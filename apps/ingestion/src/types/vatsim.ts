@@ -105,3 +105,60 @@ interface VatsimMetaName extends VatsimMetaBase {
     short_name: string;
     long_name: string;
 }
+
+interface PilotDataShort {
+    cid: number;
+    callsign: string;
+    aircraft: string,
+    coordinates: number[];
+    altitude: number;
+    groundspeed: number;
+    transponder: number;
+    heading: number;
+    connected: boolean;
+    timestamp: Date;
+}
+
+interface PilotDataLong extends PilotDataShort {
+    name: string;
+    frequency: number;
+    server: string;
+    pilot_rating: number;
+    military_rating: number;
+    qnh_i_hg: number;
+    qnh_mb: number;
+    flight_plan?: PilotFlightPlan;
+    logon_time: Date;
+    last_updated: Date;
+    flight_state: PilotFlightState;
+}
+
+interface PilotFlightPlan {
+    flight_rules: 'IFR' | 'VFR';
+    ac_reg: string; // Registration will be used to link to aircraft data in database
+    departure: string; // ICAO will be used to link to airport data in database
+    arrival: string;
+    alternate: string;
+    filed_tas: number;
+    filed_altitude: number;
+    dep_time: Date;
+    enroute_time: number;
+    fuel_time: number;
+    enroute_dist: number;
+    remarks: string;
+    route: string;
+    revision_id: number;
+}
+
+interface PilotFlightState {
+    state: string;
+    stops: 0;
+    departure_dist: number;
+    arrival_dist: number;
+    off_block: Date;
+    scheduled_dep: Date;
+    actual_dep: Date;
+    scheduled_arr: Date;
+    actual_arr: Date;
+    on_block: Date;
+}
