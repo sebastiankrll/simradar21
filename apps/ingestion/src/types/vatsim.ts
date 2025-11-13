@@ -9,6 +9,7 @@ export interface VatsimData {
     ratings: VatsimMeta[];
     pilot_ratings: VatsimMetaName[];
     military_ratings: VatsimMetaName[];
+    transceivers: VatsimTransceivers[];
 }
 
 interface VatsimGeneral {
@@ -104,6 +105,20 @@ interface VatsimMeta extends VatsimMetaBase {
 interface VatsimMetaName extends VatsimMetaBase {
     short_name: string;
     long_name: string;
+}
+
+interface VatsimTransceivers {
+    callsign: string;
+    transceivers: VatsimTransceiver[];
+}
+
+interface VatsimTransceiver {
+    id: string;
+    frequency: number;
+    latDeg: number;
+    lonDeg: number;
+    heightMslM: number;
+    heightAglM: number;
 }
 
 interface TrackPoint {
