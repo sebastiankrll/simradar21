@@ -29,7 +29,6 @@ async function fetchVatsimData(): Promise<void> {
             mapControllers(vatsimData)
             mapAirports(vatsimData)
 
-            // TODO: Do something with the data (save to DB, process, etc.)
             console.log(`✅ Retrieved ${vatsimData.pilots.length} pilots and ${vatsimData.controllers.length} controllers.`)
         } else {
             console.log("Nothing changed.")

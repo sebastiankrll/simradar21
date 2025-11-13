@@ -1,13 +1,24 @@
-import { PilotFlightPlan, PilotLong, PilotTimes, VatsimData, VatsimPilotFlightPlan } from "./types/vatsim.js"
+import { PilotFlightPlan, PilotLong, PilotTimes, VatsimData, VatsimPilot, VatsimPilotFlightPlan } from "./types/vatsim.js"
 
-export function mapPilots(vatsimData: VatsimData): void {
-    const pilotsLong: PilotLong[] = vatsimData.pilots.map(pilot => {
-        const transceiverData = vatsimData.transceivers.find(transceiver => transceiver.callsign === pilot.callsign)
+let prev: PilotLong[] = []
+
+export function mapPilots(latestVatsimData: VatsimData): void {
+    const pilotsLong: PilotLong[] = latestVatsimData.pilots.map(pilot => {
+        const transceiverData = latestVatsimData.transceivers.find(transceiver => transceiver.callsign === pilot.callsign)
         const transceiver = transceiverData?.transceivers[0]
+
+        // Search for pilot, that might have disconnected and reconnected. If so, assign old _id to prevent different db entries
+        const prevPilot = prev.find(p =>
+            p.cid === pilot.cid &&
+            p.callsign === pilot.callsign &&
+            p.groundspeed === 0 && // If prev groundspeed == 0, mark this flight as finished. TODO: Check if at gate for improved robustness.
+            p.connected === false // Only if prev disconnected, otherwise assign new _id
+        )
+        const _id = prevPilot?._id || `${pilot.cid}_${pilot.callsign}_${pilot.logon_time}`
 
         return {
             // v TrackPoint v
-            _id: `${pilot.cid}_${pilot.callsign}_${pilot.logon_time}`, // TODO: check, when flight disconnects and maybe reconnects
+            _id: _id,
             latitude: pilot.latitude,
             longitude: pilot.longitude,
             altitude_agl: transceiver?.heightAglM ? Math.round(transceiver.heightAglM * 3.28084) : pilot.altitude,
