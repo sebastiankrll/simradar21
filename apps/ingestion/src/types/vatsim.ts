@@ -122,7 +122,7 @@ interface VatsimTransceiver {
 }
 
 interface TrackPoint {
-    _id: string;
+    cid: number;
     latitude: number;
     longitude: number;
     altitude_agl: number;
@@ -130,7 +130,6 @@ interface TrackPoint {
     groundspeed: number;
     vertical_speed: number;
     heading: number;
-    connected: boolean;
     timestamp: Date;
 }
 
@@ -142,7 +141,6 @@ interface PilotShort extends TrackPoint {
 }
 
 export interface PilotLong extends PilotShort {
-    cid: number;
     name: string;
     server: string;
     pilot_rating: number;

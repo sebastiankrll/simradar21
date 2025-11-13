@@ -7,18 +7,9 @@ export function mapPilots(latestVatsimData: VatsimData): void {
         const transceiverData = latestVatsimData.transceivers.find(transceiver => transceiver.callsign === pilot.callsign)
         const transceiver = transceiverData?.transceivers[0]
 
-        // Search for pilot, that might have disconnected and reconnected. If so, assign old _id to prevent different db entries
-        const prevPilot = prev.find(p =>
-            p.cid === pilot.cid &&
-            p.callsign === pilot.callsign &&
-            p.groundspeed === 0 && // If prev groundspeed == 0, mark this flight as finished. TODO: Check if at gate for improved robustness.
-            p.connected === false // Only if prev disconnected, otherwise assign new _id
-        )
-        const _id = prevPilot?._id || `${pilot.cid}_${pilot.callsign}_${pilot.logon_time}`
-
         return {
             // v TrackPoint v
-            _id: _id,
+            cid: pilot.cid,
             latitude: pilot.latitude,
             longitude: pilot.longitude,
             altitude_agl: transceiver?.heightAglM ? Math.round(transceiver.heightAglM * 3.28084) : pilot.altitude,
@@ -26,7 +17,6 @@ export function mapPilots(latestVatsimData: VatsimData): void {
             groundspeed: pilot.groundspeed,
             vertical_speed: 0, // TODO: v/s calculation
             heading: pilot.heading,
-            connected: true, // TODO: check if connected or disconnected flight
             timestamp: new Date(pilot.last_updated),
             // v PilotShort v
             callsign: pilot.callsign,
@@ -34,7 +24,6 @@ export function mapPilots(latestVatsimData: VatsimData): void {
             transponder: pilot.flight_plan?.assigned_transponder ? Number(pilot.flight_plan?.assigned_transponder) : 2000,
             frequency: transceiver?.frequency || 122800000,
             // v PilotLong v
-            cid: pilot.cid,
             name: pilot.name,
             server: pilot.server,
             pilot_rating: pilot.pilot_rating,
