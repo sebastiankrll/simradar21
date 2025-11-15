@@ -27,7 +27,7 @@ async function fetchVatsimData(): Promise<void> {
 
             const pilotsLong = await mapPilots(vatsimData)
             const controllersLong = mapControllers(vatsimData, pilotsLong)
-            mapAirports(vatsimData)
+            const airportsLong = mapAirports(pilotsLong)
 
             console.log(`✅ Retrieved ${vatsimData.pilots.length} pilots and ${vatsimData.controllers.length} controllers.`)
         } else {

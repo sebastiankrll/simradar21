@@ -203,7 +203,7 @@ export interface ControllerLong extends ControllerShort {
     timestamp: Date;
 }
 
-export interface Airport {
+export interface AirportLong {
     icao: string;
     dep_traffic: AirportTraffic;
     arr_traffic: AirportTraffic;

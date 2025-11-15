@@ -1,37 +1,40 @@
-import { Airport, AirportTraffic, VatsimData } from "./types/vatsim.js";
+import { AirportLong, PilotLong } from "./types/vatsim.js";
 
-export function mapAirports(vatsimData: VatsimData): void {
-    const airportRecord: Record<string, Airport> = {}
+export function mapAirports(pilotsLong: PilotLong[]): AirportLong[] {
+    const airportRecord: Record<string, AirportLong> = {}
     const routeRecord: Record<string, Map<string, number>> = {}
 
-    for (const pilot of vatsimData.pilots) {
-        if (!pilot.flight_plan?.departure) continue
+    for (const pilotLong of pilotsLong) {
+        if (!pilotLong.flight_plan?.departure.icao) continue
 
-        const departure = pilot.flight_plan.departure
-        const arrival = pilot.flight_plan.arrival
-        const delay = 0 // TODO: Get delay from PilotLong and not VatsimData
+        const departure = pilotLong.flight_plan.departure
+        const arrival = pilotLong.flight_plan.arrival
 
         // Add airport if not existing already
-        if (!airportRecord[departure]) {
-            airportRecord[departure] = initAirportRecord(departure)
+        if (!airportRecord[departure.icao]) {
+            airportRecord[departure.icao] = initAirportRecord(departure.icao)
         }
 
-        if (!airportRecord[arrival]) {
-            airportRecord[arrival] = initAirportRecord(arrival)
+        if (!airportRecord[arrival.icao]) {
+            airportRecord[arrival.icao] = initAirportRecord(arrival.icao)
         }
 
-        const dep_traffic = airportRecord[departure].dep_traffic
-        dep_traffic.traffic_count++
-        if (delay > 0 && delay < 120 * 60) {
-            dep_traffic.flights_delayed++
-            dep_traffic.average_delay = ((dep_traffic.average_delay * (dep_traffic.flights_delayed - 1)) + delay) / dep_traffic.flights_delayed
+        const depTraffic = airportRecord[departure.icao].dep_traffic
+        depTraffic.traffic_count++
+
+        const depDelay = calculateDepartureDelay(pilotLong)
+        if (depDelay != 0) {
+            depTraffic.flights_delayed++
+            depTraffic.average_delay = Math.round(((depTraffic.average_delay * (depTraffic.flights_delayed - 1)) + depDelay) / depTraffic.flights_delayed)
         }
 
-        const arr_traffic = airportRecord[arrival].arr_traffic
-        arr_traffic.traffic_count++
-        if (delay > 0 && delay < 120 * 60) {
-            arr_traffic.flights_delayed++
-            arr_traffic.average_delay = ((arr_traffic.average_delay * (arr_traffic.flights_delayed - 1)) + delay) / arr_traffic.flights_delayed
+        const arrTraffic = airportRecord[arrival.icao].arr_traffic
+        arrTraffic.traffic_count++
+
+        const arrDelay = calculateArrivalDelay(pilotLong)
+        if (arrDelay != 0) {
+            arrTraffic.flights_delayed++
+            arrTraffic.average_delay = Math.round(((arrTraffic.average_delay * (arrTraffic.flights_delayed - 1)) + arrDelay) / arrTraffic.flights_delayed)
         }
 
         const setRoute = (icao: string, route: string) => {
@@ -41,15 +44,15 @@ export function mapAirports(vatsimData: VatsimData): void {
             routeRecord[icao].set(route, current + 1)
         }
 
-        const route = `${departure}-${arrival}`
-        setRoute(departure, route)
-        setRoute(arrival, route)
+        const route = `${departure.icao}-${arrival.icao}`
+        setRoute(departure.icao, route)
+        setRoute(arrival.icao, route)
     }
 
     // Get busiest and total routes
     for (const icao of Object.keys(routeRecord)) {
         const routes = routeRecord[icao]
-        if (!routes) return
+        if (!routes) continue
 
         let busiestRoute = "-"
         let maxFlights = 0
@@ -65,12 +68,13 @@ export function mapAirports(vatsimData: VatsimData): void {
         airportRecord[icao]!.total_routes = routes.size
     }
 
-    const airports = Object.values(airportRecord)
+    const airportsLong = Object.values(airportRecord)
+    // console.log(airportsLong[0])
 
-    // console.log(airports[0])
+    return airportsLong
 }
 
-function initAirportRecord(icao: string): Airport {
+function initAirportRecord(icao: string): AirportLong {
     return {
         icao: icao,
         dep_traffic: { traffic_count: 0, average_delay: 0, flights_delayed: 0 },
@@ -80,10 +84,18 @@ function initAirportRecord(icao: string): Airport {
     }
 }
 
-function mapAirportTraffic(): AirportTraffic { // TODO: Calculate airport traffic
-    return {
-        traffic_count: 0,
-        average_delay: 0,
-        flights_delayed: 0
-    }
+function calculateDepartureDelay(pilot: PilotLong): number {
+    if (!pilot.times?.off_block) return 0
+    const times = pilot.times
+    const delay_min = (times.off_block.getTime() - times.sched_off_block.getTime()) / 1000 / 60
+
+    return Math.min(Math.max(delay_min, 0), 120)
+}
+
+function calculateArrivalDelay(pilot: PilotLong): number {
+    if (!pilot.times?.on_block) return 0
+    const times = pilot.times
+    const delay_min = (times.on_block.getTime() - times.sched_on_block.getTime()) / 1000 / 60
+
+    return Math.min(Math.max(delay_min, 0), 120)
 }
