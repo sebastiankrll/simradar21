@@ -1,12 +1,15 @@
 {
     "name": "@sk/types",
-    "version": "0.0.0",
-    "private": true,
-    "license": "MIT",
-    "publishConfig": {
-        "access": "public"
+    "version": "1.0.0",
+    "exports": {
+        ".": "./src/db.ts"
+    },
+    "scripts": {
+        "dev": "tsc --watch",
+        "build": "tsc"
     },
     "devDependencies": {
-        "typescript": "^5.9.3"
+        "typescript": "^5.9.3",
+        "@sk/typescript-config": "*"
     }
 }
