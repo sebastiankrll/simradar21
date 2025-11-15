@@ -1,4 +1,4 @@
-import { AirportLong, PilotLong } from "./types/vatsim.js";
+import { AirportLong, PilotLong } from "@sk/types/vatsim";
 
 export function mapAirports(pilotsLong: PilotLong[]): AirportLong[] {
     const airportRecord: Record<string, AirportLong> = {}

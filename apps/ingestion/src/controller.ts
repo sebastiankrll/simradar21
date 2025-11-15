@@ -1,4 +1,4 @@
-import { ControllerLong, PilotLong, VatsimData } from "./types/vatsim.js";
+import { ControllerLong, PilotLong, VatsimData } from "@sk/types/vatsim";
 import { haversineDistance } from "./utils/index.js";
 
 export function mapControllers(vatsimData: VatsimData, pilotsLong: PilotLong[]): ControllerLong[] {

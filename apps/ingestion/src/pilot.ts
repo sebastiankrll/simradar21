@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { PilotFlightPlan, PilotLong, PilotTimes, VatsimData, VatsimPilot, VatsimPilotFlightPlan } from "./types/vatsim.js"
+import { PilotFlightPlan, PilotLong, PilotTimes, VatsimData, VatsimPilot, VatsimPilotFlightPlan } from "@sk/types/vatsim";
 import { pgGetAirportsByICAO } from '@sk/db/pg'
 import { haversineDistance } from './utils/index.js'
 

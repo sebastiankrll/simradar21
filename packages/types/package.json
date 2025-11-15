@@ -2,7 +2,8 @@
     "name": "@sk/types",
     "version": "1.0.0",
     "exports": {
-        ".": "./src/db.ts"
+        "./db": "./src/db.ts",
+        "./vatsim": "./src/vatsim.ts"
     },
     "scripts": {
         "dev": "tsc --watch",

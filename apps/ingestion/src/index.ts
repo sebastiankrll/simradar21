@@ -1,8 +1,8 @@
 import axios from "axios"
-import { VatsimData, VatsimTransceivers } from "./types/vatsim.js";
 import { mapPilots } from "./pilot.js";
 import { mapControllers } from "./controller.js";
 import { mapAirports } from "./airport.js";
+import { VatsimData, VatsimTransceivers } from "@sk/types/vatsim";
 
 const VATSIM_DATA_URL = "https://data.vatsim.net/v3/vatsim-data.json"
 const VATSIM_TRANSCEIVERS_URL = "https://data.vatsim.net/v3/transceivers-data.json"
