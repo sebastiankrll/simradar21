@@ -6,6 +6,10 @@
         "./pg": {
             "types": "./src/pg.ts",
             "default": "./dist/pg.js"
+        },
+        "./redis": {
+            "types": "./src/redis.ts",
+            "default": "./dist/redis.js"
         }
     },
     "scripts": {
@@ -18,7 +22,8 @@
         "typescript": "^5.9.3"
     },
     "dependencies": {
-        "pg": "^8.16.3",
-        "@sk/types": "*"
+        "@sk/types": "*",
+        "ioredis": "^5.8.2",
+        "pg": "^8.16.3"
     }
 }

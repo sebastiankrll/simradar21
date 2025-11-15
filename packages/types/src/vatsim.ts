@@ -134,7 +134,7 @@ interface TrackPoint {
     timestamp: Date;
 }
 
-interface PilotShort extends TrackPoint {
+export interface PilotShort extends TrackPoint {
     callsign: string;
     aircraft: string;
     transponder: number;
@@ -185,7 +185,7 @@ interface PilotAirport {
     longitude?: number;
 }
 
-interface ControllerShort {
+export interface ControllerShort {
     callsign: string;
     frequency: number;
     facility: number;
@@ -203,10 +203,13 @@ export interface ControllerLong extends ControllerShort {
     timestamp: Date;
 }
 
-export interface AirportLong {
+export interface AirportShort {
     icao: string;
     dep_traffic: AirportTraffic;
     arr_traffic: AirportTraffic;
+}
+
+export interface AirportLong extends AirportShort {
     busiest_route: string;
     total_routes: number;
 }
@@ -215,4 +218,10 @@ export interface AirportTraffic {
     traffic_count: number;
     average_delay: number;
     flights_delayed: number;
+}
+
+export interface WsShort {
+    pilots: PilotShort[],
+    controllers: ControllerShort[],
+    airports: AirportShort[]
 }

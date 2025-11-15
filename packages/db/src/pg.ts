@@ -1,4 +1,4 @@
-import { OurAirportsCsv, PGAirport } from '@sk/types';
+import { OurAirportsCsv, PGAirport } from '@sk/types/db';
 import { Pool } from 'pg';
 
 const pool = new Pool({

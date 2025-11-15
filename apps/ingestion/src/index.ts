@@ -2,7 +2,8 @@ import axios from "axios"
 import { mapPilots } from "./pilot.js";
 import { mapControllers } from "./controller.js";
 import { mapAirports } from "./airport.js";
-import { VatsimData, VatsimTransceivers } from "@sk/types/vatsim";
+import { AirportLong, ControllerLong, PilotLong, VatsimData, VatsimTransceivers, WsShort } from "@sk/types/vatsim";
+import { rdsPushWsShort } from "@sk/db/redis";
 
 const VATSIM_DATA_URL = "https://data.vatsim.net/v3/vatsim-data.json"
 const VATSIM_TRANSCEIVERS_URL = "https://data.vatsim.net/v3/transceivers-data.json"
@@ -29,6 +30,9 @@ async function fetchVatsimData(): Promise<void> {
             const controllersLong = mapControllers(vatsimData, pilotsLong)
             const airportsLong = mapAirports(pilotsLong)
 
+            const wsShort = extractWsShort(pilotsLong, controllersLong, airportsLong)
+            rdsPushWsShort(wsShort)
+
             console.log(`✅ Retrieved ${vatsimData.pilots.length} pilots and ${vatsimData.controllers.length} controllers.`)
         } else {
             console.log("Nothing changed.")
@@ -38,6 +42,67 @@ async function fetchVatsimData(): Promise<void> {
         console.error("❌ Error fetching VATSIM data:", error instanceof Error ? error.message : error)
     }
     updating = false
+}
+
+function extractWsShort(pilotsLong: PilotLong[], controllersLong: ControllerLong[], airportsLong: AirportLong[]): WsShort {
+    return {
+        pilots: pilotsLong.map((
+            {
+                _id,
+                cid,
+                latitude,
+                longitude,
+                altitude_agl,
+                altitude_ms,
+                groundspeed,
+                vertical_speed,
+                heading,
+                timestamp,
+                callsign,
+                aircraft,
+                transponder,
+                frequency
+            }) => ({
+                _id,
+                cid,
+                latitude,
+                longitude,
+                altitude_agl,
+                altitude_ms,
+                groundspeed,
+                vertical_speed,
+                heading,
+                timestamp,
+                callsign,
+                aircraft,
+                transponder,
+                frequency
+            })),
+        controllers: controllersLong.map((
+            {
+                callsign,
+                frequency,
+                facility,
+                atis,
+                connections
+            }) => ({
+                callsign,
+                frequency,
+                facility,
+                atis,
+                connections
+            })),
+        airports: airportsLong.map((
+            {
+                icao,
+                dep_traffic,
+                arr_traffic
+            }) => ({
+                icao,
+                dep_traffic,
+                arr_traffic
+            }))
+    }
 }
 
 fetchVatsimData()
