@@ -122,6 +122,7 @@ interface VatsimTransceiver {
 }
 
 interface TrackPoint {
+    _id: string;
     cid: number;
     latitude: number;
     longitude: number;

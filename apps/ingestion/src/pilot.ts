@@ -2,18 +2,17 @@ import 'dotenv/config'
 import { getAirportsDistance } from "@sk/db/pg"
 import { PilotFlightPlan, PilotLong, PilotTimes, VatsimData, VatsimPilot, VatsimPilotFlightPlan } from "./types/vatsim.js"
 
-let prev: PilotLong[] = []
+let cachedPilots: PilotLong[] = []
 
 export async function mapPilots(latestVatsimData: VatsimData): Promise<void> {
     const pilotsLong: PilotLong[] = latestVatsimData.pilots.map(pilot => {
+        const _id = `${pilot.cid}_${pilot.callsign}_${pilot.logon_time}`
+        const cachedPilot = cachedPilots.find(c => c._id === _id)
+
         const transceiverData = latestVatsimData.transceivers.find(transceiver => transceiver.callsign === pilot.callsign)
         const transceiver = transceiverData?.transceivers[0]
 
-        const prevPilotLong = prev.find(p => p.cid === pilot.cid)
-
-        const pilotLong = {
-            // v TrackPoint v
-            cid: pilot.cid,
+        const updatedFields = {
             latitude: pilot.latitude,
             longitude: pilot.longitude,
             altitude_agl: transceiver?.heightAglM ? Math.round(transceiver.heightAglM * 3.28084) : pilot.altitude,
@@ -22,24 +21,37 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<void> {
             vertical_speed: 0,
             heading: pilot.heading,
             timestamp: new Date(pilot.last_updated),
-            // v PilotShort v
-            callsign: pilot.callsign,
-            aircraft: pilot.flight_plan?.aircraft_short || "A320",
             transponder: pilot.flight_plan?.assigned_transponder ? Number(pilot.flight_plan?.assigned_transponder) : 2000,
             frequency: transceiver?.frequency || 122800000,
-            // v PilotLong v
-            name: pilot.name,
-            server: pilot.server,
-            pilot_rating: pilot.pilot_rating,
-            military_rating: pilot.military_rating,
             qnh_i_hg: pilot.qnh_i_hg,
-            qnh_mb: pilot.qnh_mb,
-            flight_plan: mapPilotFlightPlan(pilot.flight_plan),
-            logon_time: new Date(pilot.logon_time),
-            times: mapPilotTimes(pilot.flight_plan)
+            qnh_mb: pilot.qnh_mb
         }
 
-        pilotLong.vertical_speed = calculateVerticalSpeed(pilotLong, prevPilotLong)
+        let pilotLong: PilotLong
+        if (cachedPilot) {
+            // hit cache, use cache
+            pilotLong = { ...cachedPilot, ...updatedFields }
+            // console.log("Hit cache!")
+        } else {
+            // cache missed, re-create
+            pilotLong = {
+                _id: `${pilot.cid}_${pilot.callsign}_${pilot.logon_time}`,
+                cid: pilot.cid,
+                callsign: pilot.callsign,
+                aircraft: pilot.flight_plan?.aircraft_short || "A320",
+                name: pilot.name,
+                server: pilot.server,
+                pilot_rating: pilot.pilot_rating,
+                military_rating: pilot.military_rating,
+                flight_plan: mapPilotFlightPlan(pilot.flight_plan),
+                logon_time: new Date(pilot.logon_time),
+                times: mapPilotTimes(pilot.flight_plan),
+                ...updatedFields
+            }
+            // console.log("Missed cache, re-creating...")
+        }
+
+        pilotLong.vertical_speed = calculateVerticalSpeed(pilotLong, cachedPilot)
         return pilotLong
     })
 
@@ -53,7 +65,7 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<void> {
         }
     }
 
-    prev = pilotsLong
+    cachedPilots = pilotsLong
     // console.log(pilotsLong[0])
 }
 
