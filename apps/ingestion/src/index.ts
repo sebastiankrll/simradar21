@@ -3,7 +3,7 @@ import { mapPilots } from "./pilot.js";
 import { mapControllers } from "./controller.js";
 import { mapAirports } from "./airport.js";
 import { AirportLong, ControllerLong, PilotLong, VatsimData, VatsimTransceivers, WsShort } from "@sk/types/vatsim";
-import { rdsPushWsShort } from "@sk/db/redis";
+import { rdsPubWsShort } from "@sk/db/redis";
 
 const VATSIM_DATA_URL = "https://data.vatsim.net/v3/vatsim-data.json"
 const VATSIM_TRANSCEIVERS_URL = "https://data.vatsim.net/v3/transceivers-data.json"
@@ -31,11 +31,11 @@ async function fetchVatsimData(): Promise<void> {
             const airportsLong = mapAirports(pilotsLong)
 
             const wsShort = extractWsShort(pilotsLong, controllersLong, airportsLong)
-            rdsPushWsShort(wsShort)
+            rdsPubWsShort(wsShort)
 
             console.log(`✅ Retrieved ${vatsimData.pilots.length} pilots and ${vatsimData.controllers.length} controllers.`)
         } else {
-            console.log("Nothing changed.")
+            // console.log("Nothing changed.")
         }
 
     } catch (error) {
