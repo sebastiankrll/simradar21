@@ -2,7 +2,7 @@ import 'dotenv/config'
 import { OurAirportsCsv } from "@sk/types";
 import axios from "axios";
 import csvParser from "csv-parser";
-import { upsertAirports } from '@sk/db/pg';
+import { pgUpsertAirports } from '@sk/db/pg';
 
 const CSV_URL = 'https://ourairports.com/data/airports.csv'
 
@@ -18,7 +18,7 @@ export async function updateAirports(): Promise<void> {
             .on('error', (err: Error) => reject(err))
     })
 
-    await upsertAirports(airports)
+    await pgUpsertAirports(airports)
 
     // console.log(airports[0])
     // console.log(`Fetched ${airports.length} airports. Updating database...`)

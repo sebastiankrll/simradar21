@@ -150,32 +150,39 @@ export interface PilotLong extends PilotShort {
     qnh_mb: number;
     flight_plan: PilotFlightPlan | null;
     logon_time: Date;
-    times: PilotTimes;
+    times: PilotTimes | null;
 }
 
 export interface PilotFlightPlan {
     flight_rules: 'IFR' | 'VFR';
     ac_reg: string | null; // Registration will be used to link to aircraft data in database
-    departure: string; // ICAO will be used to link to airport data in database
-    arrival: string;
-    alternate: string;
+    departure: PilotAirport;
+    arrival: PilotAirport;
+    alternate: PilotAirport;
     filed_tas: number;
     filed_altitude: number;
     enroute_time: number;
     fuel_time: number;
-    enroute_dist_km: number;
     remarks: string;
     route: string;
     revision_id: number;
 }
 
 export interface PilotTimes {
+    sched_off_block: Date;
     off_block: Date;
-    scheduled_dep: Date;
-    actual_dep: Date;
-    scheduled_arr: Date;
-    actual_arr: Date;
+    lift_off: Date;
+    touch_down: Date;
+    sched_on_block: Date;
     on_block: Date;
+    state: string;
+    stop_counter: number;
+}
+
+interface PilotAirport {
+    icao: string;
+    latitude?: number;
+    longitude?: number;
 }
 
 interface ControllerShort {

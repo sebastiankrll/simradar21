@@ -19,3 +19,21 @@ export interface OurAirportsCsv {
     wikipedia_link: string;
     keywords: string;
 }
+
+export interface PGAirport {
+    id: number;
+    size: string;
+    name: string;
+    latitude: number;
+    longitude: number;
+    elevation: number | null;
+    continent: string;
+    iso_country: string;
+    iso_region: string;
+    municipality: string;
+    scheduled_service: boolean;
+    icao: string;
+    iata: string;
+    home_link: string;
+    wikipedia_link: string;
+}

@@ -1,7 +1,8 @@
 import 'dotenv/config'
-import { getAirportsDistance } from "@sk/db/pg"
 import { PilotFlightPlan, PilotLong, PilotTimes, VatsimData, VatsimPilot, VatsimPilotFlightPlan } from "./types/vatsim.js"
+import { pgGetAirportsByICAO } from '@sk/db/pg'
 
+const TAXI_TIME_MS = 5 * 60 * 1000
 let cachedPilots: PilotLong[] = []
 
 export async function mapPilots(latestVatsimData: VatsimData): Promise<void> {
@@ -45,41 +46,52 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<void> {
                 military_rating: pilot.military_rating,
                 flight_plan: mapPilotFlightPlan(pilot.flight_plan),
                 logon_time: new Date(pilot.logon_time),
-                times: mapPilotTimes(pilot.flight_plan),
+                times: null,
                 ...updatedFields
             }
             // console.log("Missed cache, re-creating...")
         }
 
         pilotLong.vertical_speed = calculateVerticalSpeed(pilotLong, cachedPilot)
+        pilotLong.times = mapPilotTimes(pilotLong, cachedPilot, pilot)
+
         return pilotLong
     })
 
-    const airportPairs = getUniqueAirportPairs(pilotsLong)
-    const distanceMap = await getAirportsDistance(airportPairs)
+    // Fetch airport coordinates for flight time estimation and store in PilotLong to minimize DB access
+    const icaos = getUniqueAirports(pilotsLong)
+    const airportsMap = await pgGetAirportsByICAO(icaos)
 
     for (const pilot of pilotsLong) {
         const fp = pilot.flight_plan
-        if (fp?.departure && fp?.arrival) {
-            fp.enroute_dist_km = Math.round(distanceMap.get(`${fp.departure}_${fp.arrival}`) ?? 0)
+        if (!fp) continue
+
+        if (!fp.departure.latitude) {
+            const depInfo = airportsMap.get(fp.departure.icao)
+            fp.departure.latitude = Number(depInfo?.latitude)
+            fp.departure.longitude = Number(depInfo?.longitude)
+
+            const arrInfo = airportsMap.get(fp.arrival.icao)
+            fp.arrival.latitude = Number(arrInfo?.latitude)
+            fp.arrival.longitude = Number(arrInfo?.longitude)
         }
     }
 
     cachedPilots = pilotsLong
-    // console.log(pilotsLong[0])
+    console.log(pilotsLong[0])
 }
 
-function calculateVerticalSpeed(current: PilotLong, prev: PilotLong | undefined): number {
-    if (!prev) return 0
+function calculateVerticalSpeed(current: PilotLong, cache: PilotLong | undefined): number {
+    if (!cache) return 0
 
-    const prevTime = new Date(prev.timestamp).getTime()
+    const prevTime = new Date(cache.timestamp).getTime()
     const currTime = new Date(current.timestamp).getTime()
     const diffSeconds = (currTime - prevTime) / 1000
 
     // Avoid divide-by-zero or extremely small timestamp differences
     if (diffSeconds < 1) return 0
 
-    const deltaFeet = current.altitude_ms - prev.altitude_ms
+    const deltaFeet = current.altitude_ms - cache.altitude_ms
     const vs = deltaFeet / diffSeconds * 60
 
     return Math.round(vs)
@@ -90,14 +102,13 @@ function mapPilotFlightPlan(fp?: VatsimPilotFlightPlan): PilotFlightPlan | null 
     return {
         flight_rules: fp.flight_rules === "I" ? "IFR" : "VFR",
         ac_reg: extractAircraftRegistration(fp.remarks),
-        departure: fp.departure,
-        arrival: fp.arrival,
-        alternate: fp.alternate,
+        departure: { icao: fp.departure },
+        arrival: { icao: fp.arrival },
+        alternate: { icao: fp.alternate },
         filed_tas: Number(fp.cruise_tas),
         filed_altitude: Number(fp.altitude),
         enroute_time: parseStrToSeconds(fp.enroute_time),
         fuel_time: parseStrToSeconds(fp.fuel_time),
-        enroute_dist_km: 0,
         remarks: fp.remarks,
         route: fp.route,
         revision_id: fp.revision_id
@@ -109,35 +120,192 @@ function extractAircraftRegistration(remarks: string): string | null {
     return match?.[1] ?? null
 }
 
-function mapPilotTimes(fp?: VatsimPilotFlightPlan): PilotTimes { // TODO: Calculate times
+function mapPilotTimes(current: PilotLong, cache: PilotLong | undefined, vatsimPilot: VatsimPilot): PilotTimes | null { // TODO: Calculate times
+    if (!cache?.times && !vatsimPilot.flight_plan?.deptime) return null
+
+    const sched_off_block = parseStrToDate(vatsimPilot.flight_plan!.deptime)
+    const enrouteTimeMs = parseStrToSeconds(vatsimPilot.flight_plan!.enroute_time) * 1000
+    const sched_on_block = new Date(sched_off_block.getTime() + enrouteTimeMs + TAXI_TIME_MS * 2)
+
+    if (!cache?.times) {
+        return {
+            sched_off_block: roundDateTo5Min(sched_off_block),
+            off_block: sched_off_block,
+            lift_off: new Date(sched_off_block.getTime() + TAXI_TIME_MS),
+            touch_down: new Date(sched_off_block.getTime() + TAXI_TIME_MS + enrouteTimeMs),
+            sched_on_block: roundDateTo5Min(sched_on_block),
+            on_block: sched_on_block,
+            state: estimateInitState(current),
+            stop_counter: 0
+        }
+    }
+
+    let {
+        off_block,
+        lift_off,
+        touch_down,
+        on_block,
+        state,
+        stop_counter
+    } = cache.times
+
+    const now = new Date()
+
+    // Not moving, @"Boarding", behind scheduled off blocks
+    if (current.groundspeed == 0 && cache.times.state == "Boarding" && cache.times.off_block < now) {
+        // estimate 5 mins into the future
+        off_block = new Date(now.getTime() + 5 * 60 * 1000)
+        on_block = new Date(off_block.getTime() + enrouteTimeMs + TAXI_TIME_MS * 2)
+    }
+
+    // Started moving, @"Boarding"
+    if (current.groundspeed > 0 && cache.times.state == "Boarding") {
+        off_block = now
+        on_block = new Date(off_block.getTime() + enrouteTimeMs + TAXI_TIME_MS * 2)
+        state = "Taxi Out"
+    }
+
+    // Lift-Off / Climbing, @"Taxi Out"
+    if (current.vertical_speed > 100 && cache.times.state == "Taxi Out") {
+        lift_off = now
+        on_block = new Date(lift_off.getTime() + enrouteTimeMs + TAXI_TIME_MS)
+        state = "Climb"
+    }
+
+    // Stop climbing, @"Climb"
+    if (current.vertical_speed < 500 && cache.times.state == "Climb") {
+        touch_down = estimateTouchdown(current) ?? touch_down
+        on_block = new Date(touch_down.getTime() + TAXI_TIME_MS)
+        state = "Cruise"
+    }
+
+    // Descent, @"Cruise"
+    if (current.vertical_speed < -500 && cache.times.state == "Cruise") {
+        touch_down = estimateTouchdown(current) ?? touch_down
+        on_block = new Date(touch_down.getTime() + TAXI_TIME_MS)
+        state = "Descent"
+    }
+
+    // Touchdown, @"Descent"
+    if (current.vertical_speed > -100 && current.altitude_agl < 200 && cache.times.state == "Descent") {
+        touch_down = now
+        on_block = new Date(touch_down.getTime() + TAXI_TIME_MS)
+        state = "Taxi In"
+    }
+
+    // Moving, @"Taxi In"
+    if (current.groundspeed > 0 && cache.times.state == "Taxi In") {
+        stop_counter = 0
+    }
+
+    // Not moving, @"Taxi In"
+    if (current.groundspeed == 0 && cache.times.state == "Taxi In") {
+        if (stop_counter > 5) {
+            on_block = now
+            state = "On Block"
+        } else {
+            stop_counter++
+        }
+    }
+
     return {
-        off_block: fp ? parseStrToDate(fp.deptime) : new Date(),
-        scheduled_dep: new Date(),
-        actual_dep: new Date(),
-        scheduled_arr: new Date(),
-        actual_arr: new Date(),
-        on_block: new Date()
+        sched_off_block: roundDateTo5Min(sched_off_block),
+        off_block,
+        lift_off,
+        touch_down,
+        sched_on_block: roundDateTo5Min(sched_on_block),
+        on_block,
+        state,
+        stop_counter
     }
 }
 
-function getUniqueAirportPairs(pilotsLong: PilotLong[]): [string, string][] {
-    const pairSet = new Set<string>()
+function estimateInitState(current: PilotLong): string {
+    if (!current.flight_plan?.departure.latitude || !current.flight_plan?.arrival.latitude) return "Cruise"
+
+    const departureCoordinates = [current.flight_plan.departure.latitude, current.flight_plan.departure.longitude!]
+    const arrivalCoordinates = [current.flight_plan.arrival.latitude, current.flight_plan.arrival.longitude!]
+    const currentCoordinates = [current.latitude, current.longitude]
+
+    const distToDeparture = haversineDistance(departureCoordinates, currentCoordinates)
+    const distToArrival = haversineDistance(currentCoordinates, arrivalCoordinates)
+
+    // Not moving, closer to departure airport
+    if (current.groundspeed == 0 && distToDeparture <= distToArrival) return "Boarding"
+
+    // Moving on ground, closer to departure airport
+    if (current.groundspeed > 0 && current.vertical_speed < 100 && distToDeparture <= distToArrival) return "Taxi Out"
+
+    // Climbing
+    if (current.vertical_speed > 500) return "Climb"
+
+    // Cruising
+    if (current.vertical_speed < 100 && current.vertical_speed > -100) return "Cruise"
+
+    // Descending
+    if (current.vertical_speed < -500) return "Descend"
+
+    // Moving on ground, closer to arrival airport
+    if (current.groundspeed > 0 && current.vertical_speed < 100 && distToDeparture > distToArrival) return "Taxi In"
+
+    return "Cruise"
+}
+
+function estimateTouchdown(current: PilotLong): Date | null {
+    if (!current.flight_plan?.departure.latitude || !current.flight_plan?.arrival.latitude) return null
+
+    const departureCoordinates = [current.flight_plan.departure.latitude, current.flight_plan.departure.longitude!]
+    const arrivalCoordinates = [current.flight_plan.arrival.latitude, current.flight_plan.arrival.longitude!]
+    const currentCoordinates = [current.latitude, current.longitude]
+
+    // Multiply with 1.1 to account for non direct routing (temporary until Navigraph)
+    const distToDeparture = haversineDistance(departureCoordinates, currentCoordinates) * 1.1
+    const distToArrival = haversineDistance(currentCoordinates, arrivalCoordinates) * 1.1
+    const distTotal = distToDeparture + distToArrival
+    const distanceRemaining = distToDeparture / distTotal
+
+    const timeForRemainingDistance = distanceRemaining * current.flight_plan.enroute_time * 1000
+
+    // Time needed to loose energy. Covers airport fly-overs
+    const timeToLooseEnergy = ((current.groundspeed - 100) / 1 + current.altitude_agl / 25) * 1000 // Time needed for 1 kt/s deacceleration and 25 ft/s (1500 ft/min) descent rate
+
+    return timeToLooseEnergy > timeForRemainingDistance ? new Date(Date.now() + timeToLooseEnergy) : new Date(Date.now() + timeForRemainingDistance)
+}
+
+// [lat, long]
+function haversineDistance(start: number[], end: number[]): number {
+    const R = 3440.065
+    const toRad = (d: number) => d * Math.PI / 180
+
+    const lat1Rad = toRad(start[0])
+    const lat2Rad = toRad(end[0])
+    const dLat = lat2Rad - lat1Rad
+    const dLon = toRad(end[1] - start[1])
+
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1Rad) * Math.cos(lat2Rad) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2)
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+
+    return Math.round(R * c)
+}
+
+function getUniqueAirports(pilotsLong: PilotLong[]): string[] {
+    const icaoSet = new Set<string>()
 
     for (const pilot of pilotsLong) {
         const fp = pilot.flight_plan
-        if (!fp?.departure || !fp?.arrival) continue
+        if (!fp) continue
 
-        const key = `${fp.departure}_${fp.arrival}`
-        pairSet.add(key)
+        if (!fp.departure.latitude) icaoSet.add(fp.departure.icao)
+        if (!fp.arrival.latitude) icaoSet.add(fp.arrival.icao)
     }
 
-    return Array.from(pairSet).map(k => {
-        const [dep, arr] = k.split("_")
-        return [dep, arr] as [string, string]
-    })
+    return Array.from(icaoSet)
 }
 
-// "0325" -> 12,300 seconds
+// "0325" ==> 12,300 seconds
 function parseStrToSeconds(time: string): number {
     const hours = Number(time.slice(0, 2))
     const minutes = Number(time.slice(2, 4))
@@ -145,7 +313,7 @@ function parseStrToSeconds(time: string): number {
     return hours * 3600 + minutes * 60
 }
 
-// "0020" -> 2025-11-14T00:20:00.000Z (next day)
+// "0020" ==> 2025-11-14T00:20:00.000Z (next day)
 function parseStrToDate(time: string): Date {
     const hours = Number(time.slice(0, 2))
     const minutes = Number(time.slice(2, 4))
@@ -168,4 +336,20 @@ function parseStrToDate(time: string): Date {
     // }
 
     return target
+}
+
+function roundDateTo5Min(date: Date): Date {
+    const newDate = new Date(date.getTime())
+    const minutes = newDate.getMinutes()
+
+    const remainder = minutes % 5
+
+    if (remainder !== 0) {
+        newDate.setMinutes(minutes + (5 - remainder))
+    }
+
+    newDate.setSeconds(0)
+    newDate.setMilliseconds(0)
+
+    return newDate
 }
