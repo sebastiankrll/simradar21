@@ -37,23 +37,28 @@ export async function rdsSetItems<T>(
     keyPrefix: string,
     keyExtractor: KeyExtractor<T>,
     activeSetName?: string,
-    ttlSeconds: number = 60
+    ttlSeconds: number = 120
 ) {
     if (items.length === 0) return
 
-    const pipeline = redis.pipeline()
+    const BATCH_SIZE = 2000
 
-    for (const item of items) {
-        const key = `${keyPrefix}:${keyExtractor(item)}`
-        pipeline.set(key, JSON.stringify(item))
-        pipeline.expire(key, ttlSeconds)
-        if (activeSetName) {
-            pipeline.sadd(activeSetName, keyExtractor(item))
+    for (let i = 0; i < items.length; i += BATCH_SIZE) {
+        const batch = items.slice(i, i + BATCH_SIZE)
+        const pipeline = redis.pipeline()
+
+        for (const item of batch) {
+            const key = `${keyPrefix}:${keyExtractor(item)}`
+            pipeline.set(key, JSON.stringify(item))
+            pipeline.expire(key, ttlSeconds)
+            if (activeSetName) {
+                pipeline.sadd(activeSetName, keyExtractor(item))
+            }
         }
-    }
 
-    await pipeline.exec()
-    // console.log(`✅ ${items.length} items set in ${activeSetName || keyPrefix}.`)
+        await pipeline.exec()
+        // console.log(`✅ ${items.length} items set in ${activeSetName || keyPrefix}.`)
+    }
 }
 
 export async function rdsGetSingle(query: string): Promise<string | null> {

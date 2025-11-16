@@ -17,7 +17,7 @@ export async function updateAirports(): Promise<void> {
             .on('error', (err: Error) => reject(err))
     })
 
-    await rdsSetItems(airports, "static_airport", a => a.icao_code, "airports:static")
+    await rdsSetItems(airports, "static_airport", a => a.icao_code, "airports:static", 48 * 60 * 60)
 
     // console.log(airports[0])
     // console.log(`Fetched ${airports.length} airports. Updating database...`)
