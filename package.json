@@ -14,5 +14,8 @@
     "workspaces": [
         "apps/*",
         "packages/*"
-    ]
+    ],
+    "dependencies": {
+        "ol": "^10.7.0"
+    }
 }
