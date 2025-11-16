@@ -4,10 +4,8 @@ import { Map as oMap, View } from "ol"
 import { fromLonLat, toLonLat, transformExtent } from "ol/proj"
 import { useEffect } from "react"
 import './Map.css'
-import { MapLibreLayer } from "@geoblocks/ol-maplibre-layer"
-import { StyleSpecification } from "maplibre-gl"
-import mapLibreStyle from './positron.json'
 import { initSunLayer } from "./utils/sunLayer"
+import { initBaseLayer } from "./utils/baseLayer"
 
 export default function Map() {
     useEffect(() => {
@@ -45,19 +43,15 @@ function initMap(): oMap {
         }
     }
 
-    const mbLayer = new MapLibreLayer({
-        mapLibreOptions: {
-            style: mapLibreStyle as StyleSpecification,
-        },
-        properties: { type: 'base' },
-        zIndex: 0
-    })
-
+    const baseLayer = initBaseLayer()
     const sunLayer = initSunLayer()
 
     const map = new oMap({
         target: "map",
-        layers: [mbLayer, sunLayer],
+        layers: [
+            baseLayer,
+            sunLayer
+        ],
         view: new View({
             center: fromLonLat(center),
             zoom,
