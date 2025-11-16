@@ -10,7 +10,8 @@
         "build": "tsc"
     },
     "devDependencies": {
-        "typescript": "^5.9.3",
-        "@sk/typescript-config": "*"
+        "@sk/typescript-config": "*",
+        "@types/geojson": "^7946.0.16",
+        "typescript": "^5.9.3"
     }
 }

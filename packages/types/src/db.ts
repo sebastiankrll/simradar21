@@ -1,3 +1,5 @@
+import { Feature, FeatureCollection, MultiPolygon } from "geojson";
+
 export interface OurAirportsCsv {
     id: string;
     ident: string;
@@ -30,3 +32,38 @@ export interface StaticAirport {
     elevation: number | null;
     iso_country: string;
 }
+
+interface SimAwareTRACONProperties {
+    id: string;
+    prefix: string[];
+    name: string;
+}
+
+export type SimAwareTraconFeature = Feature<MultiPolygon, SimAwareTRACONProperties>
+export type SimAwareTraconFeatureCollection = FeatureCollection<MultiPolygon, SimAwareTRACONProperties>
+
+export interface VatSpyDat {
+    icao: string;
+    name: string;
+    callsign_prefix: string;
+    fir_bound: string;
+}
+
+interface VatSpyFIRProperties {
+    id: string;
+    oceanic: "0" | "1";
+    label_lon: string;
+    label_lat: string;
+    region: string;
+    division: string;
+}
+
+export type VatSpyFIRFeatureCollection = FeatureCollection<MultiPolygon, VatSpyFIRProperties>
+
+export interface FIRProperties extends VatSpyFIRProperties {
+    name: string;
+    callsign_prefix: string;
+}
+
+export type FIRFeature = Feature<MultiPolygon, FIRProperties>
+export type FIRFeatureCollection = FeatureCollection<MultiPolygon, FIRProperties>

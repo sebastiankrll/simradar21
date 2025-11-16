@@ -1,18 +1,11 @@
 import { rdsSetSingle } from "@sk/db/redis";
+import { SimAwareTraconFeatureCollection } from "@sk/types/db";
 import axios from "axios"
-import { FeatureCollection, MultiPolygon } from "geojson";
 
 const RELEASE_URL = "https://api.github.com/repos/vatsimnetwork/simaware-tracon-project/releases/latest"
 const BASE_DATA_URL = "https://github.com/vatsimnetwork/simaware-tracon-project/releases/download/"
 
 let version: string | null = null
-
-interface SimAwareTRACONProperties {
-    id: string;
-    prefix: string[];
-    name: string;
-}
-type SimAwareTraconFeatureCollection = FeatureCollection<MultiPolygon, SimAwareTRACONProperties>
 
 export async function updateTracons(): Promise<void> {
     if (!await isNewRelease()) return

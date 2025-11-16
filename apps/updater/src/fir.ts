@@ -1,34 +1,11 @@
 import { rdsSetSingle } from "@sk/db/redis";
+import { FIRFeature, FIRProperties, VatSpyDat, VatSpyFIRFeatureCollection } from "@sk/types/db";
 import axios from "axios"
-import { Feature, FeatureCollection, MultiPolygon } from "geojson";
 
 const RELEASE_URL = "https://api.github.com/repos/vatsimnetwork/vatspy-data-project/releases/latest"
 const BASE_DATA_URL = "https://github.com/vatsimnetwork/vatspy-data-project/releases/download/"
 
 let version: string | null = null
-
-interface VatSpyDat {
-    icao: string;
-    name: string;
-    callsign_prefix: string;
-    fir_bound: string;
-}
-
-interface VatSpyFIRProperties {
-    id: string;
-    oceanic: "0" | "1";
-    label_lon: string;
-    label_lat: string;
-    region: string;
-    division: string;
-}
-type VatSpyFIRFeatureCollection = FeatureCollection<MultiPolygon, VatSpyFIRProperties>
-
-interface FIRProperties extends VatSpyFIRProperties {
-    name: string;
-    callsign_prefix: string;
-}
-type FIRFeature = Feature<MultiPolygon, FIRProperties>
 
 export async function updateFirs(): Promise<void> {
     if (!await isNewRelease()) return
