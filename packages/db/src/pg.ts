@@ -1,4 +1,4 @@
-import { OurAirportsCsv, PGAirport } from '@sk/types/db';
+import { OurAirportsCsv } from '@sk/types/db';
 import { TrackPoint } from '@sk/types/vatsim';
 import { Pool } from 'pg';
 
@@ -9,106 +9,6 @@ const pool = new Pool({
     password: process.env.POSTGRES_PASSWORD,
     port: Number(process.env.POSTGRES_PORT || 5432),
 })
-
-async function pgInitAirportsTable() {
-    const createTableQuery = `
-    CREATE TABLE IF NOT EXISTS airports (
-      id SERIAL PRIMARY KEY,
-      size TEXT,
-      name TEXT,
-      latitude FLOAT,
-      longitude FLOAT,
-      elevation INT NULL,
-      continent TEXT,
-      iso_country TEXT,
-      iso_region TEXT,
-      municipality TEXT,
-      scheduled_service BOOLEAN,
-      icao TEXT,
-      iata TEXT,
-      home_link TEXT,
-      wikipedia_link TEXT
-    );
-  `
-    await pool.query(createTableQuery)
-    console.log("airports table is ready ✅")
-}
-
-const BATCH_SIZE = 500
-
-export async function pgUpsertAirports(airports: OurAirportsCsv[]): Promise<void> {
-    try {
-        await pool.query('TRUNCATE airports RESTART IDENTITY')
-        if (airports.length === 0) return
-
-        for (let i = 0; i < airports.length; i += BATCH_SIZE) {
-            const batch = airports.slice(i, i + BATCH_SIZE)
-
-            const values: any[] = []
-            const placeholders: string[] = []
-
-            batch.forEach((airport, j) => {
-                const idx = j * 14
-                placeholders.push(
-                    `($${idx + 1}, $${idx + 2}, $${idx + 3}, $${idx + 4}, $${idx + 5}, $${idx + 6}, $${idx + 7}, $${idx + 8}, $${idx + 9}, $${idx + 10}, $${idx + 11}, $${idx + 12}, $${idx + 13}, $${idx + 14})`
-                )
-
-                values.push(
-                    airport.type,
-                    airport.name,
-                    airport.latitude_deg,
-                    airport.longitude_deg,
-                    airport.elevation_ft ? Number(airport.elevation_ft) : null,
-                    airport.continent,
-                    airport.iso_country,
-                    airport.iso_region,
-                    airport.municipality,
-                    airport.scheduled_service === "yes",
-                    airport.icao_code,
-                    airport.iata_code,
-                    airport.home_link,
-                    airport.wikipedia_link
-                )
-            })
-
-            const query = `
-        INSERT INTO airports (
-          size, name, latitude, longitude, elevation,
-          continent, iso_country, iso_region, municipality, scheduled_service,
-          icao, iata, home_link, wikipedia_link
-        ) VALUES ${placeholders.join(", ")}
-      `
-
-            await pool.query(query, values);
-            // console.log(`✅ Inserted batch of ${batch.length} airports`)
-        }
-
-        console.log(`✅ Inserted total ${airports.length} airports`)
-    } catch (err) {
-        console.error("Error inserting airports:", err)
-        throw err
-    }
-}
-
-export async function pgGetAirportsByICAO(icaos: string[]): Promise<Map<string, PGAirport>> {
-    if (icaos.length === 0) return new Map()
-
-    const placeholders = icaos.map((_, i) => `$${i + 1}`).join(", ")
-    const sql = `
-    SELECT *
-    FROM airports
-    WHERE icao IN (${placeholders})
-  `
-
-    const res = await pool.query(sql, icaos)
-
-    const airportMap = new Map<string, PGAirport>()
-    for (const row of res.rows) {
-        airportMap.set(row.icao, row)
-    }
-
-    return airportMap
-}
 
 async function pgInitTrackPointsTable() {
     const createTableQuery = `
@@ -210,7 +110,6 @@ export async function pgGetTrackPointsByUid(uid: string): Promise<TrackPoint[]> 
 }
 
 (async () => {
-    await pgInitAirportsTable()
     await pgInitTrackPointsTable()
 })()
 

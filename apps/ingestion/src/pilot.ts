@@ -1,6 +1,7 @@
 import { PilotFlightPlan, PilotLong, PilotTimes, VatsimData, VatsimPilot, VatsimPilotFlightPlan } from "@sk/types/vatsim";
-import { pgGetAirportsByICAO } from '@sk/db/pg'
 import { haversineDistance } from './utils/index.js'
+import { rdsGetMultiple } from "@sk/db/redis";
+import { StaticAirport } from "@sk/types/db";
 
 const TAXI_TIME_MS = 5 * 60 * 1000
 let cachedPilots: PilotLong[] = []
@@ -60,18 +61,18 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 
     // Fetch airport coordinates for flight time estimation and store in PilotLong to minimize DB access
     const icaos = getUniqueAirports(pilotsLong)
-    const airportsMap = await pgGetAirportsByICAO(icaos)
+    const airports = await rdsGetMultiple("static_airport", icaos) as (StaticAirport | null)[]
 
     for (const pilot of pilotsLong) {
         const fp = pilot.flight_plan
         if (!fp) continue
 
         if (!fp.departure.latitude) {
-            const depInfo = airportsMap.get(fp.departure.icao)
+            const depInfo = airports.find(a => a?.icao === fp.departure.icao)
             fp.departure.latitude = Number(depInfo?.latitude)
             fp.departure.longitude = Number(depInfo?.longitude)
 
-            const arrInfo = airportsMap.get(fp.arrival.icao)
+            const arrInfo = airports.find(a => a?.icao === fp.arrival.icao)
             fp.arrival.latitude = Number(arrInfo?.latitude)
             fp.arrival.longitude = Number(arrInfo?.longitude)
         }

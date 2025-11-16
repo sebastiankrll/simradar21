@@ -3,12 +3,12 @@ import Redis from "ioredis";
 
 const redis = new Redis()
 
-export function rdsPubWsShort(wsShort: WsShort) {
+export async function rdsPubWsShort(wsShort: WsShort) {
     redis.publish("ws:short", JSON.stringify(wsShort))
     // console.log("✅ ws:short published on redis!")
 }
 
-export function rdsSubWsShort(callback: (data: WsShort) => void) {
+export async function rdsSubWsShort(callback: (data: WsShort) => void) {
     redis.subscribe("ws:short", (err, count) => {
         if (err) {
             console.error("Failed to subscribe: %s", err.message)
@@ -30,15 +30,9 @@ export function rdsSubWsShort(callback: (data: WsShort) => void) {
     })
 }
 
-export async function rdsSetAll(pilotsLong: PilotLong[], controllersLong: ControllerLong[], airportsLong: AirportLong[]) {
-    await rdsSetItems(pilotsLong, "pilot", p => p.callsign, "pilots:active")
-    await rdsSetItems(controllersLong, "controller", c => c.callsign, "controllers:active")
-    await rdsSetItems(airportsLong, "airport", a => a.icao, "airports:active")
-}
-
 type KeyExtractor<T> = (item: T) => string
 
-async function rdsSetItems<T>(
+export async function rdsSetItems<T>(
     items: T[],
     keyPrefix: string,
     keyExtractor: KeyExtractor<T>,
@@ -67,4 +61,11 @@ export async function rdsGetSingle(query: string): Promise<string | null> {
     if (!data) return null
 
     return JSON.parse(data)
+}
+
+export async function rdsGetMultiple(keyPrefix: string, values: string[]): Promise<any[]> {
+    const keys = values.map(i => `${keyPrefix}:${i}`)
+    const results = await redis.mget(...keys)
+
+    return results.map(r => (r ? JSON.parse(r) : null))
 }

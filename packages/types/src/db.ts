@@ -20,7 +20,7 @@ export interface OurAirportsCsv {
     keywords: string;
 }
 
-export interface PGAirport {
+export interface StaticAirport {
     id: number;
     size: string;
     name: string;
