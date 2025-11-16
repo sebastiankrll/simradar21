@@ -24,7 +24,7 @@ export async function updateTracons(): Promise<void> {
         const collection = response.data as SimAwareTraconFeatureCollection
         if (!collection) return
 
-        await rdsSetSingle("static_tracons:all", JSON.stringify(collection))
+        await rdsSetSingle("static_tracons:all", collection)
         await rdsSetSingle("static_tracons:version", version?.replace(/^v/, '') || "1.0.0")
     } catch (error) {
         console.error(`Error checking for new TRACON data: ${error}`)

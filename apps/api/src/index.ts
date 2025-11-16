@@ -32,7 +32,7 @@ app.get("/api/static/:type", async (req, res) => {
 
         if (!allowedTypes.includes(type)) return res.status(400).json({ error: "Invalid static data type" })
 
-        const data = await rdsGetSingle(`static_${type}:version`)
+        const data = await rdsGetSingle(`static_${type}:all`)
         if (!data) return res.status(404).json({ error: "Static data not found" })
 
         res.json(data)

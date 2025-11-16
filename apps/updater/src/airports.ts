@@ -17,7 +17,9 @@ export async function updateAirports(): Promise<void> {
             .on('error', (err: Error) => reject(err))
     })
 
-    await rdsSetMultiple(airports, "static_airport", a => a.icao_code, "airports:static")
-    await rdsSetSingle("static_airports:all", JSON.stringify(airports))
+    const airportsWithIcao = airports.filter(a => a.icao_code && a.icao_code.trim() !== "")
+
+    await rdsSetMultiple(airportsWithIcao, "static_airport", a => a.icao_code, "airports:static")
+    await rdsSetSingle("static_airports:all", airportsWithIcao)
     await rdsSetSingle("static_airports:version", "1.0.0")
 }
