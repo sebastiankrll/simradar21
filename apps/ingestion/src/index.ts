@@ -4,7 +4,7 @@ import { mapPilots } from "./pilot.js";
 import { mapControllers } from "./controller.js";
 import { mapAirports } from "./airport.js";
 import { AirportLong, ControllerLong, PilotLong, TrackPoint, VatsimData, VatsimTransceivers, WsShort } from "@sk/types/vatsim";
-import { rdsPubWsShort, rdsSetItems } from "@sk/db/redis";
+import { rdsPubWsShort, rdsSetMultiple } from "@sk/db/redis";
 import { pgInsertTrackPoints } from "@sk/db/pg";
 
 const VATSIM_DATA_URL = "https://data.vatsim.net/v3/vatsim-data.json"
@@ -35,9 +35,9 @@ async function fetchVatsimData(): Promise<void> {
             // Publish minimal websocket data on redis ws:short
             publishWsShort(pilotsLong, controllersLong, airportsLong)
             // Set pilots, controllers and airports data in redis
-            await rdsSetItems(pilotsLong, "pilot", p => p.callsign, "pilots:active", 120)
-            await rdsSetItems(controllersLong, "controller", c => c.callsign, "controllers:active", 120)
-            await rdsSetItems(airportsLong, "airport", a => a.icao, "airports:active", 120)
+            await rdsSetMultiple(pilotsLong, "pilot", p => p.callsign, "pilots:active", 120)
+            await rdsSetMultiple(controllersLong, "controller", c => c.callsign, "controllers:active", 120)
+            await rdsSetMultiple(airportsLong, "airport", a => a.icao, "airports:active", 120)
             // Insert trackpoints in TimescaleDB
             insertTrackPoints(pilotsLong)
 

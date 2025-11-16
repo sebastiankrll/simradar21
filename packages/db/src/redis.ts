@@ -30,9 +30,14 @@ export async function rdsSubWsShort(callback: (data: WsShort) => void) {
     })
 }
 
+export async function rdsSetSingle(key: string, value: string): Promise<void> {
+    await redis.set(key, value)
+    console.log(`✅ Item ${key} set.`)
+}
+
 type KeyExtractor<T> = (item: T) => string
 
-export async function rdsSetItems<T>(
+export async function rdsSetMultiple<T>(
     items: T[],
     keyPrefix: string,
     keyExtractor: KeyExtractor<T>,
@@ -57,8 +62,9 @@ export async function rdsSetItems<T>(
         }
 
         await pipeline.exec()
-        console.log(`✅ ${items.length} items set in ${activeSetName || keyPrefix}.`)
     }
+
+    console.log(`✅ ${items.length} items set in ${activeSetName || keyPrefix}.`)
 }
 
 export async function rdsGetSingle(query: string): Promise<string | null> {

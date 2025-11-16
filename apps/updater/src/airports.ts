@@ -1,7 +1,7 @@
 import { OurAirportsCsv } from "@sk/types/db";
 import axios from "axios";
 import csvParser from "csv-parser";
-import { rdsSetItems } from "@sk/db/redis";
+import { rdsSetMultiple } from "@sk/db/redis";
 
 const CSV_URL = 'https://ourairports.com/data/airports.csv'
 
@@ -17,5 +17,5 @@ export async function updateAirports(): Promise<void> {
             .on('error', (err: Error) => reject(err))
     })
 
-    await rdsSetItems(airports, "static_airport", a => a.icao_code, "airports:static")
+    await rdsSetMultiple(airports, "static_airport", a => a.icao_code, "airports:static")
 }
