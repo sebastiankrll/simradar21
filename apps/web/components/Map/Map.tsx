@@ -7,6 +7,7 @@ import './Map.css'
 import { MapLibreLayer } from "@geoblocks/ol-maplibre-layer"
 import { StyleSpecification } from "maplibre-gl"
 import mapLibreStyle from './positron.json'
+import { initSunLayer } from "./utils/sunLayer"
 
 export default function Map() {
     useEffect(() => {
@@ -48,12 +49,15 @@ function initMap(): oMap {
         mapLibreOptions: {
             style: mapLibreStyle as StyleSpecification,
         },
-        properties: { type: 'base' }
+        properties: { type: 'base' },
+        zIndex: 0
     })
+
+    const sunLayer = initSunLayer()
 
     const map = new oMap({
         target: "map",
-        layers: [mbLayer],
+        layers: [mbLayer, sunLayer],
         view: new View({
             center: fromLonLat(center),
             zoom,
