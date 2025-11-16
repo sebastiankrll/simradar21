@@ -1,0 +1,110 @@
+import { rdsSetItems } from "@sk/db/redis";
+import axios from "axios"
+import { Feature, FeatureCollection, MultiPolygon } from "geojson";
+
+const RELEASE_URL = "https://api.github.com/repos/vatsimnetwork/vatspy-data-project/releases/latest"
+const BASE_DATA_URL = "https://github.com/vatsimnetwork/vatspy-data-project/releases/download/"
+
+let version: string | null = null
+
+interface VatSpyDat {
+    icao: string;
+    name: string;
+    callsign_prefix: string;
+    fir_bound: string;
+}
+
+interface VatSpyFIRProperties {
+    id: string;
+    oceanic: "0" | "1";
+    label_lon: string;
+    label_lat: string;
+    region: string;
+    division: string;
+}
+type VatSpyFIRFeatureCollection = FeatureCollection<MultiPolygon, VatSpyFIRProperties>
+
+interface FIRProperties extends VatSpyFIRProperties {
+    name: string;
+    callsign_prefix: string;
+}
+type FIRFeature = Feature<MultiPolygon, FIRProperties>
+
+export async function updateFIRs(): Promise<void> {
+    if (!await isNewRelease()) return
+
+    try {
+        const vatSpyDatUrl = `${BASE_DATA_URL}${version}/VATSpy.dat`
+        const firBoundJsonUrl = `${BASE_DATA_URL}${version}/Boundaries.geojson`
+
+        const vatSpyResponse = await axios.get(vatSpyDatUrl, { responseType: 'text' })
+        const vatSpyDat = vatSpyResponse.data
+        if (!vatSpyDat) return
+
+        const firs = extractVatSpyDat(vatSpyDat)
+
+        const boundsResponse = await axios.get(firBoundJsonUrl, { responseType: 'json' })
+        const bounds = boundsResponse.data as VatSpyFIRFeatureCollection
+        if (!bounds || !bounds.features) return
+
+        const newFeatures: FIRFeature[] = bounds.features.map(feature => {
+            const fir = firs.find(f => f.icao === feature.properties.id)
+            const newProps: FIRProperties = {
+                ...feature.properties,
+                name: fir?.name ?? "",
+                callsign_prefix: fir?.callsign_prefix ?? ""
+            }
+
+            return {
+                ...feature,
+                properties: newProps
+            }
+        })
+
+        await rdsSetItems(newFeatures, "static_fir", f => f.properties.id, "firs:static")
+    } catch (error) {
+        console.error(`Error checking for new FIR data: ${error}`)
+    }
+}
+
+async function isNewRelease(): Promise<boolean> {
+    try {
+        const response = await axios.get(RELEASE_URL)
+        const release = response.data.tag_name
+
+        if (release !== version) {
+            version = release
+            return true
+        }
+    } catch (error) {
+        console.error(`Error checking for updates: ${error}`)
+    }
+
+    return false
+}
+
+function extractVatSpyDat(vatSpyDat: string): VatSpyDat[] {
+    const firs: VatSpyDat[] = []
+
+    const sectionStart = vatSpyDat.indexOf('[FIRs]')
+    if (sectionStart === -1) return []
+
+    const lines = vatSpyDat.slice(sectionStart).split('\r\n')
+
+    for (let line of lines) {
+        line = line.trim()
+
+        if (line === '') break
+        if (line.startsWith(';') || line.startsWith('[FIRs]')) continue
+
+        const [icao, name, callsign_prefix, fir_bound] = line.split('|')
+        firs.push({
+            icao,
+            name,
+            callsign_prefix,
+            fir_bound
+        })
+    }
+
+    return firs
+}
