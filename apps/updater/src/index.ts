@@ -1,13 +1,15 @@
 import 'dotenv/config'
 import { CronJob } from "cron"
 import { updateAirports } from "./airports.js"
-import { updateFIRs } from './fir.js'
+import { updateFirs } from './fir.js'
+import { updateTracons } from './tracon.js'
 
 CronJob.from({
     cronTime: '0 6 * * *',
     onTick: async () => {
         await updateAirports()
-        await updateFIRs()
+        await updateFirs()
+        await updateTracons()
     },
     start: true,
     runOnInit: true,

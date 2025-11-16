@@ -1,4 +1,4 @@
-import { rdsSetItems } from "@sk/db/redis";
+import { rdsSetSingle } from "@sk/db/redis";
 import axios from "axios"
 import { Feature, FeatureCollection, MultiPolygon } from "geojson";
 
@@ -30,7 +30,7 @@ interface FIRProperties extends VatSpyFIRProperties {
 }
 type FIRFeature = Feature<MultiPolygon, FIRProperties>
 
-export async function updateFIRs(): Promise<void> {
+export async function updateFirs(): Promise<void> {
     if (!await isNewRelease()) return
 
     try {
@@ -44,10 +44,10 @@ export async function updateFIRs(): Promise<void> {
         const firs = extractVatSpyDat(vatSpyDat)
 
         const boundsResponse = await axios.get(firBoundJsonUrl, { responseType: 'json' })
-        const bounds = boundsResponse.data as VatSpyFIRFeatureCollection
-        if (!bounds || !bounds.features) return
+        const collection = boundsResponse.data as VatSpyFIRFeatureCollection
+        if (!collection || !collection.features) return
 
-        const newFeatures: FIRFeature[] = bounds.features.map(feature => {
+        const newFeatures: FIRFeature[] = collection.features.map(feature => {
             const fir = firs.find(f => f.icao === feature.properties.id)
             const newProps: FIRProperties = {
                 ...feature.properties,
@@ -61,7 +61,9 @@ export async function updateFIRs(): Promise<void> {
             }
         })
 
-        await rdsSetItems(newFeatures, "static_fir", f => f.properties.id, "firs:static")
+        collection.features = newFeatures
+
+        await rdsSetSingle("firs", JSON.stringify(collection))
     } catch (error) {
         console.error(`Error checking for new FIR data: ${error}`)
     }
