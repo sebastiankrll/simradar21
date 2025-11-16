@@ -21,19 +21,12 @@ export interface OurAirportsCsv {
 }
 
 export interface StaticAirport {
-    id: number;
+    icao: string;
+    iata: string;
     size: string;
     name: string;
     latitude: number;
     longitude: number;
     elevation: number | null;
-    continent: string;
     iso_country: string;
-    iso_region: string;
-    municipality: string;
-    scheduled_service: boolean;
-    icao: string;
-    iata: string;
-    home_link: string;
-    wikipedia_link: string;
 }

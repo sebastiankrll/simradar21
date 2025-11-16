@@ -1,4 +1,4 @@
-import { OurAirportsCsv } from "@sk/types/db";
+import { OurAirportsCsv, StaticAirport } from "@sk/types/db";
 import axios from "axios";
 import csvParser from "csv-parser";
 import { rdsSetMultiple, rdsSetSingle } from "@sk/db/redis";
@@ -17,9 +17,20 @@ export async function updateAirports(): Promise<void> {
             .on('error', (err: Error) => reject(err))
     })
 
-    const airportsWithIcao = airports.filter(a => a.icao_code && a.icao_code.trim() !== "")
+    const filteredAirports: StaticAirport[] = airports
+        .filter(a => a.icao_code && a.icao_code.trim() !== "")
+        .map(a => ({
+            icao: a.icao_code,
+            iata: a.iata_code,
+            size: a.type,
+            name: a.name,
+            latitude: Number(a.latitude_deg),
+            longitude: Number(a.longitude_deg),
+            elevation: Number(a.elevation_ft),
+            iso_country: a.iso_country
+        }))
 
-    await rdsSetMultiple(airportsWithIcao, "static_airport", a => a.icao_code, "airports:static")
-    await rdsSetSingle("static_airports:all", airportsWithIcao)
+    await rdsSetMultiple(filteredAirports, "static_airport", a => a.icao, "airports:static")
+    await rdsSetSingle("static_airports:all", filteredAirports)
     await rdsSetSingle("static_airports:version", "1.0.0")
 }
