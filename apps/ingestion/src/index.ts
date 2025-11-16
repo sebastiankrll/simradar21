@@ -1,9 +1,11 @@
+import 'dotenv/config'
 import axios from "axios"
 import { mapPilots } from "./pilot.js";
 import { mapControllers } from "./controller.js";
 import { mapAirports } from "./airport.js";
-import { AirportLong, ControllerLong, PilotLong, VatsimData, VatsimTransceivers, WsShort } from "@sk/types/vatsim";
-import { rdsPubWsShort } from "@sk/db/redis";
+import { AirportLong, ControllerLong, PilotLong, TrackPoint, VatsimData, VatsimTransceivers, WsShort } from "@sk/types/vatsim";
+import { rdsPubWsShort, rdsSetAll } from "@sk/db/redis";
+import { pgInsertTrackPoints } from "@sk/db/pg";
 
 const VATSIM_DATA_URL = "https://data.vatsim.net/v3/vatsim-data.json"
 const VATSIM_TRANSCEIVERS_URL = "https://data.vatsim.net/v3/transceivers-data.json"
@@ -30,8 +32,12 @@ async function fetchVatsimData(): Promise<void> {
             const controllersLong = mapControllers(vatsimData, pilotsLong)
             const airportsLong = mapAirports(pilotsLong)
 
-            const wsShort = extractWsShort(pilotsLong, controllersLong, airportsLong)
-            rdsPubWsShort(wsShort)
+            // Publish minimal websocket data on redis ws:short
+            publishWsShort(pilotsLong, controllersLong, airportsLong)
+            // Set pilots, controllers and airports data in redis
+            rdsSetAll(pilotsLong, controllersLong, airportsLong)
+            // Insert trackpoints in TimescaleDB
+            insertTrackPoints(pilotsLong)
 
             console.log(`✅ Retrieved ${vatsimData.pilots.length} pilots and ${vatsimData.controllers.length} controllers.`)
         } else {
@@ -44,8 +50,8 @@ async function fetchVatsimData(): Promise<void> {
     updating = false
 }
 
-function extractWsShort(pilotsLong: PilotLong[], controllersLong: ControllerLong[], airportsLong: AirportLong[]): WsShort {
-    return {
+function publishWsShort(pilotsLong: PilotLong[], controllersLong: ControllerLong[], airportsLong: AirportLong[]): void {
+    const wsShort = {
         pilots: pilotsLong.map((
             {
                 _id,
@@ -103,6 +109,7 @@ function extractWsShort(pilotsLong: PilotLong[], controllersLong: ControllerLong
                 arr_traffic
             }))
     }
+    rdsPubWsShort(wsShort)
 }
 
 fetchVatsimData()

@@ -1,4 +1,3 @@
-import 'dotenv/config'
 import { OurAirportsCsv } from "@sk/types/db";
 import axios from "axios";
 import csvParser from "csv-parser";
