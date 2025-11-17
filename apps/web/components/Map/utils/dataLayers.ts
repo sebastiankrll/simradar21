@@ -7,9 +7,10 @@ import Feature, { FeatureLike } from "ol/Feature"
 import Text from "ol/style/Text"
 import Fill from "ol/style/Fill"
 import { Map } from "ol"
-import { dxGetAirportsByExtent } from "@/storage/dexie"
+import { dxGetAllAirports } from "@/storage/dexie"
 import { Point } from "ol/geom"
-import { fromLonLat } from "ol/proj"
+import { fromLonLat, transformExtent } from "ol/proj"
+import RBush from "rbush"
 
 const airportMainSource = new VectorSource()
 
@@ -134,17 +135,57 @@ function getFirLabelLayerStyle(feature: FeatureLike, resolution: number): StyleL
     })
 }
 
-export async function setAirportFeatures(map: Map): Promise<void> {
-    const view = map.getView()
-    const resolution = view.getResolution()
+interface IndexedAirportFeature {
+    minX: number;
+    minY: number;
+    maxX: number;
+    maxY: number;
+    size: string;
+    feature: Feature<Point>;
+}
 
-    const airports = await dxGetAirportsByExtent(view.calculateExtent(map.getSize()), resolution)
-    const features = airports.map(a => new Feature({
-        geometry: new Point(fromLonLat([a.longitude, a.latitude])),
-        name: a.feature.name,
-        type: a.size,
-        id: a.id,
+const rbush = new RBush<IndexedAirportFeature>()
+
+export async function initAirportFeatures(map: Map) {
+    const airports = await dxGetAllAirports()
+
+    const items: IndexedAirportFeature[] = airports.map(a => ({
+        minX: a.longitude,
+        minY: a.latitude,
+        maxX: a.longitude,
+        maxY: a.latitude,
+        size: a.size,
+        feature: new Feature({
+            geometry: new Point(fromLonLat([a.longitude, a.latitude])),
+            name: a.feature.name,
+            type: a.size,
+            id: a.id
+        })
     }))
+    rbush.load(items)
+    setAirportFeatures(map)
+}
+
+export function setAirportFeatures(map: Map): void {
+    const resolution = map.getView().getResolution()
+    const visibleSizes = getVisibleSizes(resolution)
+    if (visibleSizes.length === 0) {
+        airportMainSource.clear()
+        return
+    }
+
+    const [minX, minY, maxX, maxY] = transformExtent(map.getView().calculateExtent(map.getSize()), 'EPSG:3857', 'EPSG:4326')
+    const featuresByExtent = rbush.search({ minX, minY, maxX, maxY })
+    const featuresBySize = featuresByExtent.filter(f => visibleSizes.includes(f.size))
+
     airportMainSource.clear()
-    airportMainSource.addFeatures(features)
+    airportMainSource.addFeatures(featuresBySize.map(f => f.feature))
+}
+
+function getVisibleSizes(resolution: number | undefined): string[] {
+    if (!resolution) return ["large_airport"]
+    if (resolution < 500) return ["heliport", "small_airport", "medium_airport", "large_airport"]
+    if (resolution < 1500) return ["medium_airport", "large_airport"]
+    if (resolution < 10000) return ["large_airport"]
+    return []
 }

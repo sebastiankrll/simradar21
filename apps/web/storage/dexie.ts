@@ -1,8 +1,6 @@
 import { FIRFeature, FIRFeatureCollection, SimAwareTraconFeature, SimAwareTraconFeatureCollection, StaticAirport } from "@sk/types/db";
 import Dexie, { EntityTable } from "dexie";
 import { FeatureCollection } from "geojson";
-import { Extent } from "ol/extent";
-import { toLonLat } from "ol/proj";
 
 interface StaticVersions {
     airportsVersion: string;
@@ -126,29 +124,6 @@ async function storeFeatures(features: DexieFeature[], db: EntityTable<DexieFeat
     })
 }
 
-export async function dxGetAirportsByExtent(extent: Extent, resolution: number | undefined): Promise<DexieAirport[]> {
-    const [minX, minY, maxX, maxY] = extent
-    const [minLon, minLat] = toLonLat([minX, minY])
-    const [maxLon, maxLat] = toLonLat([maxX, maxY])
-
-    const visibleSizes = getVisibleSizes(resolution)
-    if (visibleSizes.length === 0) return []
-
-    return await db.airports
-        .where("latitude")
-        .between(minLat, maxLat)
-        .and(a =>
-            a.longitude >= minLon &&
-            a.longitude <= maxLon &&
-            visibleSizes.includes(a.size)
-        )
-        .toArray()
-}
-
-function getVisibleSizes(resolution: number | undefined): string[] {
-    if (!resolution) return ["large_airport"]
-    if (resolution < 500) return ["heliport", "small_airport", "medium_airport", "large_airport"]
-    if (resolution < 1500) return ["medium_airport", "large_airport"]
-    if (resolution < 10000) return ["large_airport"]
-    return []
+export async function dxGetAllAirports(): Promise<DexieAirport[]> {
+    return await db.airports.toArray()
 }

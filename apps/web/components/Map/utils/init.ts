@@ -2,7 +2,7 @@ import { Map, View } from "ol"
 import { initBaseLayer } from "./baseLayer"
 import { initSunLayer } from "./sunLayer"
 import { fromLonLat, toLonLat, transformExtent } from "ol/proj"
-import { initDataLayers, setAirportFeatures } from "./dataLayers"
+import { initAirportFeatures, initDataLayers, setAirportFeatures } from "./dataLayers"
 
 export function initMap(): Map {
     const savedView = localStorage.getItem("mapView")
@@ -42,6 +42,8 @@ export function initMap(): Map {
         }),
         controls: []
     })
+
+    initAirportFeatures(map)
 
     return map
 }
