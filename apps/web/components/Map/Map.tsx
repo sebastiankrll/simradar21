@@ -6,7 +6,7 @@ import { initMap } from "./utils/init"
 import { dxInitLocalDatabase } from "@/storage/dexie"
 import { wsClient } from "@/utils/ws"
 import { setPilotFeatures } from "./utils/dataLayers"
-import { onMoveEnd, onPointerMove } from "./utils/events"
+import { onClick, onMoveEnd, onPointerMove } from "./utils/events"
 
 dxInitLocalDatabase()
 
@@ -20,10 +20,12 @@ export default function Map() {
         const map = initMap()
         map.on('moveend', onMoveEnd)
         map.on('pointermove', onPointerMove)
+        map.on('click', onClick)
 
         return () => {
             map.un('moveend', onMoveEnd)
             map.un('pointermove', onPointerMove)
+            map.un('click', onClick)
             map.setTarget(undefined)
         }
     }, [])
