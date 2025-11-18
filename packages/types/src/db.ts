@@ -65,3 +65,13 @@ export interface FIRProperties extends VatSpyFIRProperties {
 
 export type FIRFeature = Feature<MultiPolygon, FIRProperties>
 export type FIRFeatureCollection = FeatureCollection<MultiPolygon, FIRProperties>
+
+export interface StaticAirline {
+    id: string;
+    iata: string;
+    name: string;
+    callsign: string;
+    country: string;
+    bg: string | null;
+    font: string | null;
+}

@@ -3,6 +3,7 @@ import { CronJob } from "cron"
 import { updateAirports } from "./airports.js"
 import { updateFirs } from './fir.js'
 import { updateTracons } from './tracon.js'
+import { updateAirlines } from './airlines.js'
 
 CronJob.from({
     cronTime: '0 6 * * *',
@@ -15,3 +16,5 @@ CronJob.from({
     runOnInit: true,
     timeZone: 'UTC',
 })
+
+updateAirlines()

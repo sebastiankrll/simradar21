@@ -13,11 +13,13 @@ app.get("/api/static/versions", async (req, res) => {
         const airportsVersion = await rdsGetSingle("static_airports:version")
         const firsVersion = await rdsGetSingle("static_firs:version")
         const traconsVersion = await rdsGetSingle("static_tracons:version")
+        const airlinesVersion = await rdsGetSingle("static_airlines:version")
 
         res.json({
             airportsVersion,
             firsVersion,
-            traconsVersion
+            traconsVersion,
+            airlinesVersion
         })
     } catch (err) {
         console.error(err)
@@ -28,7 +30,7 @@ app.get("/api/static/versions", async (req, res) => {
 app.get("/api/static/:type", async (req, res) => {
     try {
         const { type } = req.params
-        const allowedTypes = ["airports", "tracons", "firs"]
+        const allowedTypes = ["airports", "tracons", "firs", "airlines"]
 
         if (!allowedTypes.includes(type)) return res.status(400).json({ error: "Invalid static data type" })
 

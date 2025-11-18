@@ -1,4 +1,4 @@
-import { FIRFeature, FIRFeatureCollection, SimAwareTraconFeature, SimAwareTraconFeatureCollection, StaticAirport } from "@sk/types/db";
+import { FIRFeature, FIRFeatureCollection, SimAwareTraconFeature, SimAwareTraconFeatureCollection, StaticAirline, StaticAirport } from "@sk/types/db";
 import Dexie, { EntityTable } from "dexie";
 import { FeatureCollection } from "geojson";
 
@@ -6,6 +6,7 @@ interface StaticVersions {
     airportsVersion: string;
     traconsVersion: string;
     firsVersion: string;
+    airlinesVersion: string;
 }
 
 interface DexieFeature {
@@ -21,6 +22,16 @@ interface DexieAirport {
     feature: StaticAirport;
 }
 
+interface DexieAirline {
+    id: string;
+    iata: string;
+    name: string;
+    callsign: string;
+    country: string;
+    bg: string | null;
+    font: string | null;
+}
+
 const db = new Dexie('StaticDatabase') as Dexie & {
     airports: EntityTable<
         DexieAirport,
@@ -33,13 +44,18 @@ const db = new Dexie('StaticDatabase') as Dexie & {
     tracons: EntityTable<
         DexieFeature,
         "id"
+    >,
+    airlines: EntityTable<
+        DexieAirline,
+        "id"
     >
 }
 
 db.version(1).stores({
     airports: 'id, latitude, longitude, size',
     firs: 'id',
-    tracons: 'id'
+    tracons: 'id',
+    airlines: 'id'
 })
 
 export async function dxInitLocalDatabase(): Promise<void> {
@@ -63,7 +79,7 @@ async function checkForNewVersions(): Promise<void> {
                 feature: a
             }))
 
-        storeAirports(airports)
+        storeData(airports, db.airports as EntityTable<any, "id">)
     }
 
     if (serverVersions.firsVersion !== localVersions.firsVersion) {
@@ -75,7 +91,7 @@ async function checkForNewVersions(): Promise<void> {
                 feature: f
             }))
 
-        storeFeatures(features, db.firs)
+        storeData(features, db.firs as EntityTable<any, "id">)
     }
 
     if (serverVersions.traconsVersion !== localVersions.traconsVersion) {
@@ -87,34 +103,27 @@ async function checkForNewVersions(): Promise<void> {
                 feature: f as SimAwareTraconFeature
             }))
 
-        storeFeatures(features, db.tracons)
+        storeData(features, db.tracons as EntityTable<any, "id">)
+    }
+
+    if (serverVersions.airlinesVersion !== localVersions.airlinesVersion) {
+        const data = await fetchStaticData("airlines") as StaticAirline[]
+        storeData(data, db.airlines as EntityTable<any, "id">)
     }
 
     // localStorage.setItem("databaseVersions", JSON.stringify(serverVersions))
 }
 
-async function fetchStaticData(type: string): Promise<StaticAirport[] | FeatureCollection> {
+async function fetchStaticData(type: string): Promise<any> {
     const response = await fetch(`http://localhost:5000/api/static/${type}`)
     const data = await response.json()
 
     return data
 }
 
-async function storeAirports(airports: DexieAirport[]): Promise<void> {
-    db.airports.bulkPut(airports).then(() => {
-        console.log("Done adding airports")
-    }).catch(e => {
-        if (e.name === "BulkError") {
-            console.error(`Some airports did not succeed. Completed: ${e.failures.length}`)
-        } else {
-            throw e
-        }
-    })
-}
-
-async function storeFeatures(features: DexieFeature[], db: EntityTable<DexieFeature, "id">): Promise<void> {
-    db.bulkPut(features).then(() => {
-        console.log("Done adding features")
+async function storeData(data: any[], db: EntityTable<any, "id">): Promise<void> {
+    db.bulkPut(data).then(() => {
+        console.log("Done adding data")
     }).catch(e => {
         if (e.name === "BulkError") {
             console.error(`Some airports did not succeed. Completed: ${e.failures.length}`)
