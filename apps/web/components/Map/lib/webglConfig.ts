@@ -15,7 +15,7 @@ export const webglConfig = {
         'icon-src': aircraftSprite.src,
         'icon-size': [49, 44],
         'icon-offset': [
-            'case', ['==', ['get', 'active'], 0], [
+            'case', ['all', ['==', ['get', 'clicked'], 0], ['==', ['get', 'hovered'], 0]], [
                 'match', ['get', 'aircraft'],
                 'A225', [0, 44],
                 'A306', [0, 88],
@@ -273,8 +273,8 @@ export const webglConfig = {
         'icon-src': airportSprite.src,
         'icon-size': [32, 32],
         'icon-offset': ['case',
-            ['==', ['get', 'active'], 1], [32, 0],
-            [0, 0]
+            ['all', ['==', ['get', 'clicked'], 0], ['==', ['get', 'hovered'], 0]], [0, 0],
+            [32, 0]
         ],
         'icon-scale': ['case',
             ['==', ['get', 'type'], 'small_airport'], 0.65,
@@ -287,8 +287,8 @@ export const webglConfig = {
         'icon-src': airportSprite.src,
         'icon-size': [32, 32],
         'icon-offset': ['case',
-            ['==', ['get', 'active'], 1], [32, 0],
-            [0, 0]
+            ['all', ['==', ['get', 'clicked'], 0], ['==', ['get', 'hovered'], 0]], [0, 0],
+            [32, 0]
         ],
         'icon-scale': ['case',
             ['==', ['get', 'type'], 'small_airport'], 0.7,

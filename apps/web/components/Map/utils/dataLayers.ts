@@ -12,7 +12,7 @@ import { Point } from "ol/geom"
 import { fromLonLat, transformExtent } from "ol/proj"
 import RBush from "rbush"
 import { PilotShort } from "@sk/types/vatsim"
-import { AirportProperties } from "@/types/ol"
+import { AirportProperties, PilotProperties } from "@/types/ol"
 
 const airportMainSource = new VectorSource()
 const pilotMainSource = new VectorSource()
@@ -157,7 +157,8 @@ export async function initAirportFeatures(map: OMap) {
         feature.setProperties({
             icao: a.id,
             type: 'airport',
-            active: false
+            clicked: false,
+            hovered: false
         } as AirportProperties)
 
         return {
@@ -229,8 +230,9 @@ export function setPilotFeatures(pilotsShort: PilotShort[]): void {
                 aircraft: p.aircraft,
                 heading: p.heading / 180 * Math.PI,
                 altitude_agl: p.altitude_ms,
-                active: false
-            })
+                clicked: false,
+                hovered: false
+            } as PilotProperties)
 
             pilotMainSource.addFeature(newFeature)
             pilotFeatureMap.set(p.callsign, newFeature)

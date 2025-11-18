@@ -56,8 +56,6 @@ function publishWsShort(pilotsLong: PilotLong[], controllersLong: ControllerLong
     const wsShort = {
         pilots: pilotsLong.map((
             {
-                uid,
-                cid,
                 latitude,
                 longitude,
                 altitude_agl,
@@ -65,14 +63,12 @@ function publishWsShort(pilotsLong: PilotLong[], controllersLong: ControllerLong
                 groundspeed,
                 vertical_speed,
                 heading,
-                timestamp,
                 callsign,
                 aircraft,
                 transponder,
                 frequency
             }) => ({
-                uid,
-                cid,
+                callsign,
                 latitude,
                 longitude,
                 altitude_agl,
@@ -80,8 +76,6 @@ function publishWsShort(pilotsLong: PilotLong[], controllersLong: ControllerLong
                 groundspeed,
                 vertical_speed,
                 heading,
-                timestamp,
-                callsign,
                 aircraft,
                 transponder,
                 frequency

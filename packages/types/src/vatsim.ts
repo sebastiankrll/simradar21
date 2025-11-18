@@ -133,15 +133,23 @@ export interface TrackPoint {
     timestamp: Date;
 }
 
-export interface PilotShort extends TrackPoint {
-    cid: number;
+export interface PilotShort {
     callsign: string;
+    latitude: number;
+    longitude: number;
+    altitude_agl: number;
+    altitude_ms: number;
+    groundspeed: number;
+    vertical_speed: number;
+    heading: number;
     aircraft: string;
     transponder: number;
     frequency: number;
 }
 
 export interface PilotLong extends PilotShort {
+    uid: string;
+    cid: number;
     name: string;
     server: string;
     pilot_rating: number;
@@ -151,6 +159,7 @@ export interface PilotLong extends PilotShort {
     flight_plan: PilotFlightPlan | null;
     logon_time: Date;
     times: PilotTimes | null;
+    timestamp: Date;
 }
 
 export interface PilotFlightPlan {
