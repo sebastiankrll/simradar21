@@ -177,8 +177,13 @@ const pilotRBush = new RBush<RBushPilotFeature>();
 const pilotFeaturesMap = new Map<string, RBushPilotFeature>();
 
 function updatePilotFeatures(pilots: PilotShort[]): void {
+	const seen = new Set<string>();
+
 	for (const p of pilots) {
+		const callsign = p.callsign;
 		const item = pilotFeaturesMap.get(p.callsign);
+		seen.add(callsign);
+
 		const props: PilotProperties = {
 			type: "pilot",
 			clicked: item?.feature.get("clicked") || false,
@@ -217,6 +222,13 @@ function updatePilotFeatures(pilots: PilotShort[]): void {
 		item.minX = item.maxX = p.longitude;
 		item.minY = item.maxY = p.latitude;
 		pilotRBush.insert(item);
+	}
+
+	for (const [callsign, item] of pilotFeaturesMap) {
+		if (!seen.has(callsign)) {
+			pilotRBush.remove(item);
+			pilotFeaturesMap.delete(callsign);
+		}
 	}
 }
 
