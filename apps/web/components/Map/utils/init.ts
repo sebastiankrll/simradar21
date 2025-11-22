@@ -1,8 +1,10 @@
 import { Map as OlMap, View } from "ol";
 import { fromLonLat, transformExtent } from "ol/proj";
 import { initBaseLayer } from "./baseLayer";
-import { initAirportFeatures, initDataLayers } from "./dataLayers";
+import { initDataLayers } from "./dataLayers";
 import { initSunLayer } from "./sunLayer";
+
+let map: OlMap | null = null;
 
 export function initMap(): OlMap {
 	const savedView = localStorage.getItem("mapView");
@@ -29,7 +31,7 @@ export function initMap(): OlMap {
 	const sunLayer = initSunLayer();
 	const dataLayers = initDataLayers();
 
-	const map = new OlMap({
+	map = new OlMap({
 		target: "map",
 		layers: [baseLayer, sunLayer, ...dataLayers],
 		view: new View({
@@ -42,7 +44,9 @@ export function initMap(): OlMap {
 		controls: [],
 	});
 
-	initAirportFeatures(map);
-
 	return map;
+}
+
+export function getMapView(): View | null {
+	return map?.getView() || null;
 }

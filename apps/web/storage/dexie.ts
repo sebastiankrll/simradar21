@@ -34,11 +34,7 @@ db.version(1).stores({
 	airlines: "id",
 });
 
-export async function dxInitLocalDatabase(): Promise<void> {
-	checkForNewVersions();
-}
-
-async function checkForNewVersions(): Promise<void> {
+export async function dxInitDatabases(): Promise<void> {
 	const response = await fetch(`http://localhost:5000/api/static/versions`);
 	const serverVersions: StaticVersions = await response.json();
 	const localVersions: StaticVersions = JSON.parse(

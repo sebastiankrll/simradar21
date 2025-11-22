@@ -1,21 +1,34 @@
 import type { PilotShort } from "@sk/types/vatsim";
-import type { Map as OlMap } from "ol";
-import Feature, { type FeatureLike } from "ol/Feature";
+import Feature from "ol/Feature";
 import { Point } from "ol/geom";
 import VectorLayer from "ol/layer/Vector";
 import WebGLVectorLayer from "ol/layer/WebGLVector";
 import { fromLonLat, transformExtent } from "ol/proj";
 import VectorSource from "ol/source/Vector";
-import Fill from "ol/style/Fill";
-import Style, { type StyleLike } from "ol/style/Style";
-import Text from "ol/style/Text";
 import RBush from "rbush";
 import { dxGetAllAirports } from "@/storage/dexie";
 import type { AirportProperties, PilotProperties } from "@/types/ol";
 import { webglConfig } from "../lib/webglConfig";
+import type { Extent } from "ol/extent";
 
-const airportMainSource = new VectorSource();
-const pilotMainSource = new VectorSource();
+interface RBushPilotFeature {
+	minX: number;
+	minY: number;
+	maxX: number;
+	maxY: number;
+	feature: Feature<Point>;
+}
+
+interface RBushAirportFeature extends RBushPilotFeature {
+	size: string;
+}
+
+const airportMainSource = new VectorSource({
+	useSpatialIndex: false,
+});
+const pilotMainSource = new VectorSource({
+	useSpatialIndex: false,
+});
 
 export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
 	const firSource = new VectorSource();
@@ -98,7 +111,6 @@ export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
 	const firLabelSource = new VectorSource();
 	const firLabelLayer = new VectorLayer({
 		source: firLabelSource,
-		style: getFirLabelLayerStyle as StyleLike | undefined,
 		properties: {
 			type: "fir_label",
 		},
@@ -118,44 +130,9 @@ export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
 	];
 }
 
-function getFirLabelLayerStyle(
-	feature: FeatureLike,
-	resolution: number,
-): StyleLike | undefined {
-	let maxResolution = 4000;
+const airportRBush = new RBush<RBushAirportFeature>();
 
-	if (feature.get("type") === "tracon") {
-		maxResolution = 3000;
-	}
-	if (resolution >= maxResolution) return;
-
-	return new Style({
-		text: new Text({
-			text: feature.get("desc"),
-			font: "600 12px Manrope, sans-serif",
-			fill: new Fill({ color: "white" }),
-			backgroundFill:
-				feature.get("hover") === 0
-					? new Fill({ color: "rgb(77, 95, 131)" })
-					: new Fill({ color: "rgb(234, 89, 121)" }),
-			padding: [4, 3, 2, 5],
-			textAlign: "center",
-		}),
-	});
-}
-
-interface RBushAirportFeature {
-	minX: number;
-	minY: number;
-	maxX: number;
-	maxY: number;
-	size: string;
-	feature: Feature<Point>;
-}
-
-const rbush = new RBush<RBushAirportFeature>();
-
-export async function initAirportFeatures(map: OlMap) {
+export async function initAirportFeatures(): Promise<void> {
 	const airports = await dxGetAllAirports();
 
 	const items: RBushAirportFeature[] = airports.map((a) => {
@@ -179,84 +156,125 @@ export async function initAirportFeatures(map: OlMap) {
 			feature: feature,
 		};
 	});
-	rbush.load(items);
-	setAirportFeatures(map);
+	airportRBush.load(items);
 }
 
-export function setAirportFeatures(map: OlMap): void {
-	const resolution = map.getView().getResolution();
-	const visibleSizes = getVisibleSizes(resolution);
+const pilotRBush = new RBush<RBushPilotFeature>();
+
+export function initPilotFeatures(pilots: PilotShort[]): void {
+	const items: RBushPilotFeature[] = pilots.map((p) => {
+		const feature = new Feature({
+			geometry: new Point(fromLonLat([p.longitude, p.latitude])),
+		});
+		const props: PilotProperties = {
+			...p,
+			clicked: false,
+			hovered: false,
+			type: "pilot",
+		};
+		feature.setProperties(props);
+
+		return {
+			minX: p.longitude,
+			minY: p.latitude,
+			maxX: p.longitude,
+			maxY: p.latitude,
+			feature: feature,
+		};
+	});
+	pilotRBush.clear();
+	pilotRBush.load(items);
+}
+
+export function setFeatures(extent: Extent, zoom: number): void {
+	setAirportFeatures(extent, zoom);
+	setPilotFeatures(extent);
+}
+
+function setAirportFeatures(extent: Extent, zoom: number): void {
+	const visibleSizes = getVisibleSizes(zoom);
 	if (visibleSizes.length === 0) {
 		airportMainSource.clear();
 		return;
 	}
 
 	const [minX, minY, maxX, maxY] = transformExtent(
-		map.getView().calculateExtent(map.getSize()),
+		extent,
 		"EPSG:3857",
 		"EPSG:4326",
 	);
-	const featuresByExtent = rbush.search({ minX, minY, maxX, maxY });
-	const featuresBySize = featuresByExtent.filter((f) =>
+	const airportsByExtent = airportRBush.search({ minX, minY, maxX, maxY });
+	const airportsBySize = airportsByExtent.filter((f) =>
 		visibleSizes.includes(f.size),
 	);
 
 	airportMainSource.clear();
-	airportMainSource.addFeatures(featuresBySize.map((f) => f.feature));
+	airportMainSource.addFeatures(airportsBySize.map((f) => f.feature));
 }
 
-function getVisibleSizes(resolution: number | undefined): string[] {
-	if (!resolution) return ["large_airport"];
-	if (resolution < 500)
+function getVisibleSizes(zoom: number): string[] {
+	if (zoom > 8)
 		return ["heliport", "small_airport", "medium_airport", "large_airport"];
-	if (resolution < 1500) return ["medium_airport", "large_airport"];
-	if (resolution < 10000) return ["large_airport"];
+	if (zoom > 7) return ["medium_airport", "large_airport"];
+	if (zoom > 4.5) return ["large_airport"];
 	return [];
 }
 
-const pilotFeatureMap = new Map<string, Feature<Point>>();
+function setPilotFeatures(extent: Extent): void {
+	const [minX, minY, maxX, maxY] = transformExtent(
+		extent,
+		"EPSG:3857",
+		"EPSG:4326",
+	);
+	const featuresByExtent = pilotRBush.search({ minX, minY, maxX, maxY });
 
-export function setPilotFeatures(pilotsShort: PilotShort[]): void {
-	const newCallsigns = new Set(pilotsShort.map((p) => p.callsign));
-
-	pilotFeatureMap.forEach((feature, callsign) => {
-		if (!newCallsigns.has(callsign)) {
-			pilotMainSource.removeFeature(feature);
-			pilotFeatureMap.delete(callsign);
-		}
-	});
-
-	pilotsShort.forEach((p) => {
-		const feature = pilotFeatureMap.get(p.callsign);
-		const coords = fromLonLat([p.longitude, p.latitude]);
-
-		const props: PilotProperties = {
-			callsign: p.callsign,
-			type: "pilot",
-			aircraft: p.aircraft,
-			heading: (p.heading / 180) * Math.PI,
-			altitude_agl: p.altitude_agl,
-			altitude_ms: p.altitude_ms,
-			vertical_speed: p.vertical_speed,
-			groundspeed: p.groundspeed,
-			frequency: p.frequency,
-			transponder: p.transponder,
-			clicked: feature?.get("clicked") || false,
-			hovered: feature?.get("hovered") || false,
-		};
-
-		if (feature) {
-			const geom = feature.getGeometry();
-			geom?.setCoordinates(coords);
-			feature.setProperties(props);
-		} else {
-			const newFeature = new Feature({
-				geometry: new Point(coords),
-			});
-			newFeature.setProperties(props);
-
-			pilotMainSource.addFeature(newFeature);
-			pilotFeatureMap.set(p.callsign, newFeature);
-		}
-	});
+	pilotMainSource.clear();
+	pilotMainSource.addFeatures(featuresByExtent.map((f) => f.feature));
 }
+
+// const pilotFeatureMap = new Map<string, Feature<Point>>();
+
+// export function setPilotFeatures(pilotsShort: PilotShort[]): void {
+// 	const newCallsigns = new Set(pilotsShort.map((p) => p.callsign));
+
+// 	pilotFeatureMap.forEach((feature, callsign) => {
+// 		if (!newCallsigns.has(callsign)) {
+// 			pilotMainSource.removeFeature(feature);
+// 			pilotFeatureMap.delete(callsign);
+// 		}
+// 	});
+
+// 	pilotsShort.forEach((p) => {
+// 		const feature = pilotFeatureMap.get(p.callsign);
+// 		const coords = fromLonLat([p.longitude, p.latitude]);
+
+// 		const props: PilotProperties = {
+// 			callsign: p.callsign,
+// 			type: "pilot",
+// 			aircraft: p.aircraft,
+// 			heading: (p.heading / 180) * Math.PI,
+// 			altitude_agl: p.altitude_agl,
+// 			altitude_ms: p.altitude_ms,
+// 			vertical_speed: p.vertical_speed,
+// 			groundspeed: p.groundspeed,
+// 			frequency: p.frequency,
+// 			transponder: p.transponder,
+// 			clicked: feature?.get("clicked") || false,
+// 			hovered: feature?.get("hovered") || false,
+// 		};
+
+// 		if (feature) {
+// 			const geom = feature.getGeometry();
+// 			geom?.setCoordinates(coords);
+// 			feature.setProperties(props);
+// 		} else {
+// 			const newFeature = new Feature({
+// 				geometry: new Point(coords),
+// 			});
+// 			newFeature.setProperties(props);
+
+// 			pilotMainSource.addFeature(newFeature);
+// 			pilotFeatureMap.set(p.callsign, newFeature);
+// 		}
+// 	});
+// }

@@ -5,19 +5,17 @@ import { toLonLat } from "ol/proj";
 import { createRoot, type Root } from "react-dom/client";
 import { dxGetAirline } from "@/storage/dexie";
 import { AirportOverlay, PilotOverlay } from "../components/Overlay/Overlays";
-import { setAirportFeatures } from "./dataLayers";
+import { setFeatures } from "./dataLayers";
 
 export function onMoveEnd(evt: { map: OlMap }): void {
 	const map = evt.map;
 	const view: View = map.getView();
-	if (!view) return;
-
+	const extent = view.calculateExtent();
 	const center = toLonLat(view.getCenter() || [0, 0]);
 	const zoom = view.getZoom() || 2;
 
+	setFeatures(extent, zoom);
 	localStorage.setItem("mapView", JSON.stringify({ center, zoom }));
-
-	setAirportFeatures(map);
 }
 
 let clickedFeature: Feature<Point> | null = null;
