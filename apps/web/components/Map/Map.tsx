@@ -19,9 +19,7 @@ async function init() {
 init();
 
 wsClient.addListener((msg) => {
-    console.time('initPilotFeatures');
 	initPilotFeatures(msg.pilots);
-    console.timeEnd('initPilotFeatures');
 });
 
 export default function OMap() {

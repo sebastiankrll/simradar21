@@ -146,6 +146,7 @@ export async function initAirportFeatures(): Promise<void> {
 			type: "airport",
 		};
 		feature.setProperties(props);
+		feature.setId(`airport_${a.id}`);
 
 		return {
 			minX: a.longitude,
@@ -160,30 +161,50 @@ export async function initAirportFeatures(): Promise<void> {
 }
 
 const pilotRBush = new RBush<RBushPilotFeature>();
+const pilotFeaturesMap = new Map<string, RBushPilotFeature>();
 
 export function initPilotFeatures(pilots: PilotShort[]): void {
-	const items: RBushPilotFeature[] = pilots.map((p) => {
-		const feature = new Feature({
-			geometry: new Point(fromLonLat([p.longitude, p.latitude])),
-		});
+	for (const p of pilots) {
+		const item = pilotFeaturesMap.get(p.callsign);
 		const props: PilotProperties = {
-			...p,
-			clicked: false,
-			hovered: false,
 			type: "pilot",
+			clicked: item?.feature.get("clicked") || false,
+			hovered: item?.feature.get("hovered") || false,
+			...p,
 		};
+
+		if (!item) {
+			// New pilot --> insert as new feature
+			const feature = new Feature({
+				geometry: new Point(fromLonLat([p.longitude, p.latitude])),
+			});
+			feature.setProperties(props);
+			feature.setId(`pilot_${p.callsign}`);
+
+			const newItem: RBushPilotFeature = {
+				minX: p.longitude,
+				minY: p.latitude,
+				maxX: p.longitude,
+				maxY: p.latitude,
+				feature,
+			};
+
+			pilotFeaturesMap.set(p.callsign, newItem);
+			pilotRBush.insert(newItem);
+			continue;
+		}
+
+		// Update
+		const feature = item.feature;
+		const geom = feature.getGeometry() as Point;
+		geom.setCoordinates(fromLonLat([p.longitude, p.latitude]));
 		feature.setProperties(props);
 
-		return {
-			minX: p.longitude,
-			minY: p.latitude,
-			maxX: p.longitude,
-			maxY: p.latitude,
-			feature: feature,
-		};
-	});
-	pilotRBush.clear();
-	pilotRBush.load(items);
+		pilotRBush.remove(item);
+		item.minX = item.maxX = p.longitude;
+		item.minY = item.maxY = p.latitude;
+		pilotRBush.insert(item);
+	}
 }
 
 export function setFeatures(extent: Extent, zoom: number): void {
@@ -226,55 +247,15 @@ function setPilotFeatures(extent: Extent): void {
 		"EPSG:3857",
 		"EPSG:4326",
 	);
-	const featuresByExtent = pilotRBush.search({ minX, minY, maxX, maxY });
+	const pilotsByExtent = pilotRBush.search({ minX, minY, maxX, maxY });
+	const pilotsByAltitude = pilotsByExtent
+		.sort(
+			(a, b) =>
+				(b.feature.get("altitude_agl") || 0) -
+				(a.feature.get("altitude_agl") || 0),
+		)
+		.slice(0, 300);
 
 	pilotMainSource.clear();
-	pilotMainSource.addFeatures(featuresByExtent.map((f) => f.feature));
+	pilotMainSource.addFeatures(pilotsByAltitude.map((f) => f.feature));
 }
-
-// const pilotFeatureMap = new Map<string, Feature<Point>>();
-
-// export function setPilotFeatures(pilotsShort: PilotShort[]): void {
-// 	const newCallsigns = new Set(pilotsShort.map((p) => p.callsign));
-
-// 	pilotFeatureMap.forEach((feature, callsign) => {
-// 		if (!newCallsigns.has(callsign)) {
-// 			pilotMainSource.removeFeature(feature);
-// 			pilotFeatureMap.delete(callsign);
-// 		}
-// 	});
-
-// 	pilotsShort.forEach((p) => {
-// 		const feature = pilotFeatureMap.get(p.callsign);
-// 		const coords = fromLonLat([p.longitude, p.latitude]);
-
-// 		const props: PilotProperties = {
-// 			callsign: p.callsign,
-// 			type: "pilot",
-// 			aircraft: p.aircraft,
-// 			heading: (p.heading / 180) * Math.PI,
-// 			altitude_agl: p.altitude_agl,
-// 			altitude_ms: p.altitude_ms,
-// 			vertical_speed: p.vertical_speed,
-// 			groundspeed: p.groundspeed,
-// 			frequency: p.frequency,
-// 			transponder: p.transponder,
-// 			clicked: feature?.get("clicked") || false,
-// 			hovered: feature?.get("hovered") || false,
-// 		};
-
-// 		if (feature) {
-// 			const geom = feature.getGeometry();
-// 			geom?.setCoordinates(coords);
-// 			feature.setProperties(props);
-// 		} else {
-// 			const newFeature = new Feature({
-// 				geometry: new Point(coords),
-// 			});
-// 			newFeature.setProperties(props);
-
-// 			pilotMainSource.addFeature(newFeature);
-// 			pilotFeatureMap.set(p.callsign, newFeature);
-// 		}
-// 	});
-// }

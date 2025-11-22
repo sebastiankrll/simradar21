@@ -302,7 +302,7 @@ export const webglConfig = {
 			["interpolate", ["exponential", 2], ["zoom"], 16.5, 1, 18, 2 ** 1.5],
 			["interpolate", ["exponential", 2], ["zoom"], 16.5, 1, 18, 2 ** 1.5],
 		],
-		"icon-rotation": ["get", "heading"],
+		"icon-rotation": ["*", ["/", ["get", "heading"], 180], Math.PI],
 	},
 	pilot_shadow: {
 		variables: {
@@ -473,12 +473,12 @@ export const webglConfig = {
 					["linear"],
 					["get", "altitude_agl"],
 					3000,
-					["*", ["sqrt", 2], ["cos", ["-", ["get", "heading"], Math.PI / 4]]],
+					["*", ["sqrt", 2], ["cos", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]]],
 					45000,
 					[
 						"*",
 						4,
-						["*", ["sqrt", 2], ["cos", ["-", ["get", "heading"], Math.PI / 4]]],
+						["*", ["sqrt", 2], ["cos", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]]],
 					],
 				],
 				18,
@@ -489,7 +489,7 @@ export const webglConfig = {
 						["linear"],
 						["get", "altitude_agl"],
 						3000,
-						["*", ["sqrt", 2], ["cos", ["-", ["get", "heading"], Math.PI / 4]]],
+						["*", ["sqrt", 2], ["cos", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]]],
 						45000,
 						[
 							"*",
@@ -497,7 +497,7 @@ export const webglConfig = {
 							[
 								"*",
 								["sqrt", 2],
-								["cos", ["-", ["get", "heading"], Math.PI / 4]],
+								["cos", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]],
 							],
 						],
 					],
@@ -514,12 +514,12 @@ export const webglConfig = {
 					["linear"],
 					["get", "altitude_agl"],
 					3000,
-					["*", ["sqrt", 2], ["sin", ["-", ["get", "heading"], Math.PI / 4]]],
+					["*", ["sqrt", 2], ["sin", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]]],
 					45000,
 					[
 						"*",
 						4,
-						["*", ["sqrt", 2], ["sin", ["-", ["get", "heading"], Math.PI / 4]]],
+						["*", ["sqrt", 2], ["sin", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]]],
 					],
 				],
 				18,
@@ -530,7 +530,7 @@ export const webglConfig = {
 						["linear"],
 						["get", "altitude_agl"],
 						3000,
-						["*", ["sqrt", 2], ["sin", ["-", ["get", "heading"], Math.PI / 4]]],
+						["*", ["sqrt", 2], ["sin", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]]],
 						45000,
 						[
 							"*",
@@ -538,7 +538,7 @@ export const webglConfig = {
 							[
 								"*",
 								["sqrt", 2],
-								["sin", ["-", ["get", "heading"], Math.PI / 4]],
+								["sin", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]],
 							],
 						],
 					],
@@ -546,7 +546,7 @@ export const webglConfig = {
 				],
 			],
 		],
-		"icon-rotation": ["get", "heading"],
+		"icon-rotation": ["*", ["/", ["get", "heading"], 180], Math.PI],
 	},
 	airport_main: {
 		variables: {

@@ -95,6 +95,7 @@ export async function onClick(evt: {
 
 	feature?.set("clicked", true);
 	clickedFeature = feature || null;
+    console.log(feature)
 }
 
 async function createOverlay(feature: Feature<Point>): Promise<Overlay> {
