@@ -230,30 +230,29 @@ export function setPilotFeatures(pilotsShort: PilotShort[]): void {
 		const feature = pilotFeatureMap.get(p.callsign);
 		const coords = fromLonLat([p.longitude, p.latitude]);
 
+		const props: PilotProperties = {
+			callsign: p.callsign,
+			type: "pilot",
+			aircraft: p.aircraft,
+			heading: (p.heading / 180) * Math.PI,
+			altitude_agl: p.altitude_agl,
+			altitude_ms: p.altitude_ms,
+			vertical_speed: p.vertical_speed,
+			groundspeed: p.groundspeed,
+			frequency: p.frequency,
+			transponder: p.transponder,
+			clicked: feature?.get("clicked") || false,
+			hovered: feature?.get("hovered") || false,
+		};
+
 		if (feature) {
 			const geom = feature.getGeometry();
 			geom?.setCoordinates(coords);
-
-			feature.set("heading", (p.heading / 180) * Math.PI);
-			feature.set("altitude_agl", p.altitude_ms);
+			feature.setProperties(props);
 		} else {
 			const newFeature = new Feature({
 				geometry: new Point(coords),
 			});
-			const props: PilotProperties = {
-				callsign: p.callsign,
-				type: "pilot",
-				aircraft: p.aircraft,
-				heading: (p.heading / 180) * Math.PI,
-				altitude_agl: p.altitude_agl,
-				altitude_ms: p.altitude_ms,
-				vertical_speed: p.vertical_speed,
-				groundspeed: p.groundspeed,
-				frequency: p.frequency,
-				transponder: p.transponder,
-				clicked: false,
-				hovered: false,
-			};
 			newFeature.setProperties(props);
 
 			pilotMainSource.addFeature(newFeature);
