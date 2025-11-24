@@ -1,11 +1,22 @@
 import type { AirportShort, ControllerMerged, WsAll, WsDelta } from "@sk/types/vatsim";
-import { initAirportFeatures, initControllerFeatures, initPilotFeatures, setFeatures, updateControllerFeatures, updatePilotFeatures } from "@/components/Map/utils/dataLayers";
-import { dxInitDatabases } from "./dexie";
+import {
+	initAirportFeatures,
+	initControllerFeatures,
+	initPilotFeatures,
+	setFeatures,
+	updateControllerFeatures,
+	updatePilotFeatures,
+} from "@/components/Map/utils/dataLayers";
+import { dxGetAirline, dxGetAirport, dxInitDatabases } from "./dexie";
 import { wsClient } from "@/utils/ws";
 import { getMapView } from "@/components/Map/utils/init";
+import { updateOverlays } from "@/components/Map/utils/events";
+import type { StaticAirline, StaticAirport } from "@sk/types/db";
 
 let airportsShort: AirportShort[] = [];
 let controllersMerged: ControllerMerged[] = [];
+const cachedAirports: Map<string, StaticAirport> = new Map();
+const cachedAirlines: Map<string, StaticAirline> = new Map();
 
 export async function initData(): Promise<void> {
 	await dxInitDatabases();
@@ -29,17 +40,41 @@ export async function initData(): Promise<void> {
 
 export async function updateCache(delta: WsDelta): Promise<void> {
 	updatePilotFeatures(delta.pilots);
-    updateControllerFeatures(delta.controllers);
-	// airportsShort = delta.airports;
-	// controllersShort = wsShort.controllers;
-	// tracons = await extractTracons(controllersShort);
-	// updateOverlays();
+	updateControllerFeatures(delta.controllers);
+	airportsShort = [...delta.airports.added, ...delta.airports.updated];
+	controllersMerged = [...delta.controllers.added, ...delta.controllers.updated];
+	updateOverlays();
 }
 
-export function getCachedAirport(id: string): AirportShort | null {
+export function getAirportShort(id: string): AirportShort | null {
 	return airportsShort.find((a) => a.icao === id) || null;
 }
 
-export function getCachedController(id: string): ControllerMerged | null {
+export function getControllerShort(id: string): ControllerMerged | null {
 	return controllersMerged.find((c) => c.id === id) || null;
+}
+
+export async function getCachedAirport(id: string): Promise<StaticAirport | null> {
+    console.log(id)
+	const cached = cachedAirports.get(id);
+	if (cached) return cached;
+
+	const airport = await dxGetAirport(id);
+	if (airport) {
+		cachedAirports.set(id, airport);
+	}
+
+	return airport || null;
+}
+
+export async function getCachedAirline(id: string): Promise<StaticAirline | null> {
+	const cached = cachedAirlines.get(id);
+	if (cached) return cached;
+
+	const airline = await dxGetAirline(id);
+	if (airline) {
+		cachedAirlines.set(id, airline);
+	}
+
+	return airline || null;
 }

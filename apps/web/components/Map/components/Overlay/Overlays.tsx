@@ -1,9 +1,9 @@
 import type { Feature } from "ol";
 import "./Overlays.css";
-import type { StaticAirline } from "@sk/types/db";
+import type { StaticAirline, StaticAirport } from "@sk/types/db";
 import type { AirportShort } from "@sk/types/vatsim";
 import type { Point } from "ol/geom";
-import type { AirportProperties, PilotProperties } from "@/types/ol";
+import type { PilotProperties } from "@/types/ol";
 
 export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; airline: StaticAirline | null }) {
 	const data = feature.getProperties() as PilotProperties;
@@ -42,7 +42,7 @@ export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; ai
 				<div className="popup-content-main flight">
 					<div className="popup-content-header">{data.callsign}</div>
 					<div className="popup-content-box ac">{data.aircraft}</div>
-					<p>{`${data.departure || "N/A"} -- ${data.arrival || "N/A"}`}</p>
+					<p>{data.route}</p>
 					<div className="popup-content-box ac-fr">{(data.frequency / 1000).toFixed(3)}</div>
 				</div>
 			</div>
@@ -50,15 +50,13 @@ export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; ai
 	);
 }
 
-export function AirportOverlay({ feature, airport }: { feature: Feature<Point>; airport: AirportShort | null }) {
-	const data = feature.getProperties() as AirportProperties;
-
+export function AirportOverlay({ cached, short }: { cached: StaticAirport | null; short: AirportShort | null }) {
 	return (
 		<div className="popup popup-tip">
 			<div className="popup-content airport">
 				<div className="popup-content-main">
-					<div className="popup-content-header">{data.name}</div>
-					<p>{data.id}</p>
+					<div className="popup-content-header">{cached?.name || "N/A"}</div>
+					<p>{cached?.id || "N/A"}</p>
 				</div>
 				<div className="popup-airport-info">
 					<div className="popup-airport-info-icon">
@@ -71,7 +69,7 @@ export function AirportOverlay({ feature, airport }: { feature: Feature<Point>; 
 							></path>
 						</svg>
 					</div>
-					<div className="popup-airport-info-n">{airport?.dep_traffic.traffic_count || 0}</div>
+					<div className="popup-airport-info-n">{short?.dep_traffic.traffic_count || 0}</div>
 					<div className="popup-airport-info-icon">
 						<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 							<title>Airport Logo</title>
@@ -82,7 +80,7 @@ export function AirportOverlay({ feature, airport }: { feature: Feature<Point>; 
 							></path>
 						</svg>
 					</div>
-					<div className="popup-airport-info-n">{airport?.arr_traffic.traffic_count || 0}</div>
+					<div className="popup-airport-info-n">{short?.arr_traffic.traffic_count || 0}</div>
 				</div>
 			</div>
 			<div className="popup-content-anchor"></div>

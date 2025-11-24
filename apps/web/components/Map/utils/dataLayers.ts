@@ -137,7 +137,6 @@ export async function initAirportFeatures(): Promise<void> {
 			geometry: new Point(fromLonLat([a.longitude, a.latitude])),
 		});
 		const props: AirportProperties = {
-			...a,
 			clicked: false,
 			hovered: false,
 			type: "airport",

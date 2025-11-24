@@ -3,10 +3,10 @@ import type { Point } from "ol/geom";
 import type { Pixel } from "ol/pixel";
 import { toLonLat } from "ol/proj";
 import { createRoot, type Root } from "react-dom/client";
-import { getCachedAirport } from "@/storage/cache";
-import { dxGetAirline } from "@/storage/dexie";
 import { AirportOverlay, PilotOverlay } from "../components/Overlay/Overlays";
 import { setFeatures } from "./dataLayers";
+import { getAirportShort, getCachedAirline, getCachedAirport } from "@/storage/cache";
+import { get } from "http";
 
 export function onMoveEnd(evt: { map: OlMap }): void {
 	const map = evt.map;
@@ -97,16 +97,23 @@ async function createOverlay(feature: Feature<Point>): Promise<Overlay> {
 
 	if (type === "pilot") {
 		id = feature.get("callsign") as string;
+
 		const icao = id.substring(0, 3);
-		const airline = await dxGetAirline(icao);
+		const airline = await getCachedAirline(icao);
 
 		root.render(<PilotOverlay feature={feature} airline={airline} />);
 	}
 
 	if (type === "airport") {
-		id = feature.get("id") as string;
-		const airport = getCachedAirport(id);
-		root.render(<AirportOverlay feature={feature} airport={airport} />);
+		id =
+			feature
+				.getId()
+				?.toString()
+				.replace(/^airport_/, "") || "";
+
+		const cachedAirport = await getCachedAirport(id);
+		const shortAirport = getAirportShort(id);
+		root.render(<AirportOverlay cached={cachedAirport} short={shortAirport} />);
 	}
 
 	const overlay = new Overlay({
@@ -146,14 +153,20 @@ async function updateOverlay(feature: Feature<Point>, overlay: Overlay): Promise
 	if (type === "pilot") {
 		id = feature.get("callsign") as string;
 		const icao = id.substring(0, 3);
-		const airline = await dxGetAirline(icao);
+		const airline = await getCachedAirline(icao);
 
 		root.render(<PilotOverlay feature={feature} airline={airline} />);
 	}
 
 	if (type === "airport") {
-		id = feature.get("id") as string;
-		const airport = getCachedAirport(id);
-		root.render(<AirportOverlay feature={feature} airport={airport} />);
+		id =
+			feature
+				.getId()
+				?.toString()
+				.replace(/^airport_/, "") || "";
+
+		const cachedAirport = await getCachedAirport(id);
+		const shortAirport = getAirportShort(id);
+		root.render(<AirportOverlay cached={cachedAirport} short={shortAirport} />);
 	}
 }
