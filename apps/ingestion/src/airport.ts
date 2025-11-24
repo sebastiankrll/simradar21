@@ -1,4 +1,9 @@
-import type { AirportLong, PilotLong } from "@sk/types/vatsim";
+import type { AirportDelta, AirportLong, AirportShort, PilotLong } from "@sk/types/vatsim";
+
+let cached: AirportLong[] = [];
+let deleted: string[] = [];
+let updated: AirportShort[] = [];
+let added: AirportShort[] = [];
 
 export function mapAirports(pilotsLong: PilotLong[]): AirportLong[] {
 	const airportRecord: Record<string, AirportLong> = {};
@@ -69,9 +74,34 @@ export function mapAirports(pilotsLong: PilotLong[]): AirportLong[] {
 	}
 
 	const airportsLong = Object.values(airportRecord);
+
+	const deletedLong = cached.filter((a) => !airportsLong.some((b) => b.icao === a.icao));
+	const addedLong = airportsLong.filter((a) => !cached.some((b) => b.icao === a.icao));
+	const updatedLong = airportsLong.filter((a) => cached.some((b) => b.icao === a.icao));
+
+	deleted = deletedLong.map((a) => a.icao);
+	added = addedLong.map(getAirportShort);
+	updated = updatedLong.map(getAirportShort);
 	// console.log(airportsLong[0])
 
+	cached = airportsLong;
 	return airportsLong;
+}
+
+export function getAirportShort(a: AirportLong): AirportShort {
+	return {
+		icao: a.icao,
+		dep_traffic: a.dep_traffic,
+		arr_traffic: a.arr_traffic,
+	};
+}
+
+export function getAirportDelta(): AirportDelta {
+	return {
+		deleted,
+		added,
+		updated,
+	};
 }
 
 function initAirportRecord(icao: string): AirportLong {

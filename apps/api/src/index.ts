@@ -1,8 +1,8 @@
 import "dotenv/config";
-import { pgGetTrackPointsByUid } from "@sk/db/pg";
 import { rdsGetSingle } from "@sk/db/redis";
 import cors from "cors";
 import express from "express";
+import { pgGetTrackPointsByid } from "@sk/db/pg";
 
 const app = express();
 app.use(cors());
@@ -38,6 +38,18 @@ app.get("/api/static/:type", async (req, res) => {
 		if (!data) return res.status(404).json({ error: "Static data not found" });
 
 		res.json(data);
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ error: "Internal server error" });
+	}
+});
+
+app.get("/api/data/init", async (_req, res) => {
+	try {
+		const all = await rdsGetSingle("ws:all");
+		if (!all) return res.status(404).json({ error: "Initial data not found" });
+
+		res.json(all);
 	} catch (err) {
 		console.error(err);
 		res.status(500).json({ error: "Internal server error" });
@@ -89,12 +101,12 @@ app.get("/api/data/controller/:callsign", async (req, res) => {
 	}
 });
 
-app.get("/api/data/track/:uid", async (req, res) => {
+app.get("/api/data/track/:id", async (req, res) => {
 	try {
-		const { uid } = req.params;
-		console.log("Requested track:", uid);
+		const { id } = req.params;
+		console.log("Requested track:", id);
 
-		const trackPoints = await pgGetTrackPointsByUid(uid);
+		const trackPoints = await pgGetTrackPointsByid(id);
 
 		res.json(trackPoints);
 	} catch (err) {

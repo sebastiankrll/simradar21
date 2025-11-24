@@ -1,16 +1,21 @@
-import type { ControllerLong, PilotLong, VatsimData } from "@sk/types/vatsim";
-import { haversineDistance } from "./utils/index.js";
+import type { ControllerDelta, ControllerLong, ControllerMerged, ControllerShort, PilotLong, VatsimData } from "@sk/types/vatsim";
+import { haversineDistance } from "./utils/helpers.js";
+import { rdsGetSingle } from "@sk/db/redis";
+import type { FIRFeature, SimAwareTraconFeature } from "@sk/types/db";
 
-export function mapControllers(vatsimData: VatsimData, pilotsLong: PilotLong[]): ControllerLong[] {
+let cachedMerged: ControllerMerged[] = [];
+let deleted: string[] = [];
+let updated: ControllerMerged[] = [];
+let added: ControllerMerged[] = [];
+
+export async function mapControllers(vatsimData: VatsimData, pilotsLong: PilotLong[]): Promise<[ControllerLong[], ControllerMerged[]]> {
 	const controllersLong: ControllerLong[] = vatsimData.controllers.map((controller) => {
 		return {
-			// v ControllerShort v
 			callsign: controller.callsign,
 			frequency: parseFrequencyToKHz(controller.frequency),
 			facility: controller.facility,
 			atis: controller.text_atis,
 			connections: 0,
-			// v ControllerLong v
 			cid: controller.cid,
 			name: controller.name,
 			rating: controller.rating,
@@ -22,9 +27,24 @@ export function mapControllers(vatsimData: VatsimData, pilotsLong: PilotLong[]):
 	});
 
 	getConnectionsCount(vatsimData, controllersLong, pilotsLong);
-	// console.log(controllersLong[0])
 
-	return controllersLong;
+	const merged = await mergeControllers(controllersLong);
+
+	const deletedMerged = cachedMerged.filter((a) => !merged.some((b) => b.id === a.id));
+	deleted = deletedMerged.map((c) => c.id);
+	added = merged.filter((a) => !cachedMerged.some((b) => b.id === a.id));
+	updated = merged.filter((a) => cachedMerged.some((b) => b.id === a.id));
+
+	cachedMerged = merged;
+	return [controllersLong, merged];
+}
+
+export function getControllerDelta(): ControllerDelta {
+	return {
+		deleted,
+		added,
+		updated,
+	};
 }
 
 // "122.800" ==> 122800
@@ -81,6 +101,104 @@ function getConnectionsCount(vatsimData: VatsimData, controllersLong: Controller
 
 				closestController.connections++;
 			}
+		}
+	}
+}
+
+const firPrefixes: Map<string, string> = new Map();
+const traconPrefixes: Map<string, string> = new Map();
+
+export async function mergeControllers(controllersLong: ControllerLong[]): Promise<ControllerMerged[]> {
+	await updateFeaturesFromRedis();
+
+	const merged = new Map<string, ControllerMerged>();
+
+	for (const c of controllersLong) {
+		let id: string | null = null;
+		let type: ControllerMerged["type"] | null = null;
+
+		const parts = c.callsign.split("_");
+		const prefix1 = parts[0];
+		const prefix2 = parts.length > 1 ? `${parts[0]}_${parts[1]}` : null;
+
+		if (c.facility === 6) {
+			id = firPrefixes.get(prefix1) || (prefix2 ? firPrefixes.get(prefix2) : null) || null;
+			type = "fir";
+		} else if (c.facility === 5) {
+			id = traconPrefixes.get(prefix1) || (prefix2 ? traconPrefixes.get(prefix2) : null) || null;
+			type = "tracon";
+		} else {
+			id = prefix1;
+			type = "airport";
+		}
+
+		if (!id) continue;
+
+		const controllerShort: ControllerShort = {
+			callsign: c.callsign,
+			frequency: c.frequency,
+			facility: c.facility,
+			atis: c.atis,
+			connections: c.connections,
+		};
+
+		const existing = merged.get(id);
+		if (existing) {
+			existing.controllers.push(controllerShort);
+		} else {
+			merged.set(id, {
+				id,
+				type,
+				controllers: [controllerShort],
+			});
+		}
+	}
+
+	return Array.from(merged.values());
+}
+
+let currentFirsVersion: string | null = null;
+let currentTraconsVersion: string | null = null;
+
+async function updateFeaturesFromRedis(): Promise<void> {
+	const firsVersion = await rdsGetSingle("static_firs:version");
+	const traconsVersion = await rdsGetSingle("static_tracons:version");
+
+	if (currentFirsVersion !== firsVersion) {
+		const features = (await rdsGetSingle("static_firs:all")) as FIRFeature[] | undefined;
+		if (features) {
+			firPrefixes.clear();
+			features.forEach((f) => {
+				const prefix = f.properties.callsign_prefix;
+				const id = f.properties.id;
+				if (prefix === "") {
+					firPrefixes.set(id, id);
+				} else {
+					firPrefixes.set(prefix, id);
+				}
+			});
+
+			currentFirsVersion = firsVersion;
+		}
+	}
+
+	if (currentTraconsVersion !== traconsVersion) {
+		const features = (await rdsGetSingle("static_tracons:all")) as SimAwareTraconFeature[] | undefined;
+		if (features) {
+			traconPrefixes.clear();
+			features.forEach((f) => {
+				const prefixes = f.properties.prefix;
+
+				if (typeof prefixes === "string") {
+					traconPrefixes.set(prefixes, f.properties.id);
+				} else {
+					prefixes.forEach((prefix) => {
+						traconPrefixes.set(prefix, f.properties.id);
+					});
+				}
+			});
+
+			currentTraconsVersion = traconsVersion;
 		}
 	}
 }

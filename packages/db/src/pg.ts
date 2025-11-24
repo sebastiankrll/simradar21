@@ -12,7 +12,7 @@ const pool = new Pool({
 async function pgInitTrackPointsTable() {
 	const createTableQuery = `
       CREATE TABLE IF NOT EXISTS track_points (
-        uid TEXT NOT NULL,
+        id TEXT NOT NULL,
         timestamp TIMESTAMPTZ NOT NULL,
         latitude DOUBLE PRECISION NOT NULL,
         longitude DOUBLE PRECISION NOT NULL,
@@ -21,7 +21,7 @@ async function pgInitTrackPointsTable() {
         groundspeed DOUBLE PRECISION,
         vertical_speed DOUBLE PRECISION,
         heading DOUBLE PRECISION,
-        PRIMARY KEY (uid, timestamp)
+        PRIMARY KEY (id, timestamp)
       );
     `;
 	await pool.query(`CREATE EXTENSION IF NOT EXISTS timescaledb;`);
@@ -50,13 +50,13 @@ export async function pgInsertTrackPoints(trackPoints: TrackPoint[]) {
 	trackPoints.forEach((tp, i) => {
 		const idx = i * 9;
 		placeholders.push(`($${idx + 1}, $${idx + 2}, $${idx + 3}, $${idx + 4}, $${idx + 5}, $${idx + 6}, $${idx + 7}, $${idx + 8}, $${idx + 9})`);
-		values.push(tp.uid, tp.latitude, tp.longitude, tp.altitude_agl, tp.altitude_ms, tp.groundspeed, tp.vertical_speed, tp.heading, tp.timestamp);
+		values.push(tp.id, tp.latitude, tp.longitude, tp.altitude_agl, tp.altitude_ms, tp.groundspeed, tp.vertical_speed, tp.heading, tp.timestamp);
 	});
 
 	const query = `
-    INSERT INTO track_points (uid, latitude, longitude, altitude_agl, altitude_ms, groundspeed, vertical_speed, heading, timestamp)
+    INSERT INTO track_points (id, latitude, longitude, altitude_agl, altitude_ms, groundspeed, vertical_speed, heading, timestamp)
     VALUES ${placeholders.join(", ")}
-    ON CONFLICT (uid, timestamp) DO NOTHING
+    ON CONFLICT (id, timestamp) DO NOTHING
   `;
 
 	try {
@@ -67,19 +67,19 @@ export async function pgInsertTrackPoints(trackPoints: TrackPoint[]) {
 	}
 }
 
-export async function pgGetTrackPointsByUid(uid: string): Promise<TrackPoint[]> {
-	const values: string[] = [uid];
+export async function pgGetTrackPointsByid(id: string): Promise<TrackPoint[]> {
+	const values: string[] = [id];
 	const query = `
-    SELECT uid, timestamp, latitude, longitude, altitude_agl, altitude_ms, groundspeed, vertical_speed, heading
+    SELECT id, timestamp, latitude, longitude, altitude_agl, altitude_ms, groundspeed, vertical_speed, heading
     FROM track_points
-    WHERE uid = $1
+    WHERE id = $1
     ORDER BY timestamp ASC
   `;
 
 	try {
 		const { rows } = await pool.query(query, values);
 		return rows.map((r: any) => ({
-			uid: r.uid,
+			id: r.id,
 			timestamp: r.timestamp,
 			latitude: r.latitude,
 			longitude: r.longitude,
@@ -90,7 +90,7 @@ export async function pgGetTrackPointsByUid(uid: string): Promise<TrackPoint[]> 
 			heading: r.heading,
 		}));
 	} catch (err) {
-		console.error(`Error fetching track points for ${uid}:`, err);
+		console.error(`Error fetching track points for ${id}:`, err);
 		return [];
 	}
 }

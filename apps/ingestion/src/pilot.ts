@@ -1,15 +1,22 @@
 import { rdsGetMultiple } from "@sk/db/redis";
 import type { StaticAirport } from "@sk/types/db";
-import type { PilotFlightPlan, PilotLong, PilotTimes, VatsimData, VatsimPilot, VatsimPilotFlightPlan } from "@sk/types/vatsim";
-import { haversineDistance } from "./utils/index.js";
+import type { PilotDelta, PilotFlightPlan, PilotLong, PilotShort, PilotTimes, VatsimData, VatsimPilot, VatsimPilotFlightPlan } from "@sk/types/vatsim";
+import { haversineDistance } from "./utils/helpers.js";
 
 const TAXI_TIME_MS = 5 * 60 * 1000;
-let cachedPilots: PilotLong[] = [];
+let cached: PilotLong[] = [];
+let deleted: string[] = [];
+let updated: PilotShort[] = [];
+let added: PilotShort[] = [];
 
 export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong[]> {
+	deleted = [];
+	updated = [];
+	added = [];
+
 	const pilotsLong: PilotLong[] = latestVatsimData.pilots.map((pilot) => {
-		const uid = `${pilot.cid}_${pilot.callsign}_${pilot.logon_time}`;
-		const cachedPilot = cachedPilots.find((c) => c.uid === uid);
+		const id = `${pilot.cid}_${pilot.callsign}_${pilot.logon_time}`;
+		const cachedPilot = cached.find((c) => c.id === id);
 
 		const transceiverData = latestVatsimData.transceivers.find((transceiver) => transceiver.callsign === pilot.callsign);
 		const transceiver = transceiverData?.transceivers[0];
@@ -37,7 +44,7 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 		} else {
 			// cache missed, re-create
 			pilotLong = {
-				uid: `${pilot.cid}_${pilot.callsign}_${pilot.logon_time}`,
+				id: id,
 				cid: pilot.cid,
 				callsign: pilot.callsign,
 				aircraft: pilot.flight_plan?.aircraft_short || "A320",
@@ -46,8 +53,7 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 				pilot_rating: pilot.pilot_rating,
 				military_rating: pilot.military_rating,
 				flight_plan: mapPilotFlightPlan(pilot.flight_plan),
-				departure: pilot.flight_plan?.departure || null,
-				arrival: pilot.flight_plan?.arrival || null,
+				route: `${pilot.flight_plan?.departure || "N/A"} -- ${pilot.flight_plan?.arrival || "N/A"}`,
 				logon_time: new Date(pilot.logon_time),
 				times: null,
 				...updatedFields,
@@ -80,9 +86,42 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 		}
 	}
 
-	cachedPilots = pilotsLong;
-	// console.log(pilotsLong[0])
+	const deletedLong = cached.filter((a) => !pilotsLong.some((b) => b.id === a.id));
+	const addedLong = pilotsLong.filter((a) => !cached.some((b) => b.id === a.id));
+	const updatedLong = pilotsLong.filter((a) => cached.some((b) => b.id === a.id));
+
+	deleted = deletedLong.map((p) => p.id);
+	added = addedLong.map(getPilotShort);
+	updated = updatedLong.map(getPilotShort);
+
+	cached = pilotsLong;
 	return pilotsLong;
+}
+
+export function getPilotDelta(): PilotDelta {
+	return {
+		deleted,
+		added,
+		updated,
+	};
+}
+
+export function getPilotShort(p: PilotLong): PilotShort {
+	return {
+		id: p.id,
+		latitude: p.latitude,
+		longitude: p.longitude,
+		altitude_agl: p.altitude_agl,
+		altitude_ms: p.altitude_ms,
+		groundspeed: p.groundspeed,
+		vertical_speed: p.vertical_speed,
+		heading: p.heading,
+		callsign: p.callsign,
+		aircraft: p.aircraft,
+		transponder: p.transponder,
+		frequency: p.frequency,
+		route: p.route,
+	};
 }
 
 function calculateVerticalSpeed(current: PilotLong, cache: PilotLong | undefined): number {

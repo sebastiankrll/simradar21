@@ -1,19 +1,38 @@
-import type { AirportShort, ControllerShort, WsShort } from "@sk/types/vatsim";
-import { updatePilotFeatures } from "@/components/Map/utils/dataLayers";
+import type { AirportShort, ControllerShort, WsAll, WsDelta } from "@sk/types/vatsim";
+import { initAirportFeatures, initPilotFeatures, setFeatures, updatePilotFeatures } from "@/components/Map/utils/dataLayers";
 import { updateOverlays } from "@/components/Map/utils/events";
 import type { ControllerWithFeature } from "@/types/ol";
-import { dxGetTracons } from "./dexie";
+import { dxGetTracons, dxInitDatabases } from "./dexie";
+import { wsClient } from "@/utils/ws";
+import { get } from "http";
+import { getMapView } from "@/components/Map/utils/init";
 
 let airportsShort: AirportShort[] = [];
 let controllersShort: ControllerShort[] = [];
 let tracons: ControllerWithFeature[] = [];
 
-export async function updateCache(wsShort: WsShort): Promise<void> {
-	updatePilotFeatures(wsShort.pilots);
-	airportsShort = wsShort.airports;
-	controllersShort = wsShort.controllers;
-	tracons = await extractTracons(controllersShort);
-	updateOverlays();
+export async function initData(): Promise<void> {
+	await dxInitDatabases();
+	const data = (await fetch("http://localhost:5000/api/data/init").then((res) => res.json())) as WsAll;
+	await initAirportFeatures();
+	initPilotFeatures(data.pilots);
+
+	const view = getMapView();
+	if (view) {
+		setFeatures(view.calculateExtent(), view.getZoom() || 5);
+	}
+
+	wsClient.addListener((msg) => {
+		updateCache(msg);
+	});
+}
+
+export async function updateCache(delta: WsDelta): Promise<void> {
+	updatePilotFeatures(delta.pilots);
+	// airportsShort = wsShort.airports;
+	// controllersShort = wsShort.controllers;
+	// tracons = await extractTracons(controllersShort);
+	// updateOverlays();
 }
 
 export function getCachedAirport(id: string): AirportShort | null {

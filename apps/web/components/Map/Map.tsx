@@ -2,26 +2,11 @@
 
 import { useEffect } from "react";
 import "./Map.css";
-import { updateCache } from "@/storage/cache";
-import { dxInitDatabases } from "@/storage/dexie";
-import { wsClient } from "@/utils/ws";
-import { initAirportFeatures, setFeatures } from "./utils/dataLayers";
+import { initData } from "@/storage/cache";
 import { onClick, onMoveEnd, onPointerMove } from "./utils/events";
-import { getMapView, initMap } from "./utils/init";
+import { initMap } from "./utils/init";
 
-async function init() {
-	await dxInitDatabases();
-	await initAirportFeatures();
-
-	const view = getMapView();
-	if (!view) return;
-	setFeatures(view.calculateExtent(), view.getZoom() || 2);
-}
-init();
-
-wsClient.addListener((msg) => {
-	updateCache(msg);
-});
+initData();
 
 export default function OMap() {
 	useEffect(() => {

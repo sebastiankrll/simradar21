@@ -1,30 +1,30 @@
-import type { WsShort } from "@sk/types/vatsim";
+import type { WsDelta } from "@sk/types/vatsim";
 import Redis from "ioredis";
 
 const redis = new Redis();
 
-export async function rdsPubWsShort(wsShort: WsShort) {
-	redis.publish("ws:short", JSON.stringify(wsShort));
-	// console.log("✅ ws:short published on redis!")
+export async function rdsPubWsDelta(delta: WsDelta) {
+	redis.publish("ws:delta", JSON.stringify(delta));
+	// console.log("✅ ws:delta published on redis!")
 }
 
-export async function rdsSubWsShort(callback: (data: WsShort) => void) {
-	redis.subscribe("ws:short", (err) => {
+export async function rdsSubWsDelta(callback: (data: WsDelta) => void) {
+	redis.subscribe("ws:delta", (err) => {
 		if (err) {
 			console.error("Failed to subscribe: %s", err.message);
 		} else {
-			// console.log(`✅ Subscribed to ws:short. Currently subscribed to ${count} channel(s).`)
+			// console.log(`✅ Subscribed to ws:delta. Currently subscribed to ${count} channel(s).`)
 		}
 	});
 
 	redis.on("message", (channel, data) => {
-		if (channel === "ws:short") {
+		if (channel === "ws:delta") {
 			try {
-				const parsed: WsShort = JSON.parse(data);
-				// console.log("✅ Received new data on ws:short.")
+				const parsed: WsDelta = JSON.parse(data);
+				// console.log("✅ Received new data on ws:delta.")
 				callback(parsed);
 			} catch (err) {
-				console.error("Failed to parse ws:short data", err);
+				console.error("Failed to parse ws:delta data", err);
 			}
 		}
 	});
@@ -69,7 +69,7 @@ export async function rdsSetMultiple<T>(
 	console.log(`✅ ${items.length} items set in ${activeSetName || keyPrefix}.`);
 }
 
-export async function rdsGetSingle(query: string): Promise<string | null> {
+export async function rdsGetSingle(query: string): Promise<any> {
 	const data = await redis.get(query);
 	if (!data) return null;
 

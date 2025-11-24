@@ -1,4 +1,4 @@
-import type { FIRFeature, FIRFeatureCollection, SimAwareTraconFeature, StaticAirline, StaticAirport } from "@sk/types/db";
+import type { FIRFeature, SimAwareTraconFeature, StaticAirline, StaticAirport } from "@sk/types/db";
 import Dexie, { type EntityTable } from "dexie";
 
 interface StaticVersions {
@@ -21,53 +21,44 @@ const db = new Dexie("StaticDatabase") as Dexie & {
 };
 
 db.version(1).stores({
-	airports: "id, latitude, longitude, size",
+	airports: "id",
 	firs: "id",
 	tracons: "id",
 	airlines: "id",
 });
 
 export async function dxInitDatabases(): Promise<void> {
-	const response = await fetch(`http://localhost:5000/api/static/versions`);
-	const serverVersions: StaticVersions = await response.json();
+	const serverVersions = (await fetch(`http://localhost:5000/api/static/versions`).then((res) => res.json())) as StaticVersions;
 	const localVersions: StaticVersions = JSON.parse(localStorage.getItem("databaseVersions") || "{}");
 
 	if (serverVersions.airportsVersion !== localVersions.airportsVersion) {
-		const airports = (await fetchStaticData("airports")) as StaticAirport[];
-		storeData(airports, db.airports as EntityTable<any, "id">);
+		const entries = (await fetchStaticData("airports")) as StaticAirport[];
+		storeData(entries, db.airports as EntityTable<any, "id">);
 	}
 
 	if (serverVersions.firsVersion !== localVersions.firsVersion) {
-		const collection = (await fetchStaticData("firs")) as FIRFeatureCollection;
-		const features: DexieFeature[] = collection.features
-			.filter((f) => f.properties?.id && f.properties.id.trim() !== "")
-			.map((f) => ({
-				id: f.properties.id,
-				feature: f,
-			}));
+		const features = (await fetchStaticData("firs")) as FIRFeature[];
+		const entries: DexieFeature[] = features.map((f) => ({
+			id: f.properties.id,
+			feature: f,
+		}));
 
-		storeData(features, db.firs as EntityTable<any, "id">);
+		storeData(entries, db.firs as EntityTable<any, "id">);
 	}
 
 	if (serverVersions.traconsVersion !== localVersions.traconsVersion) {
 		const features = (await fetchStaticData("tracons")) as SimAwareTraconFeature[];
-		const newFeatures: DexieFeature[] = [];
+		const entries: DexieFeature[] = features.map((f) => ({
+			id: f.properties.id,
+			feature: f,
+		}));
 
-		features.forEach((f) => {
-			for (const prefix of f.properties.prefix) {
-				newFeatures.push({
-					id: prefix,
-					feature: f,
-				});
-			}
-		});
-
-		storeData(newFeatures, db.tracons as EntityTable<any, "id">);
+		storeData(entries, db.tracons as EntityTable<any, "id">);
 	}
 
 	if (serverVersions.airlinesVersion !== localVersions.airlinesVersion) {
-		const data = (await fetchStaticData("airlines")) as StaticAirline[];
-		storeData(data, db.airlines as EntityTable<any, "id">);
+		const entries = (await fetchStaticData("airlines")) as StaticAirline[];
+		storeData(entries, db.airlines as EntityTable<any, "id">);
 	}
 
 	localStorage.setItem("databaseVersions", JSON.stringify(serverVersions));

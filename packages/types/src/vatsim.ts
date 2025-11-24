@@ -122,7 +122,7 @@ interface VatsimTransceiver {
 }
 
 export interface TrackPoint {
-	uid: string;
+	id: string;
 	latitude: number;
 	longitude: number;
 	altitude_agl: number;
@@ -134,6 +134,7 @@ export interface TrackPoint {
 }
 
 export interface PilotShort {
+	id: string;
 	callsign: string;
 	latitude: number;
 	longitude: number;
@@ -145,12 +146,10 @@ export interface PilotShort {
 	aircraft: string;
 	transponder: number;
 	frequency: number;
-	departure: string | null;
-	arrival: string | null;
+	route: string;
 }
 
 export interface PilotLong extends PilotShort {
-	uid: string;
 	cid: number;
 	name: string;
 	server: string;
@@ -214,6 +213,12 @@ export interface ControllerLong extends ControllerShort {
 	timestamp: Date;
 }
 
+export interface ControllerMerged {
+	id: string;
+	type: "airport" | "tracon" | "fir";
+	controllers: ControllerShort[];
+}
+
 export interface AirportShort {
 	icao: string;
 	dep_traffic: AirportTraffic;
@@ -231,8 +236,32 @@ export interface AirportTraffic {
 	flights_delayed: number;
 }
 
-export interface WsShort {
+export interface PilotDelta {
+	deleted: string[];
+	updated: PilotShort[];
+	added: PilotShort[];
+}
+
+export interface ControllerDelta {
+	deleted: string[];
+	updated: ControllerMerged[];
+	added: ControllerMerged[];
+}
+
+export interface AirportDelta {
+	deleted: string[];
+	updated: AirportShort[];
+	added: AirportShort[];
+}
+
+export interface WsAll {
 	pilots: PilotShort[];
-	controllers: ControllerShort[];
+	controllers: ControllerMerged[];
 	airports: AirportShort[];
+}
+
+export interface WsDelta {
+	pilots: PilotDelta;
+	controllers: ControllerDelta;
+	airports: AirportDelta;
 }

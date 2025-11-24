@@ -34,12 +34,11 @@ export interface StaticAirport {
 
 interface SimAwareTRACONProperties {
 	id: string;
-	prefix: string[];
+	prefix: string[] | string;
 	name: string;
 }
 
 export type SimAwareTraconFeature = Feature<MultiPolygon, SimAwareTRACONProperties>;
-export type SimAwareTraconFeatureCollection = FeatureCollection<MultiPolygon, SimAwareTRACONProperties>;
 
 export interface VatSpyDat {
 	icao: string;
@@ -65,7 +64,6 @@ export interface FIRProperties extends VatSpyFIRProperties {
 }
 
 export type FIRFeature = Feature<MultiPolygon, FIRProperties>;
-export type FIRFeatureCollection = FeatureCollection<MultiPolygon, FIRProperties>;
 
 export interface StaticAirline {
 	id: string;

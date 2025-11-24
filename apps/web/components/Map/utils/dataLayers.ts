@@ -1,4 +1,4 @@
-import type { PilotShort } from "@sk/types/vatsim";
+import type { PilotDelta, PilotShort } from "@sk/types/vatsim";
 import type { Extent } from "ol/extent";
 import Feature from "ol/Feature";
 import { Point } from "ol/geom";
@@ -8,7 +8,7 @@ import { fromLonLat, transformExtent } from "ol/proj";
 import VectorSource from "ol/source/Vector";
 import RBush from "rbush";
 import { dxGetAllAirports } from "@/storage/dexie";
-import type { AirportProperties, ControllerWithFeature, PilotProperties } from "@/types/ol";
+import type { AirportProperties, PilotProperties } from "@/types/ol";
 import { webglConfig } from "../lib/webglConfig";
 
 interface RBushPilotFeature {
@@ -151,62 +151,106 @@ export async function initAirportFeatures(): Promise<void> {
 }
 
 const pilotRBush = new RBush<RBushPilotFeature>();
-const pilotFeaturesMap = new Map<string, RBushPilotFeature>();
+const pilotMap = new Map<string, Feature<Point>>();
 
-export function updatePilotFeatures(pilots: PilotShort[]): void {
-	const seen = new Set<string>();
-
+export function initPilotFeatures(pilots: PilotShort[]): void {
 	for (const p of pilots) {
-		const callsign = p.callsign;
-		const item = pilotFeaturesMap.get(callsign);
-		seen.add(callsign);
-
 		const props: PilotProperties = {
 			type: "pilot",
-			clicked: item?.feature.get("clicked") || false,
-			hovered: item?.feature.get("hovered") || false,
+			clicked: false,
+			hovered: false,
 			...p,
 		};
 
-		if (!item) {
-			// New pilot --> insert as new feature
-			const feature = new Feature({
+		const feature = new Feature({
+			geometry: new Point(fromLonLat([p.longitude, p.latitude])),
+		});
+		feature.setProperties(props);
+		feature.setId(`pilot_${p.id}`);
+
+		const newItem: RBushPilotFeature = {
+			minX: p.longitude,
+			minY: p.latitude,
+			maxX: p.longitude,
+			maxY: p.latitude,
+			feature,
+		};
+
+		pilotMap.set(p.id, feature);
+		pilotRBush.insert(newItem);
+	}
+}
+
+export function updatePilotFeatures(delta: PilotDelta): void {
+	const items: RBushPilotFeature[] = [];
+
+	for (const p of delta.updated) {
+		let feature = pilotMap.get(p.id);
+
+		if (!feature) {
+			feature = new Feature({
 				geometry: new Point(fromLonLat([p.longitude, p.latitude])),
 			});
-			feature.setProperties(props);
-			feature.setId(`pilot_${p.callsign}`);
-
-			const newItem: RBushPilotFeature = {
-				minX: p.longitude,
-				minY: p.latitude,
-				maxX: p.longitude,
-				maxY: p.latitude,
-				feature,
-			};
-
-			pilotFeaturesMap.set(p.callsign, newItem);
-			pilotRBush.insert(newItem);
-			continue;
 		}
 
-		// Update
-		const feature = item.feature;
-		const geom = feature.getGeometry() as Point;
-		geom.setCoordinates(fromLonLat([p.longitude, p.latitude]));
+		const props: PilotProperties = {
+			type: "pilot",
+			clicked: feature.get("clicked") || false,
+			hovered: feature.get("hovered") || false,
+			...p,
+		};
 		feature.setProperties(props);
 
-		pilotRBush.remove(item);
-		item.minX = item.maxX = p.longitude;
-		item.minY = item.maxY = p.latitude;
-		pilotRBush.insert(item);
+		const geom = feature.getGeometry();
+		geom?.setCoordinates(fromLonLat([p.longitude, p.latitude]));
+
+		pilotMap.set(p.id, feature);
+
+		const item: RBushPilotFeature = {
+			minX: p.longitude,
+			minY: p.latitude,
+			maxX: p.longitude,
+			maxY: p.latitude,
+			feature,
+		};
+		items.push(item);
 	}
 
-	for (const [callsign, item] of pilotFeaturesMap) {
-		if (!seen.has(callsign)) {
-			pilotRBush.remove(item);
-			pilotFeaturesMap.delete(callsign);
-		}
+	for (const p of delta.added) {
+		const props: PilotProperties = {
+			type: "pilot",
+			clicked: false,
+			hovered: false,
+			...p,
+		};
+		const feature = new Feature({
+			geometry: new Point(fromLonLat([p.longitude, p.latitude])),
+		});
+		feature.setProperties(props);
+		feature.setId(`pilot_${p.id}`);
+
+		pilotMap.set(p.id, feature);
+
+		const item: RBushPilotFeature = {
+			minX: p.longitude,
+			minY: p.latitude,
+			maxX: p.longitude,
+			maxY: p.latitude,
+			feature,
+		};
+		items.push(item);
 	}
+
+	for (const p of delta.deleted) {
+		const feature = pilotMainSource.getFeatureById(`pilot_${p}`);
+		if (feature) {
+			pilotMainSource.removeFeature(feature);
+		}
+		pilotMap.delete(p);
+	}
+
+	pilotRBush.clear();
+	pilotRBush.load(items);
 }
 
 export function setFeatures(extent: Extent, zoom: number): void {
