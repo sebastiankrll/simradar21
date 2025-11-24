@@ -100,3 +100,7 @@ export async function dxGetAirline(id: string): Promise<StaticAirline | null> {
 export async function dxGetTracons(ids: string[]): Promise<(DexieFeature | undefined)[]> {
 	return await db.tracons.bulkGet(ids);
 }
+
+export async function dxGetFirs(ids: string[]): Promise<(DexieFeature | undefined)[]> {
+	return await db.firs.bulkGet(ids);
+}

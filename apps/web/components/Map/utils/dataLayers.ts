@@ -7,10 +7,10 @@ import WebGLVectorLayer from "ol/layer/WebGLVector";
 import { fromLonLat, transformExtent } from "ol/proj";
 import VectorSource from "ol/source/Vector";
 import RBush from "rbush";
-import { dxGetAirport, dxGetAllAirports, dxGetTracons } from "@/storage/dexie";
+import { dxGetAirport, dxGetAllAirports, dxGetFirs, dxGetTracons } from "@/storage/dexie";
 import type { AirportProperties, PilotProperties } from "@/types/ol";
 import { webglConfig } from "../lib/webglConfig";
-import type { SimAwareTraconFeature } from "@sk/types/db";
+import type { FIRFeature, SimAwareTraconFeature } from "@sk/types/db";
 import GeoJSON from "ol/format/GeoJSON";
 import { fromCircle } from "ol/geom/Polygon";
 
@@ -32,12 +32,14 @@ const airportMainSource = new VectorSource({
 const pilotMainSource = new VectorSource({
 	useSpatialIndex: false,
 });
+const firSource = new VectorSource({
+	useSpatialIndex: false,
+});
 const traconSource = new VectorSource({
 	useSpatialIndex: false,
 });
 
 export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
-	const firSource = new VectorSource();
 	const firLayer = new WebGLVectorLayer({
 		source: firSource,
 		style: webglConfig.fir,
@@ -259,14 +261,10 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 }
 
 const cachedTracons: Map<string, Feature<MultiPolygon | Polygon>> = new Map();
+const cachedFirs: Map<string, Feature<MultiPolygon>> = new Map();
 
 export async function initControllerFeatures(controllers: ControllerMerged[]): Promise<void> {
 	for (const c of controllers) {
-		const props = {
-			type: "controller",
-			...c,
-		};
-
 		const id = c.id.replace(/^(tracon_|airport_|fir_)/, "");
 
 		if (c.facility === "tracon") {
@@ -276,7 +274,7 @@ export async function initControllerFeatures(controllers: ControllerMerged[]): P
 					featureProjection: "EPSG:3857",
 				}) as Feature<MultiPolygon>;
 
-				feature.setProperties(props);
+				feature.setProperties({ type: "tracon" });
 				feature.setId(`controller_${id}`);
 
 				traconSource.addFeature(feature);
@@ -289,7 +287,7 @@ export async function initControllerFeatures(controllers: ControllerMerged[]): P
 					const polygon = createCircleTracon(airport.longitude, airport.latitude);
 					const feature = new Feature(polygon);
 
-					feature.setProperties(props);
+					feature.setProperties({ type: "tracon" });
 					feature.setId(`controller_${id}`);
 
 					traconSource.addFeature(feature);
@@ -297,32 +295,44 @@ export async function initControllerFeatures(controllers: ControllerMerged[]): P
 				}
 			}
 		}
+
+		if (c.facility === "fir") {
+			const geojson = (await dxGetFirs([id]).then((res) => res[0]?.feature)) as FIRFeature | undefined;
+			if (geojson) {
+				const feature = new GeoJSON().readFeature(geojson, {
+					featureProjection: "EPSG:3857",
+				}) as Feature<MultiPolygon>;
+
+				feature.setProperties({ type: "fir" });
+				feature.setId(`controller_${id}`);
+
+				firSource.addFeature(feature);
+				cachedFirs.set(id, feature);
+			}
+		}
 	}
 }
 
 export async function updateControllerFeatures(delta: ControllerDelta): Promise<void> {
 	for (const c of delta.updated) {
-		const props = {
-			type: "controller",
-			...c,
-		};
-
 		const id = c.id.replace(/^(tracon_|airport_|fir_)/, "");
 
 		if (c.facility === "tracon") {
 			const feature = cachedTracons.get(id);
 			if (feature) {
-				feature.setProperties(props);
+				feature.setProperties({ type: "tracon" });
+			}
+		}
+
+		if (c.facility === "fir") {
+			const feature = cachedFirs.get(id);
+			if (feature) {
+				feature.setProperties({ type: "fir" });
 			}
 		}
 	}
 
 	for (const c of delta.added) {
-		const props = {
-			type: "controller",
-			...c,
-		};
-
 		const id = c.id.replace(/^(tracon_|airport_|fir_)/, "");
 
 		if (c.facility === "tracon") {
@@ -332,23 +342,44 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 					featureProjection: "EPSG:3857",
 				}) as Feature<MultiPolygon>;
 
-				feature.setProperties(props);
+				feature.setProperties({ type: "tracon" });
 				feature.setId(`controller_${id}`);
 
 				traconSource.addFeature(feature);
 				cachedTracons.set(id, feature);
 			}
 		}
+
+		if (c.facility === "fir") {
+			const geojson = (await dxGetFirs([id]).then((res) => res[0]?.feature)) as FIRFeature | undefined;
+			if (geojson) {
+				const feature = new GeoJSON().readFeature(geojson, {
+					featureProjection: "EPSG:3857",
+				}) as Feature<MultiPolygon>;
+
+				feature.setProperties({ type: "fir" });
+				feature.setId(`controller_${id}`);
+
+				firSource.addFeature(feature);
+				cachedFirs.set(id, feature);
+			}
+		}
 	}
 
 	for (const c of delta.deleted) {
 		const id = c.replace(/^(tracon_|airport_|fir_)/, "");
-		const tracon = cachedTracons.get(id);
 
+		const tracon = cachedTracons.get(id);
 		if (tracon) {
 			traconSource.removeFeature(tracon);
 			cachedTracons.delete(id);
 			continue;
+		}
+
+		const fir = cachedFirs.get(id);
+		if (fir) {
+			firSource.removeFeature(fir);
+			cachedFirs.delete(id);
 		}
 	}
 }

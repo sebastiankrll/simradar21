@@ -13,7 +13,6 @@ export async function initData(): Promise<void> {
 	await initAirportFeatures();
 	initPilotFeatures(data.pilots);
 	initControllerFeatures(data.controllers);
-    console.log(data.controllers.filter(c => c.facility === "tracon"));
 
 	airportsShort = data.airports;
 	controllersMerged = data.controllers;
