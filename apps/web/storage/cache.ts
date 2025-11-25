@@ -1,15 +1,11 @@
 import type { StaticAirline, StaticAirport } from "@sk/types/db";
 import type { AirportShort, ControllerMerged, WsAll, WsDelta } from "@sk/types/vatsim";
-import {
-	initAirportFeatures,
-	initControllerFeatures,
-	initPilotFeatures,
-	setFeatures,
-	updateControllerFeatures,
-	updatePilotFeatures,
-} from "@/components/Map/utils/dataLayers";
+import { initAirportFeatures } from "@/components/Map/utils/airportFeatures";
+import { initControllerFeatures, updateControllerFeatures } from "@/components/Map/utils/controllerFeatures";
+import { setFeatures } from "@/components/Map/utils/dataLayers";
 import { updateOverlays } from "@/components/Map/utils/events";
 import { getMapView } from "@/components/Map/utils/init";
+import { initPilotFeatures, updatePilotFeatures } from "@/components/Map/utils/pilotFeatures";
 import { wsClient } from "@/utils/ws";
 import { dxGetAirline, dxGetAirport, dxInitDatabases } from "./dexie";
 

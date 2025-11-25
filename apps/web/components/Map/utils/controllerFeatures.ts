@@ -1,0 +1,209 @@
+import type { FIRFeature, SimAwareTraconFeature } from "@sk/types/db";
+import type { ControllerDelta, ControllerMerged } from "@sk/types/vatsim";
+import Feature, { type FeatureLike } from "ol/Feature";
+import GeoJSON from "ol/format/GeoJSON";
+import { Circle, type MultiPolygon, Point, type Polygon } from "ol/geom";
+import { fromCircle } from "ol/geom/Polygon";
+import { fromLonLat } from "ol/proj";
+import Fill from "ol/style/Fill";
+import Style from "ol/style/Style";
+import Text from "ol/style/Text";
+import { dxGetAirport, dxGetFirs, dxGetTracons } from "@/storage/dexie";
+import { controllerLabelSource, firSource, traconSource } from "./dataLayers";
+
+export function getControllerLabelStyle(feature: FeatureLike, resolution: number): Style {
+	const label = feature.get("label") as string;
+	const type = feature.get("type") as "tracon" | "fir";
+	const bg = type === "fir" ? new Fill({ color: "rgb(77, 95, 131)" }) : new Fill({ color: "rgb(222, 89, 234)" });
+
+	if ((type === "tracon" && resolution > 3500) || (type === "fir" && resolution > 6000)) {
+		return new Style({});
+	}
+
+	const style = new Style({
+		text: new Text({
+			text: label,
+			font: "600 12px Manrope, sans-serif",
+			fill: new Fill({ color: "white" }),
+			backgroundFill: bg,
+			padding: [4, 3, 2, 5],
+			textAlign: "center",
+		}),
+	});
+
+	return style;
+}
+
+const cachedTracons: Map<string, Feature<MultiPolygon | Polygon>> = new Map();
+const cachedFirs: Map<string, Feature<MultiPolygon>> = new Map();
+
+const readGeoJSONFeature = (geojson: SimAwareTraconFeature | FIRFeature, type: "tracon" | "fir", id: string) => {
+	const feature = new GeoJSON().readFeature(geojson, {
+		featureProjection: "EPSG:3857",
+	}) as Feature<MultiPolygon>;
+
+	feature.setProperties({ type });
+	feature.setId(`controller_${id}`);
+	return feature;
+};
+
+export async function initControllerFeatures(controllers: ControllerMerged[]): Promise<void> {
+	for (const c of controllers) {
+		const id = c.id.replace(/^(tracon_|airport_|fir_)/, "");
+
+		if (c.facility === "tracon") {
+			const traconFeature = await dxGetTracons([id]).then((r) => r[0]?.feature);
+
+			if (traconFeature) {
+				const feature = readGeoJSONFeature(traconFeature, "tracon", id);
+				traconSource.addFeature(feature);
+				cachedTracons.set(id, feature);
+
+				const longitude = Number(traconFeature.properties.label_lon);
+				const latitude = Number(traconFeature.properties.label_lat);
+				const label = traconFeature.properties.id;
+				createControllerLabel(longitude, latitude, label, "tracon");
+				continue;
+			}
+
+			const icao = id.split("_")[0];
+			const airport = await dxGetAirport(icao);
+			if (airport) {
+				const polygon = createCircleTracon(airport.longitude, airport.latitude);
+				const feature = new Feature(polygon);
+
+				feature.setProperties({ type: "tracon" });
+				feature.setId(`controller_${id}`);
+
+				traconSource.addFeature(feature);
+				cachedTracons.set(id, feature);
+
+				const longitude = airport.longitude;
+				const latitude = airport.latitude - 25 / 60;
+				const label = id;
+				createControllerLabel(longitude, latitude, label, "tracon");
+			}
+		}
+
+		if (c.facility === "fir") {
+			const firFeature = await dxGetFirs([id]).then((r) => r[0]?.feature);
+			if (!firFeature) continue;
+
+			const feature = readGeoJSONFeature(firFeature, "fir", id);
+			firSource.addFeature(feature);
+			cachedFirs.set(id, feature);
+
+			const longitude = Number(firFeature.properties.label_lon);
+			const latitude = Number(firFeature.properties.label_lat);
+			const label = firFeature.properties.id;
+			createControllerLabel(longitude, latitude, label, "fir");
+		}
+	}
+}
+
+export async function updateControllerFeatures(delta: ControllerDelta): Promise<void> {
+	for (const c of delta.updated) {
+		const id = c.id.replace(/^(tracon_|airport_|fir_)/, "");
+		let feature: Feature<MultiPolygon | Polygon> | undefined;
+
+		if (c.facility === "tracon") {
+			feature = cachedTracons.get(id);
+		}
+
+		if (c.facility === "fir") {
+			feature = cachedFirs.get(id);
+		}
+
+		if (feature) {
+			feature.setProperties({ type: c.facility });
+		}
+	}
+
+	for (const c of delta.added) {
+		const id = c.id.replace(/^(tracon_|airport_|fir_)/, "");
+
+		if (c.facility === "tracon") {
+			const traconFeature = await dxGetTracons([id]).then((r) => r[0]?.feature);
+
+			if (traconFeature) {
+				const feature = readGeoJSONFeature(traconFeature, "tracon", id);
+				traconSource.addFeature(feature);
+				cachedTracons.set(id, feature);
+
+				const longitude = Number(traconFeature.properties.label_lon);
+				const latitude = Number(traconFeature.properties.label_lat);
+				const label = traconFeature.properties.id;
+				createControllerLabel(longitude, latitude, label, "tracon");
+				continue;
+			}
+
+			const icao = id.split("_")[0];
+			const airport = await dxGetAirport(icao);
+			if (airport) {
+				const polygon = createCircleTracon(airport.longitude, airport.latitude);
+				const feature = new Feature(polygon);
+
+				feature.setProperties({ type: "tracon" });
+				feature.setId(`controller_${id}`);
+
+				traconSource.addFeature(feature);
+				cachedTracons.set(id, feature);
+			}
+		}
+
+		if (c.facility === "fir") {
+			const firFeature = await dxGetFirs([id]).then((r) => r[0]?.feature);
+			if (!firFeature) continue;
+
+			const feature = readGeoJSONFeature(firFeature, "fir", id);
+			firSource.addFeature(feature);
+			cachedFirs.set(id, feature);
+
+			const longitude = Number(firFeature.properties.label_lon);
+			const latitude = Number(firFeature.properties.label_lat);
+			const label = firFeature.properties.id;
+			createControllerLabel(longitude, latitude, label, "fir");
+		}
+	}
+
+	for (const c of delta.deleted) {
+		const id = c.replace(/^(tracon_|airport_|fir_)/, "");
+
+		const labelFeature = controllerLabelSource.getFeatureById(`controller_${id}`);
+		if (labelFeature) {
+			controllerLabelSource.removeFeature(labelFeature);
+		}
+
+		const tracon = cachedTracons.get(id);
+		if (tracon) {
+			traconSource.removeFeature(tracon);
+			cachedTracons.delete(id);
+			continue;
+		}
+
+		const fir = cachedFirs.get(id);
+		if (fir) {
+			firSource.removeFeature(fir);
+			cachedFirs.delete(id);
+		}
+	}
+}
+
+function createControllerLabel(lon: number, lat: number, label: string, type: "tracon" | "fir"): void {
+	const labelFeature = new Feature({
+		geometry: new Point(fromLonLat([lon, lat])),
+	});
+	labelFeature.setProperties({ type: type, label });
+	labelFeature.setId(`controller_${label}`);
+
+	controllerLabelSource.addFeature(labelFeature);
+}
+
+function createCircleTracon(lon: number, lat: number): Polygon {
+	const radiusMeters = 25 * 1852;
+	const center = fromLonLat([lon, lat]);
+	const circle = new Circle(center, radiusMeters);
+	const polygon = fromCircle(circle, 36);
+
+	return polygon;
+}
