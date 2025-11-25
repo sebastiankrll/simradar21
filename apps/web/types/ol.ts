@@ -11,3 +11,10 @@ export interface AirportProperties {
 	clicked: boolean;
 	hovered: boolean;
 }
+
+export interface ControllerLabelProperties {
+	type: "fir" | "tracon";
+	label: string;
+	clicked: boolean;
+	hovered: boolean;
+}

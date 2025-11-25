@@ -10,10 +10,12 @@ import Style from "ol/style/Style";
 import Text from "ol/style/Text";
 import { dxGetAirport, dxGetFirs, dxGetTracons } from "@/storage/dexie";
 import { controllerLabelSource, firSource, traconSource } from "./dataLayers";
+import type { ControllerLabelProperties } from "@/types/ol";
 
 export function getControllerLabelStyle(feature: FeatureLike, resolution: number): Style {
 	const label = feature.get("label") as string;
 	const type = feature.get("type") as "tracon" | "fir";
+	const active = (feature.get("clicked") as boolean) || (feature.get("hovered") as boolean);
 	const bg = type === "fir" ? new Fill({ color: "rgb(77, 95, 131)" }) : new Fill({ color: "rgb(222, 89, 234)" });
 
 	if ((type === "tracon" && resolution > 3500) || (type === "fir" && resolution > 6000)) {
@@ -25,7 +27,7 @@ export function getControllerLabelStyle(feature: FeatureLike, resolution: number
 			text: label,
 			font: "600 12px Manrope, sans-serif",
 			fill: new Fill({ color: "white" }),
-			backgroundFill: bg,
+			backgroundFill: active ? new Fill({ color: "rgb(234, 89, 121)" }) : bg,
 			padding: [4, 3, 2, 5],
 			textAlign: "center",
 		}),
@@ -193,9 +195,15 @@ function createControllerLabel(lon: number, lat: number, label: string, type: "t
 	const labelFeature = new Feature({
 		geometry: new Point(fromLonLat([lon, lat])),
 	});
-	labelFeature.setProperties({ type: type, label });
-	labelFeature.setId(`controller_${label}`);
+	const props: ControllerLabelProperties = {
+		type: type,
+		label: label,
+		clicked: false,
+		hovered: false,
+	};
 
+	labelFeature.setProperties(props);
+	labelFeature.setId(`controller_${label}`);
 	controllerLabelSource.addFeature(labelFeature);
 }
 

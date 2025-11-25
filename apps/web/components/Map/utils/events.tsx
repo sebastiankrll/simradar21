@@ -32,7 +32,7 @@ export async function onPointerMove(evt: { pixel: Pixel; map: OlMap }): Promise<
 	const pixel = evt.pixel;
 
 	const feature = map.forEachFeatureAtPixel(pixel, (f) => f, {
-		layerFilter: (layer) => layer.get("type") === "airport_main" || layer.get("type") === "pilot_main",
+		layerFilter: (layer) => layer.get("type") === "airport_main" || layer.get("type") === "pilot_main" || layer.get("type") === "controller_label",
 		hitTolerance: 10,
 	}) as Feature<Point> | undefined;
 
