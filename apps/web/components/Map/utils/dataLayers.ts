@@ -1,7 +1,7 @@
 import type { FIRFeature, SimAwareTraconFeature } from "@sk/types/db";
 import type { ControllerDelta, ControllerMerged, PilotDelta, PilotShort } from "@sk/types/vatsim";
 import type { Extent } from "ol/extent";
-import Feature from "ol/Feature";
+import Feature, { type FeatureLike } from "ol/Feature";
 import GeoJSON from "ol/format/GeoJSON";
 import { Circle, type MultiPolygon, Point, type Polygon } from "ol/geom";
 import { fromCircle } from "ol/geom/Polygon";
@@ -13,6 +13,9 @@ import RBush from "rbush";
 import { dxGetAirport, dxGetAllAirports, dxGetFirs, dxGetTracons } from "@/storage/dexie";
 import type { AirportProperties, PilotProperties } from "@/types/ol";
 import { webglConfig } from "../lib/webglConfig";
+import Style from "ol/style/Style";
+import Fill from "ol/style/Fill";
+import Text from "ol/style/Text";
 
 interface RBushPilotFeature {
 	minX: number;
@@ -38,11 +41,14 @@ const firSource = new VectorSource({
 const traconSource = new VectorSource({
 	useSpatialIndex: false,
 });
+const controllerLabelSource = new VectorSource({
+	useSpatialIndex: false,
+});
 
 export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
 	const firLayer = new WebGLVectorLayer({
 		source: firSource,
-		style: webglConfig.fir,
+		style: webglConfig.controller,
 		properties: {
 			type: "fir",
 		},
@@ -51,7 +57,7 @@ export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
 
 	const traconLayer = new WebGLVectorLayer({
 		source: traconSource,
-		style: webglConfig.fir,
+		style: webglConfig.controller,
 		properties: {
 			type: "tracon",
 		},
@@ -105,26 +111,39 @@ export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
 		zIndex: 7,
 	});
 
-	const airportTopSource = new VectorSource();
-	const airportTopLayer = new WebGLVectorLayer({
-		source: airportTopSource,
-		style: webglConfig.airport_top,
+	const controllerLabelLayer = new VectorLayer({
+		source: controllerLabelSource,
+		style: getControllerLabelStyle,
 		properties: {
-			type: "airport_top",
-		},
-		zIndex: 8,
-	});
-
-	const firLabelSource = new VectorSource();
-	const firLabelLayer = new VectorLayer({
-		source: firLabelSource,
-		properties: {
-			type: "fir_label",
+			type: "controller_label",
 		},
 		zIndex: 9,
 	});
 
-	return [firLayer, traconLayer, trackLayer, pilotShadowLayer, pilotMainLayer, airportLabelLayer, airportMainLayer, airportTopLayer, firLabelLayer];
+	return [firLayer, traconLayer, trackLayer, pilotShadowLayer, pilotMainLayer, airportLabelLayer, airportMainLayer, controllerLabelLayer];
+}
+
+function getControllerLabelStyle(feature: FeatureLike, resolution: number): Style {
+	const label = feature.get("label") as string;
+	const type = feature.get("type") as "tracon" | "fir";
+	const bg = type === "fir" ? new Fill({ color: "rgb(77, 95, 131)" }) : new Fill({ color: "rgb(222, 89, 234)" });
+
+	if ((type === "tracon" && resolution > 3500) || (type === "fir" && resolution > 6000)) {
+		return new Style({});
+	}
+
+	const style = new Style({
+		text: new Text({
+			text: label,
+			font: "600 12px Manrope, sans-serif",
+			fill: new Fill({ color: "white" }),
+			backgroundFill: bg,
+			padding: [4, 3, 2, 5],
+			textAlign: "center",
+		}),
+	});
+
+	return style;
 }
 
 const airportRBush = new RBush<RBushAirportFeature>();
@@ -262,52 +281,57 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 const cachedTracons: Map<string, Feature<MultiPolygon | Polygon>> = new Map();
 const cachedFirs: Map<string, Feature<MultiPolygon>> = new Map();
 
+const readGeoJSONFeature = (geojson: SimAwareTraconFeature | FIRFeature, type: "tracon" | "fir", id: string) => {
+	const feature = new GeoJSON().readFeature(geojson, {
+		featureProjection: "EPSG:3857",
+	}) as Feature<MultiPolygon>;
+
+	feature.setProperties({ type });
+	feature.setId(`controller_${id}`);
+	return feature;
+};
+
 export async function initControllerFeatures(controllers: ControllerMerged[]): Promise<void> {
 	for (const c of controllers) {
 		const id = c.id.replace(/^(tracon_|airport_|fir_)/, "");
 
 		if (c.facility === "tracon") {
-			const geojson = (await dxGetTracons([id]).then((res) => res[0]?.feature)) as SimAwareTraconFeature | undefined;
-			if (geojson) {
-				const feature = new GeoJSON().readFeature(geojson, {
-					featureProjection: "EPSG:3857",
-				}) as Feature<MultiPolygon>;
+			const traconFeature = await dxGetTracons([id]).then((r) => r[0]?.feature);
+
+			if (traconFeature) {
+				const feature = readGeoJSONFeature(traconFeature, "tracon", id);
+				traconSource.addFeature(feature);
+				cachedTracons.set(id, feature);
+
+				createControllerLabel(traconFeature, "tracon");
+				continue;
+			}
+
+			const icao = id.split("_")[0];
+			const airport = await dxGetAirport(icao);
+			if (airport) {
+				const polygon = createCircleTracon(airport.longitude, airport.latitude);
+				const feature = new Feature(polygon);
 
 				feature.setProperties({ type: "tracon" });
 				feature.setId(`controller_${id}`);
 
 				traconSource.addFeature(feature);
 				cachedTracons.set(id, feature);
-			} else {
-				const icao = id.split("_")[0];
-				const airport = await dxGetAirport(icao);
 
-				if (airport) {
-					const polygon = createCircleTracon(airport.longitude, airport.latitude);
-					const feature = new Feature(polygon);
-
-					feature.setProperties({ type: "tracon" });
-					feature.setId(`controller_${id}`);
-
-					traconSource.addFeature(feature);
-					cachedTracons.set(id, feature);
-				}
+				// Add label for circle tracon
 			}
 		}
 
 		if (c.facility === "fir") {
-			const geojson = (await dxGetFirs([id]).then((res) => res[0]?.feature)) as FIRFeature | undefined;
-			if (geojson) {
-				const feature = new GeoJSON().readFeature(geojson, {
-					featureProjection: "EPSG:3857",
-				}) as Feature<MultiPolygon>;
+			const firFeature = await dxGetFirs([id]).then((r) => r[0]?.feature);
+			if (!firFeature) continue;
 
-				feature.setProperties({ type: "fir" });
-				feature.setId(`controller_${id}`);
+			const feature = readGeoJSONFeature(firFeature, "fir", id);
+			firSource.addFeature(feature);
+			cachedFirs.set(id, feature);
 
-				firSource.addFeature(feature);
-				cachedFirs.set(id, feature);
-			}
+			createControllerLabel(firFeature, "fir");
 		}
 	}
 }
@@ -315,19 +339,18 @@ export async function initControllerFeatures(controllers: ControllerMerged[]): P
 export async function updateControllerFeatures(delta: ControllerDelta): Promise<void> {
 	for (const c of delta.updated) {
 		const id = c.id.replace(/^(tracon_|airport_|fir_)/, "");
+		let feature: Feature<MultiPolygon | Polygon> | undefined;
 
 		if (c.facility === "tracon") {
-			const feature = cachedTracons.get(id);
-			if (feature) {
-				feature.setProperties({ type: "tracon" });
-			}
+			feature = cachedTracons.get(id);
 		}
 
 		if (c.facility === "fir") {
-			const feature = cachedFirs.get(id);
-			if (feature) {
-				feature.setProperties({ type: "fir" });
-			}
+			feature = cachedFirs.get(id);
+		}
+
+		if (feature) {
+			feature.setProperties({ type: c.facility });
 		}
 	}
 
@@ -335,11 +358,20 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 		const id = c.id.replace(/^(tracon_|airport_|fir_)/, "");
 
 		if (c.facility === "tracon") {
-			const geojson = (await dxGetTracons([id]).then((res) => res[0]?.feature)) as SimAwareTraconFeature | undefined;
-			if (geojson) {
-				const feature = new GeoJSON().readFeature(geojson, {
-					featureProjection: "EPSG:3857",
-				}) as Feature<MultiPolygon>;
+			const traconFeature = await dxGetTracons([id]).then((r) => r[0]?.feature);
+
+			if (traconFeature) {
+				const feature = readGeoJSONFeature(traconFeature, "tracon", id);
+				traconSource.addFeature(feature);
+				cachedTracons.set(id, feature);
+				continue;
+			}
+
+			const icao = id.split("_")[0];
+			const airport = await dxGetAirport(icao);
+			if (airport) {
+				const polygon = createCircleTracon(airport.longitude, airport.latitude);
+				const feature = new Feature(polygon);
 
 				feature.setProperties({ type: "tracon" });
 				feature.setId(`controller_${id}`);
@@ -350,18 +382,12 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 		}
 
 		if (c.facility === "fir") {
-			const geojson = (await dxGetFirs([id]).then((res) => res[0]?.feature)) as FIRFeature | undefined;
-			if (geojson) {
-				const feature = new GeoJSON().readFeature(geojson, {
-					featureProjection: "EPSG:3857",
-				}) as Feature<MultiPolygon>;
+			const firFeature = await dxGetFirs([id]).then((r) => r[0]?.feature);
+			if (!firFeature) continue;
 
-				feature.setProperties({ type: "fir" });
-				feature.setId(`controller_${id}`);
-
-				firSource.addFeature(feature);
-				cachedFirs.set(id, feature);
-			}
+			const feature = readGeoJSONFeature(firFeature, "fir", id);
+			firSource.addFeature(feature);
+			cachedFirs.set(id, feature);
 		}
 	}
 
@@ -381,6 +407,20 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 			cachedFirs.delete(id);
 		}
 	}
+}
+
+function createControllerLabel(feature: SimAwareTraconFeature | FIRFeature, type: "tracon" | "fir"): void {
+	const label = feature.properties.id;
+	const longitude = Number(feature.properties.label_lon);
+	const latitude = Number(feature.properties.label_lat);
+
+	const labelFeature = new Feature({
+		geometry: new Point(fromLonLat([longitude, latitude])),
+	});
+	labelFeature.setProperties({ type: type, label });
+	labelFeature.setId(`controller_${label}`);
+
+	controllerLabelSource.addFeature(labelFeature);
 }
 
 function createCircleTracon(lon: number, lat: number): Polygon {

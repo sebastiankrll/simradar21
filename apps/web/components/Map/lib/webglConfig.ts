@@ -526,13 +526,6 @@ export const webglConfig = {
 		"icon-scale": ["case", ["==", ["get", "type"], "small_airport"], 0.65, ["==", ["get", "type"], "medium_airport"], 0.75, 0.85],
 		"icon-rotate-with-view": false,
 	},
-	airport_top: {
-		"icon-src": airportSprite.src,
-		"icon-size": [32, 32],
-		"icon-offset": ["case", ["all", ["==", ["get", "clicked"], 0], ["==", ["get", "hovered"], 0]], [0, 0], [32, 0]],
-		"icon-scale": ["case", ["==", ["get", "type"], "small_airport"], 0.7, ["==", ["get", "type"], "medium_airport"], 0.85, 1],
-		"icon-rotate-with-view": false,
-	},
 	airport_label: {
 		variables: {
 			dep: "",
@@ -579,7 +572,7 @@ export const webglConfig = {
 		],
 		"icon-rotate-with-view": false,
 	},
-	fir: {
+	controller: {
 		"stroke-color": ["case", ["==", ["get", "type"], "tracon"], [222, 89, 234], [77, 95, 131]],
 		"stroke-width": 1,
 		"stroke-offset": 0,

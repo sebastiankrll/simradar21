@@ -18,8 +18,9 @@ export async function updateTracons(): Promise<void> {
 		});
 		const features = flattenCollection(response.data);
 		const closedFeatures = closePolygons(features);
+		const labeledFeatures = setLabelPosition(closedFeatures);
 
-		await rdsSetSingle("static_tracons:all", closedFeatures);
+		await rdsSetSingle("static_tracons:all", labeledFeatures);
 		await rdsSetSingle("static_tracons:version", version?.replace(/^v/, "") || "1.0.0");
 	} catch (error) {
 		console.error(`Error checking for new TRACON data: ${error}`);
@@ -66,6 +67,31 @@ function closePolygons(features: SimAwareTraconFeature[]): SimAwareTraconFeature
 				if (first[0] !== last[0] || first[1] !== last[1]) {
 					ring.push(first);
 				}
+			}
+		}
+
+		return feature;
+	});
+}
+
+export function setLabelPosition(features: SimAwareTraconFeature[]): SimAwareTraconFeature[] {
+	return features.map((feature) => {
+		if (!feature.properties.label_lon || !feature.properties.label_lat) {
+			let lonlat = null;
+
+			for (const multiPoly of feature.geometry.coordinates) {
+				for (const ring of multiPoly) {
+					for (const coord of ring) {
+						if (!lonlat || coord[0] + coord[1] < lonlat[0] + lonlat[1]) {
+							lonlat = coord;
+						}
+					}
+				}
+			}
+
+			if (lonlat) {
+				feature.properties.label_lon = lonlat[0];
+				feature.properties.label_lat = lonlat[1];
 			}
 		}
 

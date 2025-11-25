@@ -55,7 +55,6 @@ export function getControllerShort(id: string): ControllerMerged | null {
 }
 
 export async function getCachedAirport(id: string): Promise<StaticAirport | null> {
-	console.log(id);
 	const cached = cachedAirports.get(id);
 	if (cached) return cached;
 

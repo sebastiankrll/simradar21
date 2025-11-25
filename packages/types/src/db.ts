@@ -36,6 +36,8 @@ interface SimAwareTRACONProperties {
 	id: string;
 	prefix: string[] | string;
 	name: string;
+	label_lat?: number;
+	label_lon?: number;
 }
 
 export type SimAwareTraconFeature = Feature<MultiPolygon, SimAwareTRACONProperties>;
