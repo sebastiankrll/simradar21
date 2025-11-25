@@ -1,5 +1,5 @@
 import type { StaticAirline, StaticAirport } from "@sk/types/db";
-import type { AirportShort, ControllerMerged, WsAll, WsDelta } from "@sk/types/vatsim";
+import type { AirportShort, ControllerMerged, TrackPoint, WsAll, WsDelta } from "@sk/types/vatsim";
 import { initAirportFeatures } from "@/components/Map/utils/airportFeatures";
 import { initControllerFeatures, updateControllerFeatures } from "@/components/Map/utils/controllerFeatures";
 import { setFeatures } from "@/components/Map/utils/dataLayers";
@@ -72,4 +72,8 @@ export async function getCachedAirline(id: string): Promise<StaticAirline | null
 	}
 
 	return airline || null;
+}
+
+export async function fetchTrackPoints(id: string): Promise<TrackPoint[]> {
+	return await fetch(`http://localhost:5000/api/data/track/${id}`).then((res) => res.json());
 }

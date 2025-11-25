@@ -5,7 +5,8 @@ import { toLonLat } from "ol/proj";
 import { createRoot, type Root } from "react-dom/client";
 import { getAirportShort, getCachedAirline, getCachedAirport } from "@/storage/cache";
 import { AirportOverlay, PilotOverlay } from "../components/Overlay/Overlays";
-import { setFeatures } from "./dataLayers";
+import { setFeatures, trackSource } from "./dataLayers";
+import { initTrackFeatures } from "./trackFeatures";
 
 export function onMoveEnd(evt: { map: OlMap }): void {
 	const map = evt.map;
@@ -71,6 +72,7 @@ export async function onClick(evt: { pixel: Pixel; map: OlMap }): Promise<void> 
 	if (feature !== clickedFeature && clickedOverlay) {
 		map.removeOverlay(clickedOverlay);
 		clickedOverlay = null;
+		trackSource.clear();
 	}
 
 	if (feature && feature !== clickedFeature) {
@@ -85,6 +87,12 @@ export async function onClick(evt: { pixel: Pixel; map: OlMap }): Promise<void> 
 
 	feature?.set("clicked", true);
 	clickedFeature = feature || null;
+
+	const type = clickedFeature?.get("type");
+	if (clickedFeature && type === "pilot") {
+		const callsign = clickedFeature.getId()?.toString();
+		initTrackFeatures(callsign || "");
+	}
 }
 
 async function createOverlay(feature: Feature<Point>): Promise<Overlay> {

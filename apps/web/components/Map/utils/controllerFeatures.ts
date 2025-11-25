@@ -9,8 +9,8 @@ import Fill from "ol/style/Fill";
 import Style from "ol/style/Style";
 import Text from "ol/style/Text";
 import { dxGetAirport, dxGetFirs, dxGetTracons } from "@/storage/dexie";
-import { controllerLabelSource, firSource, traconSource } from "./dataLayers";
 import type { ControllerLabelProperties } from "@/types/ol";
+import { controllerLabelSource, firSource, traconSource } from "./dataLayers";
 
 export function getControllerLabelStyle(feature: FeatureLike, resolution: number): Style {
 	const label = feature.get("label") as string;

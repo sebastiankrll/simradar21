@@ -22,6 +22,9 @@ export const traconSource = new VectorSource({
 export const controllerLabelSource = new VectorSource({
 	useSpatialIndex: false,
 });
+export const trackSource = new VectorSource({
+	useSpatialIndex: false,
+});
 
 export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
 	const firLayer = new WebGLVectorLayer({
@@ -42,7 +45,6 @@ export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
 		zIndex: 2,
 	});
 
-	const trackSource = new VectorSource();
 	const trackLayer = new VectorLayer({
 		source: trackSource,
 		properties: {
