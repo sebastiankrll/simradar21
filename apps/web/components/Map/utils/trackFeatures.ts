@@ -45,6 +45,8 @@ export async function initTrackFeatures(id: string): Promise<void> {
 }
 
 export async function updateTrackFeatures(delta: PilotDelta): Promise<void> {
+	if (trackSource.getFeatures().length === 0) return;
+
 	const pilot = delta.updated.find((p) => `pilot_${p.id}` === pilotId);
 	if (!pilotId || !pilot) return;
 
@@ -59,7 +61,7 @@ export async function updateTrackFeatures(delta: PilotDelta): Promise<void> {
 
 	trackSource.addFeature(trackFeature);
 
-    lastPoint = [pilot.longitude, pilot.latitude];
+	lastPoint = [pilot.longitude, pilot.latitude];
 }
 
 function getTrackSegmentColor(altitude_agl: number, altitude_ms: number): Stroke {
