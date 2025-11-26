@@ -28,6 +28,23 @@ export async function mapControllers(vatsimData: VatsimData, pilotsLong: PilotLo
 
 	getConnectionsCount(vatsimData, controllersLong, pilotsLong);
 
+	vatsimData.atis.forEach((atis) => {
+		controllersLong.push({
+			callsign: atis.callsign,
+			frequency: parseFrequencyToKHz(atis.frequency),
+			facility: -1,
+			atis: atis.text_atis,
+			connections: 0,
+			cid: atis.cid,
+			name: atis.name,
+			rating: atis.rating,
+			server: atis.server,
+			visual_range: atis.visual_range,
+			logon_time: new Date(atis.logon_time),
+			timestamp: new Date(atis.last_updated),
+		});
+	});
+
 	const merged = await mergeControllers(controllersLong);
 
 	const deletedMerged = cachedMerged.filter((a) => !merged.some((b) => b.id === a.id));

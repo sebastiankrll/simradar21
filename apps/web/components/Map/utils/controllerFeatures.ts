@@ -250,6 +250,9 @@ async function createAirportLabel(controllerMerged: ControllerMerged): Promise<v
 	const stations = [0, 0, 0, 0];
 
 	controllerMerged.controllers.forEach((c) => {
+		if (c.facility === -1) {
+			stations[3] = 1;
+		}
 		if (c.facility === 2) {
 			stations[2] = 1;
 		}
