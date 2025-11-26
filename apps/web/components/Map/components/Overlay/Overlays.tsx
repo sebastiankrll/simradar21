@@ -8,42 +8,52 @@ import type { PilotProperties } from "@/types/ol";
 export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; airline: StaticAirline | null }) {
 	const data = feature.getProperties() as PilotProperties;
 
+	const roundedVS = Math.round(data.vertical_speed / 50) * 50;
+	const vs = (roundedVS > 0 ? "+" : "") + roundedVS;
+
+	let hdg = String(data.heading);
+	if (hdg.length === 1) {
+		hdg = `00${hdg}`;
+	}
+	if (hdg.length === 2) {
+		hdg = `0${hdg}`;
+	}
+
 	return (
-		<div className="popup popup-tip">
-			<div className="popup-content-top flight">
-				<div className="popup-content-vnav">
+		<div className="overlay-wrapper">
+			<div className="overlay-live pilot">
+				<div className="overlay-live-item">
 					<span>ALT</span>
-					{data.altitude_ms}
+					{Math.round(data.altitude_ms / 250) * 250}
 				</div>
-				<div className="popup-content-vnav">
+				<div className="overlay-live-item">
 					<span>FPM</span>
-					{data.vertical_speed}
+					{vs}
 				</div>
-				<div className="popup-content-vnav">
+				<div className="overlay-live-item">
 					<span>GS</span>
 					{data.groundspeed}
 				</div>
-				<div className="popup-content-vnav">
+				<div className="overlay-live-item">
 					<span>HDG</span>
-					{Math.round(data.heading * (180 / Math.PI))}
+					{hdg}
 				</div>
 			</div>
-			<div className="popup-content flight">
-				<figure className="popup-content-logo" style={{ backgroundColor: airline?.font ?? "white" }}>
+			<div className="overlay-main-wrapper">
+				<div className="overlay-icon" style={{ backgroundColor: airline?.bg ?? "white" }}>
 					<p
 						style={{
-							color: airline?.bg ?? "var(--color-green)",
-							fontSize: airline && airline.iata.length > 2 ? ".8rem" : "",
+							color: airline?.font ?? "var(--color-green)",
 						}}
 					>
 						{airline?.iata}
 					</p>
-				</figure>
-				<div className="popup-content-main flight">
-					<div className="popup-content-header">{data.callsign}</div>
-					<div className="popup-content-box ac">{data.aircraft}</div>
-					<p>{data.route}</p>
-					<div className="popup-content-box ac-fr">{(data.frequency / 1000).toFixed(3)}</div>
+				</div>
+				<div className="overlay-main">
+					<div className="overlay-title">{data.callsign}</div>
+					<div className="overlay-pilot-ac-type">{data.aircraft}</div>
+					<div className="overlay-subtitle">{data.route}</div>
+					<div className="overlay-pilot-frequency">{(data.frequency / 1000).toFixed(3)}</div>
 				</div>
 			</div>
 		</div>
