@@ -8,6 +8,7 @@ import { getMapView } from "@/components/Map/utils/init";
 import { initPilotFeatures, updatePilotFeatures } from "@/components/Map/utils/pilotFeatures";
 import { wsClient } from "@/utils/ws";
 import { dxGetAirline, dxGetAirport, dxInitDatabases } from "./dexie";
+import { updateTrackFeatures } from "@/components/Map/utils/trackFeatures";
 
 let airportsShort: AirportShort[] = [];
 let controllersMerged: ControllerMerged[] = [];
@@ -37,8 +38,11 @@ export async function initData(): Promise<void> {
 export async function updateCache(delta: WsDelta): Promise<void> {
 	updatePilotFeatures(delta.pilots);
 	updateControllerFeatures(delta.controllers);
+	updateTrackFeatures(delta.pilots);
+
 	airportsShort = [...delta.airports.added, ...delta.airports.updated];
 	controllersMerged = [...delta.controllers.added, ...delta.controllers.updated];
+    
 	updateOverlays();
 }
 

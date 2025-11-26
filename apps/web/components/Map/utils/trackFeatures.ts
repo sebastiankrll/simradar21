@@ -5,14 +5,19 @@ import Stroke from "ol/style/Stroke";
 import Style from "ol/style/Style";
 import { fetchTrackPoints } from "@/storage/cache";
 import { trackSource } from "./dataLayers";
+import type { PilotDelta } from "@sk/types/vatsim";
+
+let pilotId: string | null = null;
+let lastPoint: [number, number] | null = null;
+let currentIndex: number = 0;
 
 export async function initTrackFeatures(id: string): Promise<void> {
 	const trackPoints = await fetchTrackPoints(id.replace("pilot_", ""));
 	const trackFeatures: Feature<LineString>[] = [];
 
-	for (let i = 0; i < trackPoints.length - 1; i++) {
-		const start = trackPoints[i];
-		const end = trackPoints[i + 1];
+	for (currentIndex = 0; currentIndex < trackPoints.length - 1; currentIndex++) {
+		const start = trackPoints[currentIndex];
+		const end = trackPoints[currentIndex + 1];
 
 		const trackFeature = new Feature({
 			geometry: new LineString(
@@ -23,15 +28,38 @@ export async function initTrackFeatures(id: string): Promise<void> {
 			),
 			type: "track",
 		});
-		const style = new Style({ stroke: getTrackSegmentColor(start.altitude_agl, start.altitude_ms) });
+		const style = new Style({ stroke: getTrackSegmentColor(end.altitude_agl, end.altitude_ms) });
 
 		trackFeature.setStyle(style);
-		trackFeature.setId(`track_${id}_${i}`);
+		trackFeature.setId(`track_${id}_${currentIndex}`);
 		trackFeatures.push(trackFeature);
+
+		if (currentIndex === trackPoints.length - 2) {
+			lastPoint = [end.longitude, end.latitude];
+		}
 	}
 
 	trackSource.clear();
 	trackSource.addFeatures(trackFeatures);
+	pilotId = id;
+}
+
+export async function updateTrackFeatures(delta: PilotDelta): Promise<void> {
+	const pilot = delta.updated.find((p) => `pilot_${p.id}` === pilotId);
+	if (!pilotId || !pilot) return;
+
+	const trackFeature = new Feature({
+		geometry: new LineString([lastPoint ?? [pilot.longitude, pilot.latitude], [pilot.longitude, pilot.latitude]].map((coord) => fromLonLat(coord))),
+		type: "track",
+	});
+	const style = new Style({ stroke: getTrackSegmentColor(pilot.altitude_agl, pilot.altitude_ms) });
+
+	trackFeature.setStyle(style);
+	trackFeature.setId(`track_${pilot.id}_${++currentIndex}`);
+
+	trackSource.addFeature(trackFeature);
+
+    lastPoint = [pilot.longitude, pilot.latitude];
 }
 
 function getTrackSegmentColor(altitude_agl: number, altitude_ms: number): Stroke {
