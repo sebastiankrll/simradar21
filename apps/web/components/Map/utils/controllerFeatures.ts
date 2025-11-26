@@ -27,10 +27,10 @@ export function getControllerLabelStyle(feature: FeatureLike, resolution: number
 	const style = new Style({
 		text: new Text({
 			text: label,
-			font: "600 12px Manrope, sans-serif",
+			font: "600 10px Manrope, sans-serif",
 			fill: new Fill({ color: "white" }),
 			backgroundFill: active ? new Fill({ color: "rgb(234, 89, 121)" }) : bg,
-			padding: [4, 3, 2, 5],
+			padding: [3, 2, 1, 4],
 			textAlign: "center",
 		}),
 	});

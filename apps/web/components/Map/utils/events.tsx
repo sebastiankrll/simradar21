@@ -5,7 +5,7 @@ import { toLonLat } from "ol/proj";
 import { createRoot, type Root } from "react-dom/client";
 import { getAirportShort, getCachedAirline, getCachedAirport } from "@/storage/cache";
 import { AirportOverlay, PilotOverlay } from "../components/Overlay/Overlays";
-import { setFeatures, trackSource } from "./dataLayers";
+import { firSource, setFeatures, trackSource, traconSource } from "./dataLayers";
 import { initTrackFeatures } from "./trackFeatures";
 
 export function onMoveEnd(evt: { map: OlMap }): void {
@@ -42,6 +42,7 @@ export async function onPointerMove(evt: { pixel: Pixel; map: OlMap }): Promise<
 	if (feature !== hoveredFeature && hoveredOverlay) {
 		map.removeOverlay(hoveredOverlay);
 		hoveredOverlay = null;
+		toggleControllerSectorHover(hoveredFeature, false, "hovered");
 	}
 
 	if (feature && feature !== hoveredFeature && feature !== clickedFeature) {
@@ -54,6 +55,8 @@ export async function onPointerMove(evt: { pixel: Pixel; map: OlMap }): Promise<
 		hoveredFeature = null;
 	}
 
+	toggleControllerSectorHover(feature, true, "hovered");
+
 	feature?.set("hovered", true);
 	hoveredFeature = feature || null;
 
@@ -65,7 +68,7 @@ export async function onClick(evt: { pixel: Pixel; map: OlMap }): Promise<void> 
 	const pixel = evt.pixel;
 
 	const feature = map.forEachFeatureAtPixel(pixel, (f) => f, {
-		layerFilter: (layer) => layer.get("type") === "airport_main" || layer.get("type") === "pilot_main",
+		layerFilter: (layer) => layer.get("type") === "airport_main" || layer.get("type") === "pilot_main" || layer.get("type") === "controller_label",
 		hitTolerance: 10,
 	}) as Feature<Point>;
 
@@ -73,6 +76,7 @@ export async function onClick(evt: { pixel: Pixel; map: OlMap }): Promise<void> 
 		map.removeOverlay(clickedOverlay);
 		clickedOverlay = null;
 		trackSource.clear();
+		toggleControllerSectorHover(clickedFeature, false, "clicked");
 	}
 
 	if (feature && feature !== clickedFeature) {
@@ -87,6 +91,8 @@ export async function onClick(evt: { pixel: Pixel; map: OlMap }): Promise<void> 
 
 	feature?.set("clicked", true);
 	clickedFeature = feature || null;
+
+	toggleControllerSectorHover(feature, true, "clicked");
 
 	const type = clickedFeature?.get("type");
 	if (clickedFeature && type === "pilot") {
@@ -175,5 +181,27 @@ async function updateOverlay(feature: Feature<Point>, overlay: Overlay): Promise
 		const cachedAirport = await getCachedAirport(id);
 		const shortAirport = getAirportShort(id);
 		root.render(<AirportOverlay cached={cachedAirport} short={shortAirport} />);
+	}
+}
+
+function toggleControllerSectorHover(feature: Feature<Point> | undefined | null, hovered: boolean, event: "hovered" | "clicked"): void {
+	if (feature?.get("type") === "tracon") {
+		const id = feature.getId()?.toString();
+		if (id) {
+			const multiFeature = traconSource.getFeatureById(id);
+			if (multiFeature) {
+				multiFeature.set(event, hovered);
+			}
+		}
+	}
+
+	if (feature?.get("type") === "fir") {
+		const id = feature.getId()?.toString();
+		if (id) {
+			const multiFeature = firSource.getFeatureById(id);
+			if (multiFeature) {
+				multiFeature.set(event, hovered);
+			}
+		}
 	}
 }
