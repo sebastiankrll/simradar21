@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import "./globals.css";
+import "@/assets/images/sprites/freakflags.css";
 import Header from "@/components/Header/Header";
 import OMap from "@/components/Map/Map";
 

@@ -56,8 +56,14 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	aspect-ratio: 1 / 1;
 	height: 100%;
+    aspect-ratio: 1/1;
+    background-color: white;
+}
+
+.overlay-icon.flag {
+    padding: 0px 4px;
+    box-sizing: border-box;
 }
 
 .overlay-icon p {
@@ -70,46 +76,63 @@
 	display: flex;
 	flex-flow: column;
     gap: 5px;
-    margin-left: 5px;
-    margin-right: 1.5rem;
+	margin-left: 5px;
+	margin-right: 1rem;
 }
 
 .overlay-title p {
 	color: white;
 	font-weight: 700;
 	line-height: 18px;
-	font-size: 18px;
+	font-size: 14px;
 }
 
 .overlay-title p:last-child {
 	font-size: 10px;
-    line-height: 10px;
-    font-weight: 500;
+	line-height: 10px;
+	font-weight: 500;
 }
 
 .overlay-misc {
-    display: flex;
-    flex-flow: column;
-    justify-content: space-between;
-    height: 100%;
+	display: flex;
+	flex-flow: column;
+    gap: 5px;
+	height: 100%;
 }
 
 .overlay-misc div {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 12px;
 	line-height: 12px;
-    padding: 2px 0px;
-    width: 2.8rem;
+	padding: 2px 0px;
+	width: 2.8rem;
 }
 
 .overlay-pilot-ac-type {
 	background: var(--color-main-text);
-    color: white;
-    font-weight: 700;
+	color: white;
+	font-weight: 700;
 }
 
 .overlay-pilot-frequency {
+	color: white;
+}
+
+.overlay-misc .overlay-airport-traffic {
+    gap: 4px;
+    height: 50%;
+    overflow: hidden;
+    width: fit-content;
+    padding-right: 4px;
+}
+
+.overlay-airport-traffic p {
     color: white;
+}
+
+.overlay-airport-traffic svg {
+    fill: white;
+    width: 18px;
 }

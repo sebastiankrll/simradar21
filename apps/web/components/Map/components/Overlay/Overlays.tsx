@@ -4,6 +4,7 @@ import type { StaticAirline, StaticAirport } from "@sk/types/db";
 import type { AirportShort } from "@sk/types/vatsim";
 import type { Point } from "ol/geom";
 import type { PilotProperties } from "@/types/ol";
+import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
 
 export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; airline: StaticAirline | null }) {
 	const data = feature.getProperties() as PilotProperties;
@@ -64,14 +65,35 @@ export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; ai
 
 export function AirportOverlay({ cached, short }: { cached: StaticAirport | null; short: AirportShort | null }) {
 	return (
-		<div className="popup popup-tip">
-			<div className="popup-content airport">
-				<div className="popup-content-main">
-					<div className="popup-content-header">{cached?.name || "N/A"}</div>
-					<p>{cached?.id || "N/A"}</p>
+		<div className="overlay-wrapper">
+			{/* <div className="overlay-live pilot">
+				<div className="overlay-live-item">
+					<span>ALT</span>
+					{Math.round(data.altitude_ms / 250) * 250}
 				</div>
-				<div className="popup-airport-info">
-					<div className="popup-airport-info-icon">
+				<div className="overlay-live-item">
+					<span>FPM</span>
+					{vs}
+				</div>
+				<div className="overlay-live-item">
+					<span>GS</span>
+					{data.groundspeed}
+				</div>
+				<div className="overlay-live-item">
+					<span>HDG</span>
+					{hdg}
+				</div>
+			</div> */}
+			<div className="overlay-main-wrapper">
+				<div className="overlay-icon flag">
+					<div className={`fflag ff-lg fflag-${cached?.country}`} style={{ backgroundImage: `url(${FlagSprite.src})` }}></div>
+				</div>
+				<div className="overlay-title">
+					<p>{cached?.name || "N/A"}</p>
+					<p>{`${cached?.id || "N/A"} / ${cached?.iata || "N/A"}`}</p>
+				</div>
+				<div className="overlay-misc">
+					<div className="overlay-airport-traffic">
 						<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 							<title>Airport Logo</title>
 							<path
@@ -80,9 +102,9 @@ export function AirportOverlay({ cached, short }: { cached: StaticAirport | null
 								clipRule="evenodd"
 							></path>
 						</svg>
+						<p>{short?.dep_traffic.traffic_count || 0}</p>
 					</div>
-					<div className="popup-airport-info-n">{short?.dep_traffic.traffic_count || 0}</div>
-					<div className="popup-airport-info-icon">
+					<div className="overlay-airport-traffic">
 						<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 							<title>Airport Logo</title>
 							<path
@@ -91,11 +113,10 @@ export function AirportOverlay({ cached, short }: { cached: StaticAirport | null
 								clipRule="evenodd"
 							></path>
 						</svg>
+						<p>{short?.arr_traffic.traffic_count || 0}</p>
 					</div>
-					<div className="popup-airport-info-n">{short?.arr_traffic.traffic_count || 0}</div>
 				</div>
 			</div>
-			<div className="popup-content-anchor"></div>
 		</div>
 	);
 }
