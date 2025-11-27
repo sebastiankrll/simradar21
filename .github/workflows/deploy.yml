@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Create .env file
-        run: echo "${{ secrets.ENV_FILE }}" > .env
+        run: echo "${{ secrets.ENV_FILE }}" > ./docker/.env
 
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.8.0
