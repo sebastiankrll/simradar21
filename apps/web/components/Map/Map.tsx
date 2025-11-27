@@ -2,11 +2,8 @@
 
 import { useEffect } from "react";
 import "./Map.css";
-import { initData } from "@/storage/cache";
 import { onClick, onMoveEnd, onPointerMove } from "./utils/events";
 import { initMap } from "./utils/init";
-
-initData();
 
 export default function OMap() {
 	useEffect(() => {

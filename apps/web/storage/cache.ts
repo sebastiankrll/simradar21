@@ -7,6 +7,7 @@ import { updateOverlays } from "@/components/Map/utils/events";
 import { getMapView } from "@/components/Map/utils/init";
 import { initPilotFeatures, updatePilotFeatures } from "@/components/Map/utils/pilotFeatures";
 import { updateTrackFeatures } from "@/components/Map/utils/trackFeatures";
+import type { StatusMap } from "@/types/data";
 import { wsClient } from "@/utils/ws";
 import { dxGetAirline, dxGetAirport, dxGetFirs, dxGetTracons, dxInitDatabases } from "./dexie";
 
@@ -19,9 +20,15 @@ const cachedAirlines: Map<string, StaticAirline> = new Map();
 const cachedTracons: Map<string, SimAwareTraconFeature> = new Map();
 const cachedFirs: Map<string, FIRFeature> = new Map();
 
-export async function initData(): Promise<void> {
+type StatusSetter = (status: Partial<StatusMap> | ((prev: Partial<StatusMap>) => Partial<StatusMap>)) => void;
+
+export async function initData(setStatus?: StatusSetter): Promise<void> {
 	await dxInitDatabases();
+	setStatus?.((prev) => ({ ...prev, indexedDB: true }));
+
 	const data = (await fetch(`${BASE_URL}/api/data/init`).then((res) => res.json())) as WsAll;
+	setStatus?.((prev) => ({ ...prev, initData: true }));
+
 	await initAirportFeatures();
 	initPilotFeatures(data.pilots);
 	initControllerFeatures(data.controllers);
@@ -33,6 +40,7 @@ export async function initData(): Promise<void> {
 	if (view) {
 		setFeatures(view.calculateExtent(), view.getZoom() || 5);
 	}
+	setStatus?.((prev) => ({ ...prev, initMap: true }));
 
 	wsClient.addListener((msg) => {
 		updateCache(msg);

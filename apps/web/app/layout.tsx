@@ -3,6 +3,7 @@ import { Manrope } from "next/font/google";
 import "./globals.css";
 import "@/assets/images/sprites/freakflags.css";
 import Header from "@/components/Header/Header";
+import Loader from "@/components/Loader/Loader";
 import OMap from "@/components/Map/Map";
 
 export const metadata: Metadata = {
@@ -24,6 +25,7 @@ export default function RootLayout({
 		<html lang="en" className={manrope.className}>
 			<body>
 				<Header />
+				<Loader />
 				<OMap />
 				{children}
 			</body>
