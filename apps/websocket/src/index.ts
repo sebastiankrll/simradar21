@@ -4,7 +4,7 @@ import type { WsDelta } from "@sk/types/vatsim";
 import { WebSocketServer } from "ws";
 
 const wss = new WebSocketServer({
-	port: 5001,
+	port: Number(process.env.WEBSOCKET_PORT) || 3002,
 	perMessageDeflate: false,
 });
 

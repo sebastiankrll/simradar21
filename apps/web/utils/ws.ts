@@ -1,11 +1,11 @@
 // lib/wsClient.ts
 
-import type { WsShort } from "@sk/types/vatsim";
+import type { WsDelta } from "@sk/types/vatsim";
 import Pako from "pako";
 
-const WS_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "ws://localhost:5001";
+const WS_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "ws://localhost:3002";
 
-type Listener = (msg: WsShort) => void;
+type Listener = (msg: WsDelta) => void;
 
 class WsClient {
 	private ws: WebSocket;
@@ -24,7 +24,7 @@ class WsClient {
 				const compressed = new Uint8Array(e.data);
 				const decompressed = Pako.ungzip(compressed, { to: "string" });
 				const parsed = JSON.parse(decompressed);
-				const data: WsShort = parsed.data;
+				const data: WsDelta = parsed.data;
 
 				this.listeners.forEach((fn) => {
 					fn(data);

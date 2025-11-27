@@ -10,6 +10,8 @@ import { updateTrackFeatures } from "@/components/Map/utils/trackFeatures";
 import { wsClient } from "@/utils/ws";
 import { dxGetAirline, dxGetAirport, dxGetFirs, dxGetTracons, dxInitDatabases } from "./dexie";
 
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
 let airportsShort: AirportShort[] = [];
 let controllersMerged: ControllerMerged[] = [];
 const cachedAirports: Map<string, StaticAirport> = new Map();
@@ -19,7 +21,7 @@ const cachedFirs: Map<string, FIRFeature> = new Map();
 
 export async function initData(): Promise<void> {
 	await dxInitDatabases();
-	const data = (await fetch("http://localhost:5000/api/data/init").then((res) => res.json())) as WsAll;
+	const data = (await fetch(`${BASE_URL}/api/data/init`).then((res) => res.json())) as WsAll;
 	await initAirportFeatures();
 	initPilotFeatures(data.pilots);
 	initControllerFeatures(data.controllers);
@@ -107,5 +109,5 @@ export async function getCachedFir(id: string): Promise<FIRFeature | null> {
 }
 
 export async function fetchTrackPoints(id: string): Promise<TrackPoint[]> {
-	return await fetch(`http://localhost:5000/api/data/track/${id}`).then((res) => res.json());
+	return await fetch(`${BASE_URL}/api/data/track/${id}`).then((res) => res.json());
 }

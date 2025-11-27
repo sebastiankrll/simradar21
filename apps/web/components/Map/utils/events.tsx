@@ -1,4 +1,5 @@
 import { type Feature, type MapBrowserEvent, Overlay, type View } from "ol";
+import type BaseEvent from "ol/events/Event";
 import type { Point } from "ol/geom";
 import { toLonLat } from "ol/proj";
 import { createRoot, type Root } from "react-dom/client";
@@ -7,8 +8,8 @@ import { AirportOverlay, PilotOverlay, SectorOverlay } from "../components/Overl
 import { firSource, setFeatures, trackSource, traconSource } from "./dataLayers";
 import { initTrackFeatures } from "./trackFeatures";
 
-export function onMoveEnd(evt: MapBrowserEvent): void {
-	const map = evt.map;
+export function onMoveEnd(evt: BaseEvent | Event): void {
+	const map = evt.target;
 	const view: View = map.getView();
 	const extent = view.calculateExtent();
 	const center = toLonLat(view.getCenter() || [0, 0]);

@@ -1,0 +1,131 @@
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg17
+    container_name: sr24_timescaledb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  redis:
+    image: redis:latest
+    container_name: sr24_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
+
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    restart: always
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: "https://api.radar.skruellex.com"
+      NEXT_PUBLIC_WEBSOCKET_URL: "wss://ws.radar.skruellex.com"
+    networks:
+      - traefik_proxy
+      - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nextjs.rule=Host(`radar.skruellex.com`)"
+      - "traefik.http.routers.nextjs.entrypoints=websecure"
+      - "traefik.http.routers.nextjs.tls=true"
+      - "traefik.http.routers.nextjs.tls.certresolver=letsencrypt"
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: timescaledb
+      POSTGRES_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    networks:
+      - traefik_proxy
+      - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`api.radar.skruellex.com`)"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls=true"
+      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+
+  ws:
+    build:
+      context: ..
+      dockerfile: apps/websocket/Dockerfile
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 3002
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    networks:
+      - traefik_proxy
+      - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ws.rule=Host(`ws.radar.skruellex.com`)"
+      - "traefik.http.routers.ws.entrypoints=websecure"
+      - "traefik.http.routers.ws.tls=true"
+      - "traefik.http.routers.ws.tls.certresolver=letsencrypt"
+
+  ingestion:
+    build:
+      context: ..
+      dockerfile: apps/ingestion/Dockerfile
+    restart: always
+    environment:
+      NODE_ENV: production
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: timescaledb
+      POSTGRES_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    networks:
+      - backend
+
+  updater:
+    build:
+      context: ..
+      dockerfile: apps/updater/Dockerfile
+    restart: always
+    environment:
+      NODE_ENV: production
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: timescaledb
+      POSTGRES_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    networks:
+      - backend
+
+networks:
+  traefik_proxy:
+    external: true
+  backend:
+    driver: bridge
+
+volumes:
+  timescaledb_data:
+  redis_data:
