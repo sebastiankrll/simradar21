@@ -26,6 +26,7 @@ services:
     build:
       context: ..
       dockerfile: apps/web/Dockerfile
+    container_name: sr24_web
     restart: always
     environment:
       NODE_ENV: production
@@ -45,10 +46,11 @@ services:
     build:
       context: ..
       dockerfile: apps/api/Dockerfile
+    container_name: sr24_api
     restart: always
     environment:
       NODE_ENV: production
-      PORT: 3001
+      API_PORT: 3001
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
@@ -70,10 +72,11 @@ services:
     build:
       context: ..
       dockerfile: apps/websocket/Dockerfile
+    container_name: sr24_websocket
     restart: always
     environment:
       NODE_ENV: production
-      PORT: 3002
+      WEBSOCKET_PORT: 3002
       REDIS_HOST: redis
       REDIS_PORT: 6379
     networks:
@@ -90,6 +93,7 @@ services:
     build:
       context: ..
       dockerfile: apps/ingestion/Dockerfile
+    container_name: sr24_ingestion
     restart: always
     environment:
       NODE_ENV: production
@@ -107,6 +111,7 @@ services:
     build:
       context: ..
       dockerfile: apps/updater/Dockerfile
+    container_name: sr24_updater
     restart: always
     environment:
       NODE_ENV: production
