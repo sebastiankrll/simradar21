@@ -8,6 +8,12 @@ import { AirportOverlay, PilotOverlay, SectorOverlay } from "../components/Overl
 import { firSource, setFeatures, trackSource, traconSource } from "./dataLayers";
 import { initTrackFeatures } from "./trackFeatures";
 
+export type NavigateFn = (href: string) => void;
+let navigate: NavigateFn | null = null;
+export function setNavigator(fn: NavigateFn) {
+	navigate = fn;
+}
+
 export function onMoveEnd(evt: BaseEvent | Event): void {
 	const map = evt.target;
 	const view: View = map.getView();
@@ -100,6 +106,10 @@ export async function onClick(evt: MapBrowserEvent): Promise<void> {
 		clickedFeature = null;
 	}
 
+	if (!feature) {
+		navigate?.(`/`);
+	}
+
 	feature?.set("clicked", true);
 	clickedFeature = feature || null;
 
@@ -107,8 +117,13 @@ export async function onClick(evt: MapBrowserEvent): Promise<void> {
 
 	const type = clickedFeature?.get("type");
 	if (clickedFeature && type === "pilot") {
-		const callsign = clickedFeature.getId()?.toString();
-		initTrackFeatures(callsign || "");
+		const id = clickedFeature.getId()?.toString();
+		initTrackFeatures(id || "");
+
+		if (id) {
+			const strippedId = id.toString().replace(/^pilot_/, "");
+			navigate?.(`/pilot/${strippedId}`);
+		}
 	}
 }
 

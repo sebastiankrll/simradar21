@@ -56,12 +56,12 @@ app.get("/api/data/init", async (_req, res) => {
 	}
 });
 
-app.get("/api/data/pilot/:callsign", async (req, res) => {
+app.get("/api/data/pilot/:id", async (req, res) => {
 	try {
-		const { callsign } = req.params;
-		console.log("Requested pilot:", callsign);
+		const { id } = req.params;
+		console.log("Requested pilot:", id);
 
-		const pilot = await rdsGetSingle(`pilot:${callsign}`);
+		const pilot = await rdsGetSingle(`pilot:${id}`);
 		if (!pilot) return res.status(404).json({ error: "Pilot not found" });
 
 		res.json(pilot);
