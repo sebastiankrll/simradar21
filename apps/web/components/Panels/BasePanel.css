@@ -3,17 +3,26 @@
 	left: 1rem;
 	top: 4.5rem;
 	width: 20rem;
-	height: calc(100% - 9rem);
+	max-height: calc(100% - 6rem);
 	display: flex;
 	flex-flow: column;
 	transition: ease left 0.2s;
 	background: rgba(255, 255, 255, 0.5);
 	backdrop-filter: blur(5px);
 	border: 1px solid var(--color-border);
+	gap: 1rem;
 }
 
 .panel.hide {
 	left: -20rem;
+}
+
+.panel-container {
+	display: flex;
+	background-color: white;
+	padding: 0.5rem;
+	box-sizing: border-box;
+	box-shadow: 1px 1px 5px 1px var(--color-box-shadow);
 }
 
 .panel-header {
@@ -41,6 +50,62 @@
 
 .panel-close svg {
 	fill: white;
+}
+
+.panel-container.title-section {
+	display: flex;
+	padding: 0rem;
+}
+
+.panel-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 4rem;
+	aspect-ratio: 1 / 1;
+	background-color: white;
+}
+
+.panel-icon p {
+	font-weight: 800;
+	font-size: 2rem;
+	line-height: 2rem;
+}
+
+.panel-title {
+    display: flex;
+    flex-flow: column;
+    width: 100%;
+    padding: 0.5rem;
+    justify-content: space-between;
+}
+
+.panel-title p {
+	font-weight: 700;
+	font-size: 1.25rem;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.panel-desc-items {
+	display: flex;
+	gap: 0rem 0.5rem;
+}
+
+.panel-desc-item {
+	display: flex;
+	align-items: center;
+	font-size: 0.875rem;
+}
+
+.panel-desc-text {
+	white-space: nowrap;
+}
+
+.panel-desc-icon {
+	color: var(--color-light-text);
+	font-weight: 600;
+	margin-right: 0.375rem;
 }
 
 .panel-navigation {

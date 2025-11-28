@@ -1,8 +1,21 @@
 "use client";
 
+import { getCachedAirline } from "@/storage/cache";
+import { StaticAirline } from "@sk/types/db";
 import type { PilotLong } from "@sk/types/vatsim";
+import { useEffect, useState } from "react";
 
 export default function PilotPanel({ pilot }: { pilot: PilotLong | null }) {
+	const [airline, setAirline] = useState<StaticAirline | null>(null);
+	const airlineCode = pilot?.callsign.slice(0, 3).toUpperCase();
+	const flightNumber = pilot?.callsign.slice(3);
+
+	useEffect(() => {
+		getCachedAirline(airlineCode || "").then((data) => {
+			setAirline(data);
+		});
+	}, [airlineCode]);
+
 	return (
 		<>
 			<div className="panel-header">
@@ -18,7 +31,30 @@ export default function PilotPanel({ pilot }: { pilot: PilotLong | null }) {
 					</svg>
 				</button>
 			</div>
-			<div className="panel-main"></div>
+			<div className="panel-container title-section">
+				<figure className="panel-icon" style={{ backgroundColor: airline?.bg ?? "none" }}>
+					<p
+						style={{
+							color: airline?.font ?? "var(--color-green)",
+						}}
+					>
+						{airline?.iata || "?"}
+					</p>
+				</figure>
+				<div className="panel-title">
+					<p>{airline?.name}</p>
+					<div className="panel-desc-items">
+						<div className="panel-desc-item">
+							<div className="panel-desc-icon">#</div>
+							<div className="panel-desc-text">{airline?.iata ? airline.iata + flightNumber : pilot?.callsign}</div>
+						</div>
+						<div className="panel-desc-item">
+							<div className="panel-desc-icon">A</div>
+							<div className="panel-desc-text">{pilot?.aircraft}</div>
+						</div>
+					</div>
+				</div>
+			</div>
 			<div className="panel-navigation">
 				<button className={`panel-navigation-button`} type="button">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
