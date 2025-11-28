@@ -52,6 +52,14 @@
 	fill: white;
 }
 
+.panel-close:hover {
+	background-color: white;
+}
+
+.panel-close:hover svg {
+	fill: var(--color-red);
+}
+
 .panel-container.title-section {
 	display: flex;
 	padding: 0rem;
@@ -73,11 +81,11 @@
 }
 
 .panel-title {
-    display: flex;
-    flex-flow: column;
-    width: 100%;
-    padding: 0.5rem;
-    justify-content: space-between;
+	display: flex;
+	flex-flow: column;
+	width: 100%;
+	padding: 0.5rem;
+	justify-content: space-between;
 }
 
 .panel-title p {

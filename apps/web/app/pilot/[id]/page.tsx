@@ -14,5 +14,7 @@ async function fetchPilotLong(id: string): Promise<PilotLong | null> {
 export default async function Page(props: { params: Promise<{ id: string }> }) {
 	const params = await props.params;
 	const pilot = await fetchPilotLong(params.id);
+
+	if (!pilot) return <div>Pilot not found</div>;
 	return <PilotPanel pilot={pilot} />;
 }
