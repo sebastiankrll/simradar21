@@ -27,8 +27,8 @@ services:
       context: ..
       dockerfile: apps/web/Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: "https://api.radar.skruellex.com/api"
-        NEXT_PUBLIC_WEBSOCKET_URL: "wss://ws.radar.skruellex.com/ws"
+        NEXT_PUBLIC_API_URL: "https://radar.skruellex.com/api"
+        NEXT_PUBLIC_WEBSOCKET_URL: "wss://radar.skruellex.com/ws"
     container_name: sr24_web
     restart: always
     environment:
@@ -76,7 +76,7 @@ services:
       - "traefik.http.services.api.loadbalancer.server.port=3001"
       - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api"
       - "traefik.http.routers.api.middlewares=api-stripprefix"
-      - "traefik.docker.network=traefik_proxy" 
+      - "traefik.docker.network=traefik_proxy"
 
   ws:
     build:
@@ -105,7 +105,7 @@ services:
       - "traefik.http.services.ws.loadbalancer.server.port=3002"
       - "traefik.http.middlewares.ws-stripprefix.stripprefix.prefixes=/ws"
       - "traefik.http.routers.ws.middlewares=ws-stripprefix"
-      - "traefik.docker.network=traefik_proxy" 
+      - "traefik.docker.network=traefik_proxy"
 
   ingestion:
     build:
