@@ -1,7 +1,7 @@
 "use client";
 
 import type { StaticAircraft, StaticAirline, StaticAirport } from "@sk/types/db";
-import type { PilotLong } from "@sk/types/vatsim";
+import type { PilotLong, WsDelta } from "@sk/types/vatsim";
 import { useEffect, useRef, useState } from "react";
 import { getCachedAirline, getCachedAirport } from "@/storage/cache";
 import "./PilotPanel.css";
@@ -13,16 +13,19 @@ import { PilotCharts } from "./components/PilotCharts";
 import { PilotTelemetry } from "./components/PilotTelemetry";
 import { PilotUser } from "./components/PilotUser";
 import { PilotMisc } from "./components/PilotMisc";
+import { wsClient } from "@/utils/ws";
 
 export interface PilotPanelFetchData {
 	airline: StaticAirline | null;
 	departure: StaticAirport | null;
 	arrival: StaticAirport | null;
 }
-
 type AccordionSection = "info" | "charts" | "pilot" | null;
 
-export default function PilotPanel({ pilot, aircraft }: { pilot: PilotLong; aircraft: StaticAircraft | null }) {
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: PilotLong; aircraft: StaticAircraft | null }) {
+	const [pilot, setPilot] = useState<PilotLong>(initialPilot);
 	const [data, setData] = useState<PilotPanelFetchData>({
 		airline: null,
 		departure: null,
@@ -68,6 +71,39 @@ export default function PilotPanel({ pilot, aircraft }: { pilot: PilotLong; airc
 			setData({ airline, departure, arrival });
 		});
 	}, [pilot]);
+
+	useEffect(() => {
+		const onDelta = (delta: WsDelta) => {
+			const updatedPilot = delta.pilots.updated.find((p) => p.id === pilot.id);
+
+			if (updatedPilot) {
+				setPilot((prev) => ({
+					...prev,
+					...updatedPilot,
+				}));
+			}
+		};
+
+		const fetchPilot = async () => {
+			try {
+				const res = await fetch(`${BASE_URL}/api/data/pilot/${pilot.id}`);
+				if (res.ok) {
+					const updatedPilot: PilotLong = await res.json();
+					setPilot(updatedPilot);
+				}
+			} catch (error) {
+				console.error("Failed to fetch pilot data:", error);
+			}
+		};
+
+		wsClient.addListener(onDelta);
+		const interval = setInterval(fetchPilot, 60_000);
+
+		return () => {
+			wsClient.removeListener(onDelta);
+			clearInterval(interval);
+		};
+	}, [pilot.id]);
 
 	return (
 		<>

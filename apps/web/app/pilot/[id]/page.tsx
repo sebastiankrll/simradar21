@@ -27,5 +27,5 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
 	const aircraft = reg ? await fetchAircraftByReg(reg) : null;
 
 	if (!pilot) return <div>Pilot not found</div>;
-	return <PilotPanel pilot={pilot} aircraft={aircraft} />;
+	return <PilotPanel initialPilot={pilot} aircraft={aircraft} />;
 }
