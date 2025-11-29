@@ -1,4 +1,4 @@
-import { rdsGetMultiple } from "@sk/db/redis";
+import { rdsGetMultiple, rdsGetSingle } from "@sk/db/redis";
 import type { StaticAirport } from "@sk/types/db";
 import type {
 	PilotDelta,
@@ -23,7 +23,7 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 	updated = [];
 	added = [];
 
-	const pilotsLong: PilotLong[] = latestVatsimData.pilots.map((pilot) => {
+	const pilotsLongPromises: Promise<PilotLong>[] = latestVatsimData.pilots.map(async (pilot) => {
 		const id = `${pilot.cid}_${pilot.callsign}_${pilot.logon_time}`;
 		const cachedPilot = cached.find((c) => c.id === id);
 
@@ -61,7 +61,7 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 				server: pilot.server,
 				pilot_rating: pilot.pilot_rating,
 				military_rating: pilot.military_rating,
-				flight_plan: mapPilotFlightPlan(pilot.flight_plan),
+				flight_plan: await mapPilotFlightPlan(pilot.flight_plan),
 				route: `${pilot.flight_plan?.departure || "N/A"} -- ${pilot.flight_plan?.arrival || "N/A"}`,
 				logon_time: new Date(pilot.logon_time),
 				times: null,
@@ -75,6 +75,8 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 
 		return pilotLong;
 	});
+
+	const pilotsLong = await Promise.all(pilotsLongPromises);
 
 	// Fetch airport coordinates for flight time estimation and store in PilotLong to minimize DB access
 	const icaos = getUniqueAirports(pilotsLong);
@@ -149,11 +151,11 @@ function calculateVerticalSpeed(current: PilotLong, cache: PilotLong | undefined
 	return Math.round(vs);
 }
 
-function mapPilotFlightPlan(fp?: VatsimPilotFlightPlan): PilotFlightPlan | null {
+async function mapPilotFlightPlan(fp?: VatsimPilotFlightPlan): Promise<PilotFlightPlan | null> {
 	if (!fp) return null;
 	return {
 		flight_rules: fp.flight_rules === "I" ? "IFR" : "VFR",
-		ac_reg: extractAircraftRegistration(fp.remarks),
+		ac_reg: await extractAircraftRegistration(fp.remarks),
 		departure: { icao: fp.departure },
 		arrival: { icao: fp.arrival },
 		alternate: { icao: fp.alternate },
@@ -167,9 +169,27 @@ function mapPilotFlightPlan(fp?: VatsimPilotFlightPlan): PilotFlightPlan | null 
 	};
 }
 
-function extractAircraftRegistration(remarks: string): string | null {
+async function extractAircraftRegistration(remarks: string): Promise<string | null> {
 	const match = remarks.match(/REG\/([A-Z0-9]+)/i);
-	return match?.[1] ?? null;
+	if (!match?.[1]) return null;
+	const reg = match[1].toUpperCase();
+
+	let aircraft = await rdsGetSingle(`fleet:${reg}`);
+	if (aircraft) return reg;
+
+	if (reg.length > 1) {
+		const format1 = `${reg[0]}-${reg.slice(1)}`;
+		aircraft = await rdsGetSingle(`fleet:${format1}`);
+		if (aircraft) return format1;
+	}
+
+	if (reg.length > 2) {
+		const format2 = `${reg.slice(0, 2)}-${reg.slice(2)}`;
+		aircraft = await rdsGetSingle(`fleet:${format2}`);
+		if (aircraft) return format2;
+	}
+
+	return reg;
 }
 
 function mapPilotTimes(current: PilotLong, cache: PilotLong | undefined, vatsimPilot: VatsimPilot): PilotTimes | null {

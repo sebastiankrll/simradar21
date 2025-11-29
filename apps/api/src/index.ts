@@ -115,6 +115,21 @@ app.get("/api/data/track/:id", async (req, res) => {
 	}
 });
 
+app.get("/api/data/aircraft/:reg", async (req, res) => {
+	try {
+		const { reg } = req.params;
+		console.log("Requested aircraft:", reg);
+
+		const aircraft = await rdsGetSingle(`fleet:${reg}`);
+		if (!aircraft) return res.status(404).json({ error: "Aircraft not found" });
+
+		res.json(aircraft);
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ error: "Internal server error" });
+	}
+});
+
 const PORT = process.env.API_PORT || 3001;
 app.listen(PORT, () => {
 	console.log(`Express API listening on port ${PORT}`);

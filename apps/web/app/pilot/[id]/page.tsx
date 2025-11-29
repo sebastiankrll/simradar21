@@ -1,3 +1,4 @@
+import type { StaticAircraft } from "@sk/types/db";
 import type { PilotLong } from "@sk/types/vatsim";
 import PilotPanel from "@/components/Panels/PilotPanel";
 
@@ -11,10 +12,20 @@ async function fetchPilotLong(id: string): Promise<PilotLong | null> {
 	return res.json();
 }
 
+async function fetchAircraftByReg(reg: string): Promise<StaticAircraft | null> {
+	const res = await fetch(`${API_URL}/api/data/aircraft/${reg}`, {
+		cache: "no-store",
+	});
+	if (!res.ok) return null;
+	return res.json();
+}
+
 export default async function Page(props: { params: Promise<{ id: string }> }) {
 	const params = await props.params;
 	const pilot = await fetchPilotLong(params.id);
+	const reg = pilot?.flight_plan?.ac_reg || "";
+	const aircraft = reg ? await fetchAircraftByReg(reg) : null;
 
 	if (!pilot) return <div>Pilot not found</div>;
-	return <PilotPanel pilot={pilot} />;
+	return <PilotPanel pilot={pilot} aircraft={aircraft} />;
 }

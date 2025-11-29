@@ -168,6 +168,10 @@
 	display: flex;
 }
 
+.panel-sub-container.sep {
+	border-top: 1px solid var(--color-border);
+}
+
 .panel-section-title {
 	display: flex;
 	justify-content: center;
@@ -184,6 +188,7 @@
 
 .panel-section-content {
 	display: grid;
+	width: 100%;
 }
 
 .panel-data-separator {

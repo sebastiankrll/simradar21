@@ -1,10 +1,11 @@
 "use client";
 
-import type { StaticAirline, StaticAirport } from "@sk/types/db";
+import type { StaticAircraft, StaticAirline, StaticAirport } from "@sk/types/db";
 import type { PilotLong } from "@sk/types/vatsim";
 import { useEffect, useState } from "react";
 import { getCachedAirline, getCachedAirport } from "@/storage/cache";
 import "./PilotPanel.css";
+import { PilotAircraft } from "./components/PilotAircraft";
 import { PilotFlightplan } from "./components/PilotFlightplan";
 import { PilotStatus } from "./components/PilotStatus";
 import { PilotTitle } from "./components/PilotTitle";
@@ -15,7 +16,7 @@ export interface PilotPanelFetchData {
 	arrival: StaticAirport | null;
 }
 
-export default function PilotPanel({ pilot }: { pilot: PilotLong }) {
+export default function PilotPanel({ pilot, aircraft }: { pilot: PilotLong; aircraft: StaticAircraft | null }) {
 	const [data, setData] = useState<PilotPanelFetchData>({
 		airline: null,
 		departure: null,
@@ -65,6 +66,7 @@ export default function PilotPanel({ pilot }: { pilot: PilotLong }) {
 					</svg>
 				</button>
 				<PilotFlightplan pilot={pilot} data={data} />
+				<PilotAircraft pilot={pilot} aircraft={aircraft} />
 			</div>
 			<div className="panel-navigation">
 				<button className={`panel-navigation-button`} type="button">

@@ -152,3 +152,18 @@
 #panel-pilot-flightplan {
 	flex-flow: column;
 }
+
+#panel-pilot-aircraft {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	grid-template-rows: auto repeat(2, 1fr);
+}
+
+#panel-pilot-aircraft > :nth-child(1) {
+	grid-area: 1 / 1 / 2 / 3;
+}
+
+#panel-pilot-aircraft-country {
+	height: 14px;
+    width: 21px;
+}
