@@ -187,8 +187,6 @@ export interface PilotTimes {
 	on_block: Date;
 	state: string;
 	stop_counter: number;
-	departure_dist: number;
-	arrival_dist: number;
 }
 
 interface PilotAirport {

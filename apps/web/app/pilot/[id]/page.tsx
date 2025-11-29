@@ -1,5 +1,5 @@
-import PilotPanel from "@/components/Panels/PilotPanel";
 import type { PilotLong } from "@sk/types/vatsim";
+import PilotPanel from "@/components/Panels/PilotPanel";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 

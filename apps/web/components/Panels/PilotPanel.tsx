@@ -1,26 +1,28 @@
 "use client";
 
-import { getCachedAirline, getCachedAirport } from "@/storage/cache";
 import type { StaticAirline, StaticAirport } from "@sk/types/db";
 import type { PilotLong } from "@sk/types/vatsim";
 import { useEffect, useState } from "react";
-import flightStatusSprite from "./lib/sprites/flightStatusSprite.png";
-import { useRouter } from "next/navigation";
+import { getCachedAirline, getCachedAirport } from "@/storage/cache";
 import "./PilotPanel.css";
+import { PilotFlightplan } from "./components/PilotFlightplan";
+import { PilotStatus } from "./components/PilotStatus";
+import { PilotTitle } from "./components/PilotTitle";
 
-interface DataToFetch {
+export interface PilotPanelFetchData {
 	airline: StaticAirline | null;
 	departure: StaticAirport | null;
 	arrival: StaticAirport | null;
 }
 
 export default function PilotPanel({ pilot }: { pilot: PilotLong }) {
-	const [data, setData] = useState<DataToFetch>({
+	const [data, setData] = useState<PilotPanelFetchData>({
 		airline: null,
 		departure: null,
 		arrival: null,
 	});
-	const flightNumber = pilot.callsign.slice(3);
+	const callsignNumber = pilot.callsign.slice(3);
+	const flightNumber = data.airline?.iata ? data.airline.iata + callsignNumber : pilot?.callsign;
 
 	useEffect(() => {
 		const airlineCode = pilot.callsign.slice(0, 3).toUpperCase();
@@ -48,45 +50,21 @@ export default function PilotPanel({ pilot }: { pilot: PilotLong }) {
 					</svg>
 				</button>
 			</div>
-			<div className="panel-container title-section">
-				<figure className="panel-icon" style={{ backgroundColor: data.airline?.bg ?? "none" }}>
-					<p
-						style={{
-							color: data.airline?.font ?? "var(--color-green)",
-						}}
-					>
-						{data.airline?.iata || "?"}
-					</p>
-				</figure>
-				<div className="panel-title">
-					<p>{data.airline?.name}</p>
-					<div className="panel-desc-items">
-						<div className="panel-desc-item">
-							<div className="panel-desc-icon">#</div>
-							<div className="panel-desc-text">{data.airline?.iata ? data.airline.iata + flightNumber : pilot?.callsign}</div>
-						</div>
-						<div className="panel-desc-item">
-							<div className="panel-desc-icon">A</div>
-							<div className="panel-desc-text">{pilot.aircraft}</div>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div className="panel-container" id="panel-pilot-status">
-				<div id="panel-pilot-route">
-					<Airport airport={data.departure} />
-					<div id="panel-pilot-route-line"></div>
-					<div
-						id="panel-pilot-route-icon"
-						style={{
-							backgroundImage: `url(${flightStatusSprite.src})`,
-							// backgroundPositionY: flightStatus.imgOffset + "px",
-						}}
-					></div>
-					<Airport airport={data.arrival} />
-				</div>
-				<Times pilot={pilot} />
-				<Progress pilot={pilot} />
+			<PilotTitle pilot={pilot} data={data} />
+			<PilotStatus pilot={pilot} data={data} />
+			<div className="panel-container main">
+				<button className="panel-container-header" type="button" onClick={() => {}}>
+					<p>More {flightNumber} information</p>
+					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+						<title>Toggle more information</title>
+						<path
+							fillRule="evenodd"
+							d="M11.842 18 .237 7.26a.686.686 0 0 1 0-1.038.8.8 0 0 1 1.105 0L11.842 16l10.816-9.704a.8.8 0 0 1 1.105 0 .686.686 0 0 1 0 1.037z"
+							clipRule="evenodd"
+						></path>
+					</svg>
+				</button>
+				<PilotFlightplan pilot={pilot} data={data} />
 			</div>
 			<div className="panel-navigation">
 				<button className={`panel-navigation-button`} type="button">
@@ -135,111 +113,5 @@ export default function PilotPanel({ pilot }: { pilot: PilotLong }) {
 				</button>
 			</div>
 		</>
-	);
-}
-
-function Airport({ airport }: { airport: StaticAirport | null }) {
-	const router = useRouter();
-
-	const onClick = () => {
-		router.push(`/airport/${airport?.id}`);
-	};
-
-	return (
-		<button className="panel-pilot-airport" type="button" onClick={onClick}>
-			<div className="panel-pilot-airport-iata">{airport?.iata ?? "N/A"}</div>
-			<div className="panel-pilot-airport-name">{airport?.name ?? "Not abailable"}</div>
-		</button>
-	);
-}
-
-function Times({ pilot }: { pilot: PilotLong }) {
-	const getTime = (time: string | Date | undefined) => {
-		if (!time) {
-			return "xx:xx";
-		}
-
-		const date = new Date(time);
-		const hours = String(date.getUTCHours()).padStart(2, "0");
-		const minutes = String(date.getUTCMinutes()).padStart(2, "0");
-
-		return `${hours}:${minutes}`;
-	};
-
-	const getDelayColor = (scheduled: string | Date | undefined, actual: string | Date | undefined) => {
-		if (!scheduled || !actual) {
-			return null;
-		}
-		const scheduledDate = new Date(scheduled);
-		const actualDate = new Date(actual);
-		const delayMinutes = (actualDate.getTime() - scheduledDate.getTime()) / 60000;
-		if (delayMinutes >= 30) {
-			return "red";
-		} else if (delayMinutes >= 15) {
-			return "yellow";
-		} else if (delayMinutes > 0) {
-			return "green";
-		}
-		return "green";
-	};
-
-	return (
-		<div id="panel-pilot-times">
-			<p>{getTime(pilot.times?.sched_off_block)}</p>
-			<p className="panel-pilot-time-desc">SCHED</p>
-			<p className="panel-pilot-time-desc">SCHED</p>
-			<p>{getTime(pilot.times?.sched_on_block)}</p>
-			<p>{getTime(pilot.times?.off_block)}</p>
-			<p className="panel-pilot-time-desc">EST</p>
-			<p className="panel-pilot-time-desc">EST</p>
-			<p className={`panel-pilot-arrival-status ${getDelayColor(pilot.times?.sched_on_block, pilot.times?.on_block) ?? null}`}>
-				{getTime(pilot.times?.on_block)}
-			</p>
-		</div>
-	);
-}
-
-function Progress({ pilot }: { pilot: PilotLong }) {
-	const progress =
-		pilot.times?.departure_dist && pilot.times?.arrival_dist
-			? Math.round((1 - pilot.times.arrival_dist / (pilot.times.departure_dist + pilot.times.arrival_dist)) * 100)
-			: 0;
-
-	const departureDistKm = pilot.times?.departure_dist ? Math.round(pilot.times.departure_dist * 1.60934).toLocaleString() : 0;
-	const arrivalDistKm = pilot.times?.arrival_dist ? Math.round(pilot.times.arrival_dist * 1.60934).toLocaleString() : 0;
-
-	let timeSinceDeparture = "";
-	let timeUntilArrival = "";
-	const now = new Date();
-
-	if (pilot.times) {
-		if (new Date(pilot.times.off_block) > now) {
-			const delta = Math.floor((new Date(pilot.times.off_block).getTime() - now.getTime()) / 60000);
-			timeSinceDeparture = `in ${delta} min`;
-		} else {
-			const delta = Math.floor((now.getTime() - new Date(pilot.times.off_block).getTime()) / 60000);
-			timeSinceDeparture = `${delta} min ago`;
-		}
-
-		if (new Date(pilot.times.on_block) > now) {
-			const delta = Math.floor((new Date(pilot.times.on_block).getTime() - now.getTime()) / 60000);
-			timeUntilArrival = `in ${delta} min`;
-		} else {
-			const delta = Math.floor((now.getTime() - new Date(pilot.times.on_block).getTime()) / 60000);
-			timeUntilArrival = `${delta} min ago`;
-		}
-	}
-
-	return (
-		<div id="panel-pilot-progress">
-			<div id="panel-pilot-progressbar">
-				<div id="panel-pilot-progressbar-value" style={{ width: `${progress}%` }}></div>
-				<div id="panel-pilot-progressbar-icon" style={{ left: `${Math.max(Math.min(progress, 98), 2)}%` }}></div>
-			</div>
-			<div id="panel-pilot-progress-data">
-				<p>{`${departureDistKm} km, ${timeSinceDeparture}`}</p>
-				<p>{`${arrivalDistKm} km, ${timeUntilArrival}`}</p>
-			</div>
-		</div>
 	);
 }

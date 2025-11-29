@@ -27,7 +27,7 @@
 }
 
 .panel-pilot-airport:hover {
-	background-color: var(--color-blue);
+	background-color: var(--color-main-text);
 }
 
 .panel-pilot-airport:hover * {
@@ -114,7 +114,7 @@
 	position: relative;
 	width: 100%;
 	margin-top: 6px;
-    height: 4px;
+	height: 4px;
 	border-radius: 2px;
 	background-color: var(--color-dark-grey);
 }
@@ -147,4 +147,8 @@
 	font-size: 11px;
 	color: var(--color-main-text);
 	margin-top: 10px;
+}
+
+#panel-pilot-flightplan {
+	flex-flow: column;
 }

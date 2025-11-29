@@ -189,8 +189,6 @@ function mapPilotTimes(current: PilotLong, cache: PilotLong | undefined, vatsimP
 			on_block: sched_on_block,
 			state: estimateInitState(current),
 			stop_counter: 0,
-			departure_dist: 0,
-			arrival_dist: 0,
 		};
 	}
 
@@ -264,18 +262,6 @@ function mapPilotTimes(current: PilotLong, cache: PilotLong | undefined, vatsimP
 		on_block,
 		state,
 		stop_counter,
-		departure_dist: current.flight_plan?.departure
-			? haversineDistance(
-					[current.flight_plan?.departure.latitude || 0, current.flight_plan?.departure.longitude || 0],
-					[current.latitude, current.longitude],
-				)
-			: 0,
-		arrival_dist: current.flight_plan?.arrival
-			? haversineDistance(
-					[current.flight_plan?.arrival.latitude || 0, current.flight_plan?.arrival.longitude || 0],
-					[current.latitude, current.longitude],
-				)
-			: 0,
 	};
 }
 

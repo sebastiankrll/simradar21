@@ -1,8 +1,8 @@
 "use client";
 
 import "./BasePanel.css";
-import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 export default function BasePanel({ children }: { children: React.ReactNode }) {
 	const pathname = usePathname();

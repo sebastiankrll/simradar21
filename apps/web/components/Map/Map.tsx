@@ -2,9 +2,9 @@
 
 import { useEffect } from "react";
 import "./Map.css";
+import { useRouter } from "next/navigation";
 import { onClick, onMoveEnd, onPointerMove, setNavigator } from "./utils/events";
 import { initMap } from "./utils/init";
-import { useRouter } from "next/navigation";
 
 export default function OMap() {
 	const router = useRouter();
