@@ -2,7 +2,17 @@ import type { PilotLong } from "@sk/types/vatsim";
 import { haversineDistance } from "@/utils/helpers";
 import type { PilotPanelFetchData } from "../PilotPanel";
 
-export function PilotFlightplan({ pilot, data }: { pilot: PilotLong; data: PilotPanelFetchData }) {
+export function PilotFlightplan({
+	pilot,
+	data,
+	openSection,
+	ref,
+}: {
+	pilot: PilotLong;
+	data: PilotPanelFetchData;
+	openSection: string | null;
+	ref: React.Ref<HTMLDivElement>;
+}) {
 	const distKm =
 		data.departure && data.arrival
 			? haversineDistance([data.departure.latitude, data.departure.longitude], [data.arrival.latitude, data.arrival.longitude])
@@ -19,7 +29,7 @@ export function PilotFlightplan({ pilot, data }: { pilot: PilotLong; data: Pilot
 		: "N/A";
 
 	return (
-		<div className="panel-sub-container">
+		<div ref={ref} className={`panel-sub-container accordion${openSection === "info" ? " open" : ""}`}>
 			<div className="panel-section-title">
 				<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 					<title>Flightplan</title>

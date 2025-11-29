@@ -1,8 +1,8 @@
 import type { PilotLong } from "@sk/types/vatsim";
 
-export function PilotUser({ pilot }: { pilot: PilotLong }) {
+export function PilotUser({ pilot, openSection, ref }: { pilot: PilotLong; openSection: string | null; ref: React.Ref<HTMLDivElement> }) {
 	return (
-		<div className="panel-sub-container">
+		<div ref={ref} className={`panel-sub-container accordion${openSection === "pilot" ? " open" : ""}`}>
 			<div className="panel-section-title">
 				<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 					<title>User</title>

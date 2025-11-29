@@ -2,7 +2,7 @@
 
 import type { StaticAircraft, StaticAirline, StaticAirport } from "@sk/types/db";
 import type { PilotLong } from "@sk/types/vatsim";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getCachedAirline, getCachedAirport } from "@/storage/cache";
 import "./PilotPanel.css";
 import { PilotAircraft } from "./components/PilotAircraft";
@@ -20,6 +20,8 @@ export interface PilotPanelFetchData {
 	arrival: StaticAirport | null;
 }
 
+type AccordionSection = "info" | "charts" | "pilot" | null;
+
 export default function PilotPanel({ pilot, aircraft }: { pilot: PilotLong; aircraft: StaticAircraft | null }) {
 	const [data, setData] = useState<PilotPanelFetchData>({
 		airline: null,
@@ -28,6 +30,33 @@ export default function PilotPanel({ pilot, aircraft }: { pilot: PilotLong; airc
 	});
 	const callsignNumber = pilot.callsign.slice(3);
 	const flightNumber = data.airline?.iata ? data.airline.iata + callsignNumber : pilot?.callsign;
+
+	const infoRef = useRef<HTMLDivElement>(null);
+	const chartsRef = useRef<HTMLDivElement>(null);
+	const userRef = useRef<HTMLDivElement>(null);
+
+	const [openSection, setOpenSection] = useState<AccordionSection>(null);
+	const toggleSection = (section: AccordionSection) => {
+		setOpenSection(openSection === section ? null : section);
+	};
+
+	useEffect(() => {
+		const setHeight = (ref: React.RefObject<HTMLDivElement | null>, isOpen: boolean) => {
+			if (!ref.current) return;
+
+			if (isOpen) {
+				// Measure the scrollHeight (natural content height)
+				const height = ref.current.scrollHeight;
+				ref.current.style.minHeight = `${height}px`;
+			} else {
+				ref.current.style.minHeight = "0px";
+			}
+		};
+
+		setHeight(infoRef, openSection === "info");
+		setHeight(chartsRef, openSection === "charts");
+		setHeight(userRef, openSection === "pilot");
+	}, [openSection]);
 
 	useEffect(() => {
 		const airlineCode = pilot.callsign.slice(0, 3).toUpperCase();
@@ -58,7 +87,7 @@ export default function PilotPanel({ pilot, aircraft }: { pilot: PilotLong; airc
 			<PilotTitle pilot={pilot} data={data} />
 			<PilotStatus pilot={pilot} data={data} />
 			<div className="panel-container main">
-				<button className="panel-container-header" type="button" onClick={() => {}}>
+				<button className={`panel-container-header${openSection === "info" ? " open" : ""}`} type="button" onClick={() => toggleSection("info")}>
 					<p>More {flightNumber} information</p>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 						<title>Toggle more information</title>
@@ -69,9 +98,9 @@ export default function PilotPanel({ pilot, aircraft }: { pilot: PilotLong; airc
 						></path>
 					</svg>
 				</button>
-				<PilotFlightplan pilot={pilot} data={data} />
+				<PilotFlightplan pilot={pilot} data={data} openSection={openSection} ref={infoRef} />
 				<PilotAircraft pilot={pilot} aircraft={aircraft} />
-				<button className="panel-container-header" type="button" onClick={() => {}}>
+				<button className={`panel-container-header${openSection === "charts" ? " open" : ""}`} type="button" onClick={() => toggleSection("charts")}>
 					<p>Speed & altitude graph</p>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 						<title>Toggle more information</title>
@@ -82,9 +111,9 @@ export default function PilotPanel({ pilot, aircraft }: { pilot: PilotLong; airc
 						></path>
 					</svg>
 				</button>
-				<PilotCharts />
+				<PilotCharts openSection={openSection} ref={chartsRef} />
 				<PilotTelemetry pilot={pilot} />
-				<button className="panel-container-header" type="button" onClick={() => {}}>
+				<button className={`panel-container-header${openSection === "pilot" ? " open" : ""}`} type="button" onClick={() => toggleSection("pilot")}>
 					<p>Pilot information</p>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 						<title>Toggle more information</title>
@@ -95,7 +124,7 @@ export default function PilotPanel({ pilot, aircraft }: { pilot: PilotLong; airc
 						></path>
 					</svg>
 				</button>
-				<PilotUser pilot={pilot} />
+				<PilotUser pilot={pilot} openSection={openSection} ref={userRef} />
 				<PilotMisc pilot={pilot} />
 			</div>
 			<div className="panel-navigation">

@@ -5,9 +5,9 @@ const data = [
 	{ name: "Page B", uv: 0, pv: 1398, amt: 2210 },
 ];
 
-export function PilotCharts() {
+export function PilotCharts({ openSection, ref }: { openSection: string | null; ref: React.Ref<HTMLDivElement> }) {
 	return (
-		<div className="panel-sub-container">
+		<div ref={ref} className={`panel-sub-container accordion${openSection === "charts" ? " open" : ""}`}>
 			<div className="panel-section-title">
 				<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 					<title>Charts</title>
