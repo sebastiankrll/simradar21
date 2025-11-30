@@ -9,7 +9,7 @@ import { getAirportShort, getCachedAirline, getCachedAirport, getCachedFir, getC
 import { AirportOverlay, PilotOverlay, SectorOverlay } from "../components/Overlay/Overlays";
 import { addHighlightedAirport, clearHighlightedAirport } from "./airportFeatures";
 import { firSource, pilotMainSource, setFeatures, trackSource, traconSource } from "./dataLayers";
-import { getMapView } from "./init";
+import { getMap, getMapView } from "./init";
 import { addHighlightedPilot, clearHighlightedPilot } from "./pilotFeatures";
 import { initTrackFeatures } from "./trackFeatures";
 
@@ -92,7 +92,7 @@ export async function onClick(evt: MapBrowserEvent): Promise<void> {
 	if (feature !== clickedFeature && clickedOverlay) {
 		map.removeOverlay(clickedOverlay);
 		clickedOverlay = null;
-		resetMap();
+		clearMap();
 	}
 
 	if (feature && feature !== clickedFeature) {
@@ -355,7 +355,7 @@ export function followPilotOnMap(id: string, toggle: "route" | "follow" | null):
 	followInterval = setInterval(follow, 5000);
 }
 
-function resetMap(): void {
+function clearMap(): void {
 	trackSource.clear();
 
 	toggleControllerSectorHover(clickedFeature, false, "clicked");
@@ -369,4 +369,20 @@ function resetMap(): void {
 	}
 
 	lastExtent = null;
+}
+
+export function resetMap(): void {
+	clearMap();
+
+	const map = getMap();
+
+	if (clickedOverlay) {
+		map?.removeOverlay(clickedOverlay);
+		clickedOverlay = null;
+	}
+
+	clickedFeature?.set("clicked", false);
+	clickedFeature = null;
+
+	navigate?.(`/`);
 }

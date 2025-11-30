@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { fetchTrackPoints, getCachedAirline, getCachedAirport } from "@/storage/cache";
 import "./PilotPanel.css";
 import { wsClient } from "@/utils/ws";
-import { followPilotOnMap, showRouteOnMap } from "../Map/utils/events";
+import { followPilotOnMap, resetMap, showRouteOnMap } from "../Map/utils/events";
 import { PilotAircraft } from "./components/PilotAircraft";
 import { PilotCharts } from "./components/PilotCharts";
 import { PilotFlightplan } from "./components/PilotFlightplan";
@@ -146,7 +146,7 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 		<>
 			<div className="panel-header">
 				<div className="panel-id">{pilot.callsign}</div>
-				<button className="panel-close" type="button">
+				<button className="panel-close" type="button" onClick={() => resetMap()}>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 						<title>Close panel</title>
 						<path
