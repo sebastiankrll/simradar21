@@ -1,0 +1,48 @@
+#panel-dashboard-stats {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	grid-template-rows: repeat(2, 1fr);
+}
+
+#panel-dashboard-busiest {
+	flex-flow: column;
+}
+
+#dashboard-stats-navigation {
+	position: relative;
+	display: flex;
+	background: var(--color-dark-grey);
+	margin: 5px;
+	border-radius: 2px;
+}
+
+#dashboard-stats-navigation button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 11px;
+	width: 100%;
+	margin: 2px;
+	border-radius: 2px;
+}
+
+#dashboard-stats-navigation button.active,
+#dashboard-stats-navigation button:hover {
+	background: var(--color-green);
+	color: white;
+}
+
+.dashboard-table {
+	display: grid;
+	grid-template-columns: 2rem repeat(2, 1fr);
+	font-size: 12px;
+	padding: 0px 5px;
+}
+
+.dashboard-table.airport {
+	grid-template-columns: 2rem repeat(3, 1fr);
+}
+
+.dashboard-table-header {
+	font-weight: 700;
+}

@@ -145,7 +145,7 @@
 
 .panel-container.dashboard {
 	padding: 0rem;
-    flex-flow: column;
+	flex-flow: column;
 }
 
 .panel-container-header {

@@ -7,6 +7,7 @@ import { fetchTrackPoints, getCachedAirline, getCachedAirport } from "@/storage/
 import "./PilotPanel.css";
 import { wsClient } from "@/utils/ws";
 import { followPilotOnMap, resetMap, showRouteOnMap } from "../../Map/utils/events";
+import { setHeight } from "../helpers";
 import { PilotAircraft } from "./PilotAircraft";
 import { PilotCharts } from "./PilotCharts";
 import { PilotFlightplan } from "./PilotFlightplan";
@@ -15,7 +16,6 @@ import { PilotStatus } from "./PilotStatus";
 import { PilotTelemetry } from "./PilotTelemetry";
 import { PilotTitle } from "./PilotTitle";
 import { PilotUser } from "./PilotUser";
-import { setHeight } from "../helpers";
 
 export interface PilotPanelFetchData {
 	airline: StaticAirline | null;

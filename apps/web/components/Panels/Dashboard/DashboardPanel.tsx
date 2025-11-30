@@ -1,20 +1,14 @@
 "use client";
 
+import type { DashboardData } from "@sk/types/vatsim";
 import { useEffect, useRef, useState } from "react";
-import { DashboardHistory } from "./DashboardHistory";
 import { setHeight } from "../helpers";
-import { DashboardStats } from "./DashboardStats";
 import { DashboardEvents } from "./DashboardEvents";
+import { DashboardHistory } from "./DashboardHistory";
+import { DashboardStats } from "./DashboardStats";
+import "./DashboardPanel.css";
 
-const sampleData = [
-	{ name: "00:00", altitude: 1000, speed: 150 },
-	{ name: "01:00", altitude: 1200, speed: 160 },
-	{ name: "02:00", altitude: 1100, speed: 155 },
-	{ name: "03:00", altitude: 1300, speed: 165 },
-	{ name: "04:00", altitude: 1250, speed: 158 },
-];
-
-export default function DashboardPanel() {
+export default function DashboardPanel({ data }: { data: DashboardData }) {
 	const historyRef = useRef<HTMLDivElement>(null);
 	const statsRef = useRef<HTMLDivElement>(null);
 	const eventsRef = useRef<HTMLDivElement>(null);
@@ -26,6 +20,8 @@ export default function DashboardPanel() {
 
 	useEffect(() => {
 		setHeight(historyRef, openSection === "history");
+		setHeight(statsRef, openSection === "stats");
+		setHeight(eventsRef, openSection === "events");
 	}, [openSection]);
 
 	return (
@@ -47,7 +43,7 @@ export default function DashboardPanel() {
 					</svg>
 				</button>
 				<div ref={historyRef} className={`panel-sub-container accordion${openSection === "history" ? " open" : ""}`}>
-					<DashboardHistory data={sampleData} />
+					<DashboardHistory history={data.history} />
 				</div>
 			</div>
 			<div className="panel-container dashboard">
@@ -63,7 +59,7 @@ export default function DashboardPanel() {
 					</svg>
 				</button>
 				<div ref={statsRef} className={`panel-sub-container accordion${openSection === "stats" ? " open" : ""}`}>
-					<DashboardStats />
+					<DashboardStats stats={data.stats} />
 				</div>
 			</div>
 			<div className="panel-container dashboard">
@@ -79,7 +75,7 @@ export default function DashboardPanel() {
 					</svg>
 				</button>
 				<div ref={eventsRef} className={`panel-sub-container accordion${openSection === "events" ? " open" : ""}`}>
-					<DashboardEvents />
+					<DashboardEvents events={data.events} />
 				</div>
 			</div>
 		</>

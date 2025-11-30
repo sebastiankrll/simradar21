@@ -1,14 +1,26 @@
+import type { DashboardData } from "@sk/types/vatsim";
 import { Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-export function DashboardHistory({ data }: { data: any[] }) {
+export function DashboardHistory({ history }: { history: DashboardData["history"] }) {
+	const data = history.map((point) => {
+		const date = new Date(point.t);
+		const hours = date.getHours().toString().padStart(2, "0");
+		const minutes = date.getMinutes().toString().padStart(2, "0");
+
+		return {
+			name: `${hours}:${minutes}`,
+			controllers: point.v.controllers,
+			pilots: point.v.pilots,
+		};
+	});
+
 	return (
 		<ResponsiveContainer width="100%" aspect={1.618} maxHeight={500}>
 			<LineChart data={data} margin={{ top: 5, right: 5, bottom: 10, left: 5 }}>
-				<YAxis yAxisId="alt" orientation="left" fontSize="10px" width={33} tickSize={4} tickLine={false} axisLine={false} />
-				<YAxis yAxisId="spd" orientation="right" fontSize="10px" width={23} tickSize={4} tickLine={false} axisLine={false} />
+				<YAxis yAxisId="all" orientation="left" fontSize="10px" width={30} tickSize={4} tickLine={false} axisLine={false} />
 				<XAxis dataKey="name" tick={false} mirror={true} axisLine={false} />
-				<Line type="monotone" dataKey="altitude" yAxisId="alt" stroke="var(--color-red)" dot={false} name="Barometric Altitude (ft)" />
-				<Line type="monotone" dataKey="speed" yAxisId="spd" stroke="var(--color-green)" dot={false} name="Groundspeed (kt)" />
+				<Line type="monotone" dataKey="controllers" yAxisId="all" stroke="var(--color-red)" dot={false} name="Controllers" />
+				<Line type="monotone" dataKey="pilots" yAxisId="all" stroke="var(--color-green)" dot={false} name="Pilots" />
 				<Legend verticalAlign="bottom" height={5} iconSize={10} wrapperStyle={{ fontSize: "10px" }} />
 				<Tooltip wrapperStyle={{ fontSize: "10px" }} />
 			</LineChart>
