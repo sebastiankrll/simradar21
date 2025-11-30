@@ -8,27 +8,53 @@ import { DashboardHistory } from "./DashboardHistory";
 import { DashboardStats } from "./DashboardStats";
 import "./DashboardPanel.css";
 
+function storeOpenSections(sections: string[]) {
+	if (typeof window === "undefined") return;
+	try {
+		localStorage.setItem("dashboardOpenSections", JSON.stringify(sections));
+	} catch {}
+}
+
+function getStoredOpenSections(): string[] {
+	if (typeof window === "undefined") return [];
+	try {
+		const stored = localStorage.getItem("dashboardOpenSections");
+		if (!stored) return [];
+		const parsed = JSON.parse(stored);
+		if (Array.isArray(parsed) && parsed.every((s) => typeof s === "string")) {
+			return parsed;
+		}
+	} catch {}
+	return [];
+}
+
 export default function DashboardPanel({ data }: { data: DashboardData }) {
 	const historyRef = useRef<HTMLDivElement>(null);
 	const statsRef = useRef<HTMLDivElement>(null);
 	const eventsRef = useRef<HTMLDivElement>(null);
 
-	const [openSection, setOpenSection] = useState<string | null>(null);
+	const [openSection, setOpenSection] = useState<string[]>([]);
 	const toggleSection = (section: string) => {
-		setOpenSection(openSection === section ? null : section);
+		const newOpenSections = openSection.includes(section) ? openSection.filter((s) => s !== section) : [...openSection, section];
+		setOpenSection(newOpenSections);
+		storeOpenSections(newOpenSections);
 	};
 
 	useEffect(() => {
-		setHeight(historyRef, openSection === "history");
-		setHeight(statsRef, openSection === "stats");
-		setHeight(eventsRef, openSection === "events");
+		setOpenSection(getStoredOpenSections());
+	}, []);
+
+	useEffect(() => {
+		setHeight(historyRef, openSection.includes("history"));
+		setHeight(statsRef, openSection.includes("stats"));
+		setHeight(eventsRef, openSection.includes("events"));
 	}, [openSection]);
 
 	return (
 		<>
 			<div className="panel-container dashboard">
 				<button
-					className={`panel-container-header${openSection === "history" ? " open" : ""}`}
+					className={`panel-container-header${openSection.includes("history") ? " open" : ""}`}
 					type="button"
 					onClick={() => toggleSection("history")}
 				>
@@ -42,12 +68,16 @@ export default function DashboardPanel({ data }: { data: DashboardData }) {
 						></path>
 					</svg>
 				</button>
-				<div ref={historyRef} className={`panel-sub-container accordion${openSection === "history" ? " open" : ""}`}>
+				<div ref={historyRef} className={`panel-sub-container accordion${openSection.includes("history") ? " open" : ""}`}>
 					<DashboardHistory history={data.history} />
 				</div>
 			</div>
 			<div className="panel-container dashboard">
-				<button className={`panel-container-header${openSection === "stats" ? " open" : ""}`} type="button" onClick={() => toggleSection("stats")}>
+				<button
+					className={`panel-container-header${openSection.includes("stats") ? " open" : ""}`}
+					type="button"
+					onClick={() => toggleSection("stats")}
+				>
 					<p>General statistics</p>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 						<title>General statistics</title>
@@ -58,12 +88,16 @@ export default function DashboardPanel({ data }: { data: DashboardData }) {
 						></path>
 					</svg>
 				</button>
-				<div ref={statsRef} className={`panel-sub-container accordion${openSection === "stats" ? " open" : ""}`}>
+				<div ref={statsRef} className={`panel-sub-container accordion${openSection.includes("stats") ? " open" : ""}`}>
 					<DashboardStats stats={data.stats} />
 				</div>
 			</div>
 			<div className="panel-container dashboard">
-				<button className={`panel-container-header${openSection === "events" ? " open" : ""}`} type="button" onClick={() => toggleSection("events")}>
+				<button
+					className={`panel-container-header${openSection.includes("events") ? " open" : ""}`}
+					type="button"
+					onClick={() => toggleSection("events")}
+				>
 					<p>VATSIM events</p>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 						<title>VATSIM events</title>
@@ -74,7 +108,7 @@ export default function DashboardPanel({ data }: { data: DashboardData }) {
 						></path>
 					</svg>
 				</button>
-				<div ref={eventsRef} className={`panel-sub-container accordion${openSection === "events" ? " open" : ""}`}>
+				<div ref={eventsRef} className={`panel-sub-container accordion${openSection.includes("events") ? " open" : ""}`}>
 					<DashboardEvents events={data.events} />
 				</div>
 			</div>

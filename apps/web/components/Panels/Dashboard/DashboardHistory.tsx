@@ -15,7 +15,7 @@ export function DashboardHistory({ history }: { history: DashboardData["history"
 	});
 
 	return (
-		<ResponsiveContainer width="100%" aspect={1.618} maxHeight={500}>
+		<ResponsiveContainer width="100%" height={150} maxHeight={500}>
 			<LineChart data={data} margin={{ top: 5, right: 5, bottom: 10, left: 5 }}>
 				<YAxis yAxisId="all" orientation="left" fontSize="10px" width={30} tickSize={4} tickLine={false} axisLine={false} />
 				<XAxis dataKey="name" tick={false} mirror={true} axisLine={false} />
