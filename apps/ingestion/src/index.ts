@@ -5,6 +5,7 @@ import type { TrackPoint, VatsimData, VatsimTransceivers, WsAll, WsDelta } from 
 import axios from "axios";
 import { getAirportDelta, getAirportShort, mapAirports } from "./airport.js";
 import { getControllerDelta, mapControllers } from "./controller.js";
+import { updateDashboardData } from "./dashboard.js";
 import { getPilotDelta, getPilotShort, mapPilots } from "./pilot.js";
 
 const VATSIM_DATA_URL = "https://data.vatsim.net/v3/vatsim-data.json";
@@ -67,6 +68,9 @@ async function fetchVatsimData(): Promise<void> {
 				timestamp: p.timestamp,
 			}));
 			pgInsertTrackPoints(trackPoints);
+
+			// Update dashboard data
+			updateDashboardData(vatsimData, controllersLong);
 
 			console.log(`✅ Retrieved ${vatsimData.pilots.length} pilots and ${vatsimData.controllers.length} controllers.`);
 		} else {

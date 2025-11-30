@@ -6,15 +6,16 @@ import { useEffect, useRef, useState } from "react";
 import { fetchTrackPoints, getCachedAirline, getCachedAirport } from "@/storage/cache";
 import "./PilotPanel.css";
 import { wsClient } from "@/utils/ws";
-import { followPilotOnMap, resetMap, showRouteOnMap } from "../Map/utils/events";
-import { PilotAircraft } from "./components/PilotAircraft";
-import { PilotCharts } from "./components/PilotCharts";
-import { PilotFlightplan } from "./components/PilotFlightplan";
-import { PilotMisc } from "./components/PilotMisc";
-import { PilotStatus } from "./components/PilotStatus";
-import { PilotTelemetry } from "./components/PilotTelemetry";
-import { PilotTitle } from "./components/PilotTitle";
-import { PilotUser } from "./components/PilotUser";
+import { followPilotOnMap, resetMap, showRouteOnMap } from "../../Map/utils/events";
+import { setHeight } from "../helpers";
+import { PilotAircraft } from "./PilotAircraft";
+import { PilotCharts } from "./PilotCharts";
+import { PilotFlightplan } from "./PilotFlightplan";
+import { PilotMisc } from "./PilotMisc";
+import { PilotStatus } from "./PilotStatus";
+import { PilotTelemetry } from "./PilotTelemetry";
+import { PilotTitle } from "./PilotTitle";
+import { PilotUser } from "./PilotUser";
 
 export interface PilotPanelFetchData {
 	airline: StaticAirline | null;
@@ -25,18 +26,6 @@ type AccordionSection = "info" | "charts" | "pilot" | null;
 type MapInteraction = "route" | "follow" | null;
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
-
-function setHeight(ref: React.RefObject<HTMLDivElement | null>, isOpen: boolean) {
-	if (!ref.current) return;
-
-	if (isOpen) {
-		// Measure the scrollHeight (natural content height)
-		const height = ref.current.scrollHeight;
-		ref.current.style.minHeight = `${height}px`;
-	} else {
-		ref.current.style.minHeight = "0px";
-	}
-}
 
 function onStatsClick(cid: number) {
 	window.open(`https://stats.vatsim.net/stats/${cid}`, "_blank");
@@ -159,7 +148,7 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 			</div>
 			<PilotTitle pilot={pilot} data={data} />
 			<PilotStatus pilot={pilot} data={data} />
-			<div className="panel-container main">
+			<div className="panel-container main scrollable">
 				<button className={`panel-container-header${openSection === "info" ? " open" : ""}`} type="button" onClick={() => toggleSection("info")}>
 					<p>More {flightNumber} information</p>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">

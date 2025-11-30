@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { pgGetTrackPointsByid } from "@sk/db/pg";
-import { rdsGetSingle } from "@sk/db/redis";
+import { rdsGetRingStorage, rdsGetSingle } from "@sk/db/redis";
 import cors from "cors";
 import express from "express";
 
@@ -124,6 +124,20 @@ app.get("/data/aircraft/:reg", async (req, res) => {
 		if (!aircraft) return res.status(404).json({ error: "Aircraft not found" });
 
 		res.json(aircraft);
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ error: "Internal server error" });
+	}
+});
+
+app.get("/data/dashboard/", async (_req, res) => {
+	try {
+		const stats = await rdsGetSingle(`dashboard:stats`);
+		const history = await rdsGetRingStorage(`dashboard:history`, 24 * 60 * 60 * 1000);
+		const events = await rdsGetSingle(`dashboard:events`);
+		if (!stats || !history || !events) return res.status(404).json({ error: "Dashboard data not found" });
+
+		res.json({ stats, history, events });
 	} catch (err) {
 		console.error(err);
 		res.status(500).json({ error: "Internal server error" });

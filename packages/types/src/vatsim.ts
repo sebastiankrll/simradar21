@@ -265,3 +265,59 @@ export interface WsDelta {
 	controllers: ControllerDelta;
 	airports: AirportDelta;
 }
+
+export interface VatsimEventData {
+	data: VatsimEvent[];
+}
+
+export interface VatsimEvent {
+	id: number;
+	type: "Event" | "Contoller Examination" | "VASOPS Event";
+	name: string;
+	link: string;
+	organisers: VatsimEventOrganiser[];
+	airports: VatsimEventAirport[];
+	routes: VatsimEventRoute[];
+	start_time: string;
+	end_time: string;
+	short_description: string;
+	description: string;
+	banner: string;
+}
+
+interface VatsimEventOrganiser {
+	region: string | null;
+	division: string | null;
+	subdivision: string | null;
+	organized_by_vatsim: boolean;
+}
+
+interface VatsimEventAirport {
+	icao: string;
+}
+
+interface VatsimEventRoute {
+	departure: string;
+	arrival: string;
+	route: string;
+}
+
+export interface DashboardData {
+	history: { t: Date; v: { pilots: number; controllers: number } }[];
+	stats: DashboardStats;
+	events: VatsimEvent[];
+}
+
+export interface DashboardStats {
+	pilots: number;
+	controllers: number;
+	supervisors: number;
+	busiestAirports: { icao: string; departures: number; arrivals: number }[];
+	quietestAirports: { icao: string; departures: number; arrivals: number }[];
+	busiestRoutes: { route: string; count: number }[];
+	quietestRoutes: { route: string; count: number }[];
+	busiestAircrafts: { aircraft: string; count: number }[];
+	rarestAircrafts: { aircraft: string; count: number }[];
+	busiestControllers: { callsign: string; count: number }[];
+	quietestControllers: { callsign: string; count: number }[];
+}

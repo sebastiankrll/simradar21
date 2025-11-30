@@ -1,6 +1,6 @@
 import type { PilotLong } from "@sk/types/vatsim";
 import { haversineDistance } from "@/utils/helpers";
-import type { PilotPanelFetchData } from "../PilotPanel";
+import type { PilotPanelFetchData } from "./PilotPanel";
 
 export function PilotFlightplan({
 	pilot,

@@ -85,3 +85,25 @@ export async function rdsGetMultiple(keyPrefix: string, values: string[]): Promi
 
 	return results.map((r) => (r ? JSON.parse(r) : null));
 }
+
+export async function rdsSetRingStorage(key: string, value: any, windowMs: number): Promise<void> {
+	const timestamp = Date.now();
+	const member = JSON.stringify({ t: timestamp, v: value });
+	await redis.zadd(key, timestamp, member);
+	await redis.zremrangebyscore(key, 0, timestamp - windowMs);
+}
+
+export async function rdsGetRingStorage(key: string, windowMs: number): Promise<any[]> {
+	const timestamp = Date.now();
+	const minScore = timestamp - windowMs;
+	const members = await redis.zrangebyscore(key, minScore, timestamp);
+	return members
+		.map((member) => {
+			try {
+				return JSON.parse(member);
+			} catch {
+				return null;
+			}
+		})
+		.filter((item) => item !== null);
+}
