@@ -2,10 +2,10 @@ import type { StaticAircraft } from "@sk/types/db";
 import type { PilotLong } from "@sk/types/vatsim";
 import PilotPanel from "@/components/Panels/PilotPanel";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 async function fetchPilotLong(id: string): Promise<PilotLong | null> {
-	const res = await fetch(`${API_URL}/api/data/pilot/${id}`, {
+	const res = await fetch(`${API_URL}/data/pilot/${id}`, {
 		cache: "no-store",
 	});
 	if (!res.ok) return null;
@@ -13,7 +13,7 @@ async function fetchPilotLong(id: string): Promise<PilotLong | null> {
 }
 
 async function fetchAircraftByReg(reg: string): Promise<StaticAircraft | null> {
-	const res = await fetch(`${API_URL}/api/data/aircraft/${reg}`, {
+	const res = await fetch(`${API_URL}/data/aircraft/${reg}`, {
 		cache: "no-store",
 	});
 	if (!res.ok) return null;

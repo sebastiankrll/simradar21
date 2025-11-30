@@ -56,7 +56,7 @@ app.get("/data/init", async (_req, res) => {
 	}
 });
 
-app.get("/api/data/pilot/:id", async (req, res) => {
+app.get("/data/pilot/:id", async (req, res) => {
 	try {
 		const { id } = req.params;
 		console.log("Requested pilot:", id);
@@ -115,7 +115,7 @@ app.get("/data/track/:id", async (req, res) => {
 	}
 });
 
-app.get("/api/data/aircraft/:reg", async (req, res) => {
+app.get("/data/aircraft/:reg", async (req, res) => {
 	try {
 		const { reg } = req.params;
 		console.log("Requested aircraft:", reg);

@@ -14,9 +14,8 @@ import { addHighlightedPilot, clearHighlightedPilot } from "./pilotFeatures";
 import { initTrackFeatures } from "./trackFeatures";
 
 export type NavigateFn = (href: string) => void;
-let navigate: NavigateFn | null = null;
-export function setNavigator(fn: NavigateFn) {
-	navigate = fn;
+export function navigateTo(href: string) {
+	window.dispatchEvent(new CustomEvent("sr24:navigate", { detail: href }));
 }
 
 export function onMoveEnd(evt: BaseEvent | Event): void {
@@ -111,7 +110,7 @@ export async function onClick(evt: MapBrowserEvent): Promise<void> {
 	}
 
 	if (!feature) {
-		navigate?.(`/`);
+		navigateTo(`/`);
 		return;
 	}
 
@@ -127,7 +126,7 @@ export async function onClick(evt: MapBrowserEvent): Promise<void> {
 
 		if (id) {
 			const strippedId = id.toString().replace(/^pilot_/, "");
-			navigate?.(`/pilot/${strippedId}`);
+			navigateTo(`/pilot/${strippedId}`);
 			addHighlightedPilot(strippedId);
 		}
 	}
@@ -384,5 +383,5 @@ export function resetMap(): void {
 	clickedFeature?.set("clicked", false);
 	clickedFeature = null;
 
-	navigate?.(`/`);
+	navigateTo(`/`);
 }

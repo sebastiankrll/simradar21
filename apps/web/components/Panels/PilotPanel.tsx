@@ -24,7 +24,7 @@ export interface PilotPanelFetchData {
 type AccordionSection = "info" | "charts" | "pilot" | null;
 type MapInteraction = "route" | "follow" | null;
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 function setHeight(ref: React.RefObject<HTMLDivElement | null>, isOpen: boolean) {
 	if (!ref.current) return;
@@ -123,7 +123,7 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 
 		const fetchPilot = async () => {
 			try {
-				const res = await fetch(`${BASE_URL}/api/data/pilot/${pilot.id}`);
+				const res = await fetch(`${BASE_URL}/data/pilot/${pilot.id}`);
 				if (res.ok) {
 					const updatedPilot: PilotLong = await res.json();
 					setPilot(updatedPilot);

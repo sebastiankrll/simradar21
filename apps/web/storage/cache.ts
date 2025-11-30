@@ -13,7 +13,7 @@ import { dxGetAirline, dxGetAirport, dxGetFirs, dxGetTracons, dxInitDatabases } 
 
 type StatusSetter = (status: Partial<StatusMap> | ((prev: Partial<StatusMap>) => Partial<StatusMap>)) => void;
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 let airportsShort: AirportShort[] = [];
 let controllersMerged: ControllerMerged[] = [];
@@ -128,7 +128,7 @@ export async function fetchTrackPoints(id: string): Promise<TrackPoint[]> {
 		return trackPointsPending;
 	}
 
-	trackPointsPending = fetch(`${BASE_URL}/api/data/track/${id}`).then((res) => res.json());
+	trackPointsPending = fetch(`${BASE_URL}/data/track/${id}`).then((res) => res.json());
 	trackPointsCache = await trackPointsPending;
 	trackPointsPending = null;
 

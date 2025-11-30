@@ -98,7 +98,7 @@
 	line-height: 1rem;
 	white-space: nowrap;
 	overflow: hidden;
-    text-overflow: ellipsis;
+	text-overflow: ellipsis;
 }
 
 .panel-desc-items {
