@@ -143,6 +143,11 @@
 	background-color: var(--color-green);
 }
 
+.panel-container.dashboard {
+	padding: 0rem;
+    flex-flow: column;
+}
+
 .panel-container-header {
 	background-color: var(--color-blue);
 	display: flex;

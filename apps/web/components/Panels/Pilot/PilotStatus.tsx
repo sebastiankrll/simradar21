@@ -1,6 +1,6 @@
 import type { PilotLong } from "@sk/types/vatsim";
 import flightStatusSprite from "../lib/sprites/flightStatusSprite.png";
-import type { PilotPanelFetchData } from "../PilotPanel";
+import type { PilotPanelFetchData } from "./PilotPanel";
 import { PilotAirport } from "./PilotAirport";
 import { PilotProgress } from "./PilotProgress";
 import { PilotTimes } from "./PilotTimes";

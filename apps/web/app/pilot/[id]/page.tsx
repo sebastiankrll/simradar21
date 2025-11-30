@@ -1,6 +1,6 @@
 import type { StaticAircraft } from "@sk/types/db";
 import type { PilotLong } from "@sk/types/vatsim";
-import PilotPanel from "@/components/Panels/PilotPanel";
+import PilotPanel from "@/components/Panels/Pilot/PilotPanel";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 

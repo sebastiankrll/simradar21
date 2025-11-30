@@ -1,5 +1,5 @@
 import type { PilotLong } from "@sk/types/vatsim";
-import type { PilotPanelFetchData } from "../PilotPanel";
+import type { PilotPanelFetchData } from "./PilotPanel";
 
 export function PilotTitle({ pilot, data }: { pilot: PilotLong; data: PilotPanelFetchData }) {
 	const callsignNumber = pilot.callsign.slice(3);
