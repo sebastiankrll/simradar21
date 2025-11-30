@@ -11,7 +11,6 @@ import { StaticAirport } from "@sk/types/db";
 import { boundingExtent, Extent } from "ol/extent";
 import { getMapView } from "./init";
 import { addHighlightedAirport, clearHighlightedAirport } from "./airportFeatures";
-import { add } from "dexie";
 import { addHighlightedPilot, clearHighlightedPilot } from "./pilotFeatures";
 
 export type NavigateFn = (href: string) => void;

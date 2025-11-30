@@ -5,20 +5,20 @@ import { PilotAirport } from "./PilotAirport";
 import { PilotProgress } from "./PilotProgress";
 import { PilotTimes } from "./PilotTimes";
 
-export function PilotStatus({ pilot, data }: { pilot: PilotLong; data: PilotPanelFetchData }) {
-	const getSpriteOffset = (status: string | undefined) => {
-		switch (status) {
-			case "Climb":
-				return -30;
-			case "Cruise":
-				return -60;
-			case "Descent":
-				return -90;
-			default:
-				return 0;
-		}
-	};
+function getSpriteOffset(status: string | undefined) {
+	switch (status) {
+		case "Climb":
+			return -30;
+		case "Cruise":
+			return -60;
+		case "Descent":
+			return -90;
+		default:
+			return 0;
+	}
+}
 
+export function PilotStatus({ pilot, data }: { pilot: PilotLong; data: PilotPanelFetchData }) {
 	return (
 		<div className="panel-container" id="panel-pilot-status">
 			<div id="panel-pilot-route">

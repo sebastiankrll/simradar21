@@ -2,6 +2,15 @@ import type { StaticAirport } from "@sk/types/db";
 import type { PilotLong } from "@sk/types/vatsim";
 import { haversineDistance } from "@/utils/helpers";
 
+function formatTimeDelta(minutes: number): string {
+	if (minutes < 60) {
+		return `${minutes} min`;
+	}
+	const hours = Math.floor(minutes / 60);
+	const remainingMinutes = minutes % 60;
+	return `${hours}h ${remainingMinutes}m`;
+}
+
 export function PilotProgress({ pilot, departure, arrival }: { pilot: PilotLong; departure: StaticAirport | null; arrival: StaticAirport | null }) {
 	const departureDistKm = departure ? haversineDistance([departure.latitude, departure.longitude], [pilot.latitude, pilot.longitude]) : 0;
 	const arrivalDistKm = arrival ? haversineDistance([arrival.latitude, arrival.longitude], [pilot.latitude, pilot.longitude]) : 0;
@@ -15,18 +24,18 @@ export function PilotProgress({ pilot, departure, arrival }: { pilot: PilotLong;
 	if (pilot.times) {
 		if (new Date(pilot.times.off_block) > now) {
 			const delta = Math.floor((new Date(pilot.times.off_block).getTime() - now.getTime()) / 60000);
-			timeSinceDeparture = `in ${delta} min`;
+			timeSinceDeparture = `in ${formatTimeDelta(delta)}`;
 		} else {
 			const delta = Math.floor((now.getTime() - new Date(pilot.times.off_block).getTime()) / 60000);
-			timeSinceDeparture = `${delta} min ago`;
+			timeSinceDeparture = `${formatTimeDelta(delta)} ago`;
 		}
 
 		if (new Date(pilot.times.on_block) > now) {
 			const delta = Math.floor((new Date(pilot.times.on_block).getTime() - now.getTime()) / 60000);
-			timeUntilArrival = `in ${delta} min`;
+			timeUntilArrival = `in ${formatTimeDelta(delta)}`;
 		} else {
 			const delta = Math.floor((now.getTime() - new Date(pilot.times.on_block).getTime()) / 60000);
-			timeUntilArrival = `${delta} min ago`;
+			timeUntilArrival = `${formatTimeDelta(delta)} ago`;
 		}
 	}
 
