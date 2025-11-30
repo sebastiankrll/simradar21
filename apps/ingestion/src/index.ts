@@ -6,7 +6,7 @@ import axios from "axios";
 import { getAirportDelta, getAirportShort, mapAirports } from "./airport.js";
 import { getControllerDelta, mapControllers } from "./controller.js";
 import { getPilotDelta, getPilotShort, mapPilots } from "./pilot.js";
-import { updateVatsimEvents } from "./events.js";
+import { updateDashboardData } from "./dashboard.js";
 
 const VATSIM_DATA_URL = "https://data.vatsim.net/v3/vatsim-data.json";
 const VATSIM_TRANSCEIVERS_URL = "https://data.vatsim.net/v3/transceivers-data.json";
@@ -69,6 +69,9 @@ async function fetchVatsimData(): Promise<void> {
             }));
             pgInsertTrackPoints(trackPoints);
 
+            // Update dashboard data
+            updateDashboardData(vatsimData, controllersLong);
+
             console.log(`✅ Retrieved ${vatsimData.pilots.length} pilots and ${vatsimData.controllers.length} controllers.`);
         } else {
             // console.log("Nothing changed.")
@@ -81,6 +84,3 @@ async function fetchVatsimData(): Promise<void> {
 
 fetchVatsimData();
 setInterval(fetchVatsimData, FETCH_INTERVAL);
-
-updateVatsimEvents();
-setInterval(updateVatsimEvents, 60 * 60 * 1000);

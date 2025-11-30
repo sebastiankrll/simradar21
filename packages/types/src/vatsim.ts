@@ -301,3 +301,14 @@ interface VatsimEventRoute {
     arrival: string;
     route: string;
 }
+
+export interface DashboardStats {
+    pilots: number;
+    controllers: number;
+    supervisors: number;
+    busiestAirports: { icao: string; count: number }[];
+    busiestRoutes: { route: string; count: number }[];
+    busiestAircraft: { aircraft: string; count: number }[];
+    rarestAircraft: { aircraft: string; count: number }[];
+    busiestControllers: { callsign: string; count: number }[];
+}
