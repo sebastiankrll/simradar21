@@ -1,5 +1,4 @@
 import type { PilotLong } from "@sk/types/vatsim";
-import { off } from "process";
 
 function getTime(time: string | Date | undefined) {
 	if (!time) {

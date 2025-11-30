@@ -5,16 +5,16 @@ import type { PilotLong, TrackPoint, WsDelta } from "@sk/types/vatsim";
 import { useEffect, useRef, useState } from "react";
 import { fetchTrackPoints, getCachedAirline, getCachedAirport } from "@/storage/cache";
 import "./PilotPanel.css";
-import { PilotAircraft } from "./components/PilotAircraft";
-import { PilotFlightplan } from "./components/PilotFlightplan";
-import { PilotStatus } from "./components/PilotStatus";
-import { PilotTitle } from "./components/PilotTitle";
-import { PilotCharts } from "./components/PilotCharts";
-import { PilotTelemetry } from "./components/PilotTelemetry";
-import { PilotUser } from "./components/PilotUser";
-import { PilotMisc } from "./components/PilotMisc";
 import { wsClient } from "@/utils/ws";
 import { followPilotOnMap, showRouteOnMap } from "../Map/utils/events";
+import { PilotAircraft } from "./components/PilotAircraft";
+import { PilotCharts } from "./components/PilotCharts";
+import { PilotFlightplan } from "./components/PilotFlightplan";
+import { PilotMisc } from "./components/PilotMisc";
+import { PilotStatus } from "./components/PilotStatus";
+import { PilotTelemetry } from "./components/PilotTelemetry";
+import { PilotTitle } from "./components/PilotTitle";
+import { PilotUser } from "./components/PilotUser";
 
 export interface PilotPanelFetchData {
 	airline: StaticAirline | null;

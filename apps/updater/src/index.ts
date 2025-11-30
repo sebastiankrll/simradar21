@@ -7,18 +7,18 @@ import { updateFleets } from "./fleet.js";
 import { updateTracons } from "./tracon.js";
 
 CronJob.from({
-    cronTime: "0 6 * * *",
-    onTick: async () => {
-        await updateAirports();
-        await updateFirs();
-        await updateTracons();
-        await updateFleets();
+	cronTime: "0 6 * * *",
+	onTick: async () => {
+		await updateAirports();
+		await updateFirs();
+		await updateTracons();
+		await updateFleets();
 
-        console.log("✅ Static data update completed!");
-    },
-    start: true,
-    runOnInit: true,
-    timeZone: "UTC",
+		console.log("✅ Static data update completed!");
+	},
+	start: true,
+	runOnInit: true,
+	timeZone: "UTC",
 });
 
 updateAirlines();

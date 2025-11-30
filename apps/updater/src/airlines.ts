@@ -7,46 +7,46 @@ const BASE_DATA_URL = "https://github.com/sebastiankrll/simradar24-data/releases
 let version: string | null = null;
 
 export async function updateAirlines(): Promise<void> {
-    if (!version) {
-        await initVersion();
-    }
-    if (!(await isNewRelease())) return;
+	if (!version) {
+		await initVersion();
+	}
+	if (!(await isNewRelease())) return;
 
-    try {
-        const airlinesJsonUrl = `${BASE_DATA_URL}${version}/airlines.json`;
+	try {
+		const airlinesJsonUrl = `${BASE_DATA_URL}${version}/airlines.json`;
 
-        const response = await axios.get(airlinesJsonUrl, {
-            responseType: "json",
-        });
+		const response = await axios.get(airlinesJsonUrl, {
+			responseType: "json",
+		});
 
-        await rdsSetSingle("static_airlines:all", response.data);
-        await rdsSetSingle("static_airlines:version", version || "1.0.0");
+		await rdsSetSingle("static_airlines:all", response.data);
+		await rdsSetSingle("static_airlines:version", version || "1.0.0");
 
-        console.log(`✅ Airlines data updated to version ${version}`);
-    } catch (error) {
-        console.error(`Error checking for new airlines data: ${error}`);
-    }
+		console.log(`✅ Airlines data updated to version ${version}`);
+	} catch (error) {
+		console.error(`Error checking for new airlines data: ${error}`);
+	}
 }
 
 async function initVersion(): Promise<void> {
-    if (!version) {
-        const redisVersion = await rdsGetSingle("static_airlines:version");
-        version = redisVersion || "0.0.0";
-    }
+	if (!version) {
+		const redisVersion = await rdsGetSingle("static_airlines:version");
+		version = redisVersion || "0.0.0";
+	}
 }
 
 async function isNewRelease(): Promise<boolean> {
-    try {
-        const response = await axios.get(RELEASE_URL);
-        const release = response.data.tag_name;
+	try {
+		const response = await axios.get(RELEASE_URL);
+		const release = response.data.tag_name;
 
-        if (release !== version) {
-            version = release;
-            return true;
-        }
-    } catch (error) {
-        console.error(`Error checking for updates: ${error}`);
-    }
+		if (release !== version) {
+			version = release;
+			return true;
+		}
+	} catch (error) {
+		console.error(`Error checking for updates: ${error}`);
+	}
 
-    return false;
+	return false;
 }

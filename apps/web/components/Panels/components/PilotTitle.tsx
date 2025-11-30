@@ -19,14 +19,8 @@ export function PilotTitle({ pilot, data }: { pilot: PilotLong; data: PilotPanel
 			<div className="panel-title">
 				<p>{data.airline?.name}</p>
 				<div className="panel-desc-items">
-					<div className="panel-desc-item">
-						<div className="panel-desc-icon">#</div>
-						<div className="panel-desc-text">{flightNumber}</div>
-					</div>
-					<div className="panel-desc-item">
-						<div className="panel-desc-icon">A</div>
-						<div className="panel-desc-text">{pilot.aircraft}</div>
-					</div>
+					<div className="panel-desc-item r">{flightNumber}</div>
+					<div className="panel-desc-item g">{pilot.aircraft}</div>
 				</div>
 			</div>
 		</div>

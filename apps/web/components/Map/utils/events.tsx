@@ -1,17 +1,17 @@
+import type { StaticAirport } from "@sk/types/db";
 import { type Feature, type MapBrowserEvent, Overlay, type View } from "ol";
 import type BaseEvent from "ol/events/Event";
+import { boundingExtent, type Extent } from "ol/extent";
 import type { Point } from "ol/geom";
 import { fromLonLat, toLonLat } from "ol/proj";
 import { createRoot, type Root } from "react-dom/client";
 import { getAirportShort, getCachedAirline, getCachedAirport, getCachedFir, getCachedTracon, getControllerMerged } from "@/storage/cache";
 import { AirportOverlay, PilotOverlay, SectorOverlay } from "../components/Overlay/Overlays";
-import { firSource, pilotMainSource, setFeatures, trackSource, traconSource } from "./dataLayers";
-import { initTrackFeatures } from "./trackFeatures";
-import { StaticAirport } from "@sk/types/db";
-import { boundingExtent, Extent } from "ol/extent";
-import { getMapView } from "./init";
 import { addHighlightedAirport, clearHighlightedAirport } from "./airportFeatures";
+import { firSource, pilotMainSource, setFeatures, trackSource, traconSource } from "./dataLayers";
+import { getMapView } from "./init";
 import { addHighlightedPilot, clearHighlightedPilot } from "./pilotFeatures";
+import { initTrackFeatures } from "./trackFeatures";
 
 export type NavigateFn = (href: string) => void;
 let navigate: NavigateFn | null = null;
