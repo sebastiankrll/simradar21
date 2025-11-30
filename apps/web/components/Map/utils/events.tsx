@@ -1,12 +1,15 @@
 import { type Feature, type MapBrowserEvent, Overlay, type View } from "ol";
 import type BaseEvent from "ol/events/Event";
 import type { Point } from "ol/geom";
-import { toLonLat } from "ol/proj";
+import { fromLonLat, toLonLat } from "ol/proj";
 import { createRoot, type Root } from "react-dom/client";
 import { getAirportShort, getCachedAirline, getCachedAirport, getCachedFir, getCachedTracon, getControllerMerged } from "@/storage/cache";
 import { AirportOverlay, PilotOverlay, SectorOverlay } from "../components/Overlay/Overlays";
 import { firSource, setFeatures, trackSource, traconSource } from "./dataLayers";
 import { initTrackFeatures } from "./trackFeatures";
+import { StaticAirport } from "@sk/types/db";
+import { boundingExtent, Extent } from "ol/extent";
+import { getMapView } from "./init";
 
 export type NavigateFn = (href: string) => void;
 let navigate: NavigateFn | null = null;
@@ -281,4 +284,25 @@ function toggleControllerSectorHover(feature: Feature<Point> | undefined | null,
 			}
 		}
 	}
+}
+
+let lastExtent: Extent | null = null;
+
+export function showRouteOnMap(departure: StaticAirport, arrival: StaticAirport, toggle: boolean): void {
+	const view = getMapView();
+	if (!toggle && lastExtent) {
+		view?.fit(lastExtent, {
+			duration: 200,
+		});
+		return;
+	}
+
+	const coords = [fromLonLat([departure.longitude, departure.latitude]), fromLonLat([arrival.longitude, arrival.latitude])];
+	const extent = boundingExtent(coords);
+
+	lastExtent = view?.calculateExtent() || null;
+	view?.fit(extent, {
+		duration: 200,
+		padding: [150, 100, 100, 468],
+	});
 }

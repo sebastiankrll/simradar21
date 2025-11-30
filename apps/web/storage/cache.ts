@@ -120,18 +120,17 @@ export async function getCachedFir(id: string): Promise<FIRFeature | null> {
     return feature || null;
 }
 
-const trackPointsCache: TrackPoint[] = [];
+let trackPointsCache: TrackPoint[] = [];
 let trackPointsPending: Promise<TrackPoint[]> | null = null;
 
 export async function fetchTrackPoints(id: string): Promise<TrackPoint[]> {
-    if (trackPointsCache[0]?.id === id) {
-        return trackPointsCache;
-    }
-
     if (trackPointsPending) {
         return trackPointsPending;
     }
 
     trackPointsPending = fetch(`${BASE_URL}/api/data/track/${id}`).then((res) => res.json())
-    return trackPointsPending
+    trackPointsCache = await trackPointsPending;
+    trackPointsPending = null;
+
+    return trackPointsCache;
 }

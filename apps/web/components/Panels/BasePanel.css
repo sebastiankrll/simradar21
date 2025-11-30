@@ -273,17 +273,20 @@
 	height: 1rem;
 }
 
-.panel-navigation-button:hover,
-.panel-navigation-button.highlight {
+.panel-navigation-button:hover {
 	background-color: var(--color-main-text);
 }
 
+.panel-navigation-button.active {
+	background-color: var(--color-green);
+}
+
 .panel-navigation-button:hover svg,
-.panel-navigation-button.highlight svg {
+.panel-navigation-button.active svg {
 	fill: white;
 }
 
 .panel-navigation-button:hover p,
-.panel-navigation-button.highlight p {
+.panel-navigation-button.active p {
 	color: white;
 }

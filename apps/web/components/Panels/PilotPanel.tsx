@@ -14,6 +14,7 @@ import { PilotTelemetry } from "./components/PilotTelemetry";
 import { PilotUser } from "./components/PilotUser";
 import { PilotMisc } from "./components/PilotMisc";
 import { wsClient } from "@/utils/ws";
+import { showRouteOnMap } from "../Map/utils/events";
 
 export interface PilotPanelFetchData {
 	airline: StaticAirline | null;
@@ -21,8 +22,27 @@ export interface PilotPanelFetchData {
 	arrival: StaticAirport | null;
 }
 type AccordionSection = "info" | "charts" | "pilot" | null;
+type MapInteraction = "route" | "follow" | null;
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+function setHeight(ref: React.RefObject<HTMLDivElement | null>, isOpen: boolean) {
+	if (!ref.current) return;
+
+	if (isOpen) {
+		// Measure the scrollHeight (natural content height)
+		const height = ref.current.scrollHeight;
+		ref.current.style.minHeight = `${height}px`;
+	} else {
+		ref.current.style.minHeight = "0px";
+	}
+}
+
+function onRouteClick(departure: StaticAirport | null, arrival: StaticAirport | null, toggle: boolean) {
+	if (departure && arrival) {
+		showRouteOnMap(departure, arrival, toggle);
+	}
+}
 
 export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: PilotLong; aircraft: StaticAircraft | null }) {
 	const [pilot, setPilot] = useState<PilotLong>(initialPilot);
@@ -35,6 +55,14 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 	const callsignNumber = pilot.callsign.slice(3);
 	const flightNumber = data.airline?.iata ? data.airline.iata + callsignNumber : pilot?.callsign;
 
+	const [mapInteraction, setMapInteraction] = useState<MapInteraction>(null);
+	const toggleMapInteraction = (interaction: MapInteraction) => {
+		setMapInteraction(mapInteraction === interaction ? null : interaction);
+		if (interaction === "route") {
+			onRouteClick(data.departure, data.arrival, mapInteraction !== "route");
+		}
+	};
+
 	const infoRef = useRef<HTMLDivElement>(null);
 	const chartsRef = useRef<HTMLDivElement>(null);
 	const userRef = useRef<HTMLDivElement>(null);
@@ -45,18 +73,6 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 	};
 
 	useEffect(() => {
-		const setHeight = (ref: React.RefObject<HTMLDivElement | null>, isOpen: boolean) => {
-			if (!ref.current) return;
-
-			if (isOpen) {
-				// Measure the scrollHeight (natural content height)
-				const height = ref.current.scrollHeight;
-				ref.current.style.minHeight = `${height}px`;
-			} else {
-				ref.current.style.minHeight = "0px";
-			}
-		};
-
 		setHeight(infoRef, openSection === "info");
 		setHeight(chartsRef, openSection === "charts");
 		setHeight(userRef, openSection === "pilot");
@@ -180,7 +196,11 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 				<PilotMisc pilot={pilot} />
 			</div>
 			<div className="panel-navigation">
-				<button className={`panel-navigation-button`} type="button">
+				<button
+					className={`panel-navigation-button${mapInteraction === "route" ? " active" : ""}`}
+					type="button"
+					onClick={() => toggleMapInteraction("route")}
+				>
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
 						<title>Route</title>
 						<path
@@ -191,7 +211,11 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 					</svg>
 					<p>Route</p>
 				</button>
-				<button className={`panel-navigation-button`} type="button">
+				<button
+					className={`panel-navigation-button${mapInteraction === "follow" ? " active" : ""}`}
+					type="button"
+					onClick={() => toggleMapInteraction("follow")}
+				>
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
 						<title>Follow</title>
 						<path
@@ -202,7 +226,7 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 					</svg>
 					<p>Follow</p>
 				</button>
-				<button className={`panel-navigation-button`} type="button">
+				<button className={`panel-navigation-button`} type="button" onClick={() => {}}>
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
 						<title>Share</title>
 						<path
@@ -213,7 +237,7 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 					</svg>
 					<p>Share</p>
 				</button>
-				<button className={`panel-navigation-button`} type="button">
+				<button className={`panel-navigation-button`} type="button" onClick={() => {}}>
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
 						<title>More</title>
 						<path
