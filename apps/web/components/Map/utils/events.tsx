@@ -131,6 +131,14 @@ export async function onClick(evt: MapBrowserEvent): Promise<void> {
 			addHighlightedPilot(strippedId);
 		}
 	}
+
+	if (clickedFeature && type === "airport") {
+		const id = clickedFeature.getId()?.toString();
+		if (id) {
+			const strippedId = id.toString().replace(/^airport_/, "");
+			navigate?.(`/airport/${strippedId}`);
+		}
+	}
 }
 
 async function createOverlay(feature: Feature<Point>): Promise<Overlay> {

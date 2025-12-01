@@ -1,0 +1,19 @@
+import AirportPanel from "@/components/Panels/Airport/AirportPanel";
+import { AirportLong } from "@sk/types/vatsim";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+
+async function fetchAirportLong(icao: string): Promise<AirportLong | null> {
+	const res = await fetch(`${API_URL}/data/airport/${icao}`, {
+		cache: "no-store",
+	});
+	if (!res.ok) return null;
+	return res.json();
+}
+
+export default async function Page(props: { params: Promise<{ icao: string }> }) {
+	const params = await props.params;
+	const airport = await fetchAirportLong(params.icao);
+	if (!airport) return <div>Airport not found</div>;
+	return <AirportPanel initialAirport={airport} />;
+}
