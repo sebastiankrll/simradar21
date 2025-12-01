@@ -1,5 +1,6 @@
 import type { StaticAirport } from "@sk/types/db";
 import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
+import { useEffect, useState } from "react";
 
 function formatLocalTime(tz: string): string {
 	const now = new Date();
@@ -11,13 +12,13 @@ function formatLocalTime(tz: string): string {
 		hour12: false,
 	}).format(now);
 
-	const tzAbbrev =
-		new Intl.DateTimeFormat("en-US", {
-			timeZone: tz,
-			timeZoneName: "short",
-		})
-			.formatToParts(now)
-			.find((part) => part.type === "timeZoneName")?.value || "UTC";
+	// const tzAbbrev =
+	// 	new Intl.DateTimeFormat("en-US", {
+	// 		timeZone: tz,
+	// 		timeZoneName: "short",
+	// 	})
+	// 		.formatToParts(now)
+	// 		.find((part) => part.type === "timeZoneName")?.value || "UTC";
 
 	const offsetMinutes = new Date(now.toLocaleString("en-US", { timeZone: tz })).getTimezoneOffset() * -1;
 
@@ -33,10 +34,28 @@ function formatLocalTime(tz: string): string {
 		timeZone: tz,
 	}).format(now);
 
-	return `${time} ${tzAbbrev} (${utcOffset}) | ${date}`;
+	return `${time} | ${utcOffset} | ${date}`;
 }
 
 export function AirportTitle({ staticAirport }: { staticAirport: StaticAirport | null }) {
+	const [time, setTime] = useState<string>("N/A");
+
+	useEffect(() => {
+		if (!staticAirport?.timezone) {
+			setTime("N/A");
+			return;
+		}
+
+		const updateTime = () => {
+			setTime(formatLocalTime(staticAirport.timezone));
+		};
+
+		updateTime();
+		const interval = setInterval(updateTime, 1000);
+
+		return () => clearInterval(interval);
+	}, [staticAirport]);
+
 	return (
 		<div className="panel-container title-section">
 			<div className="panel-icon">
@@ -46,7 +65,7 @@ export function AirportTitle({ staticAirport }: { staticAirport: StaticAirport |
 				<p>{staticAirport?.name || "Unknown Airport"}</p>
 				<div className="panel-desc-items">
 					<div className="panel-desc-item r">{staticAirport?.iata || "N/A"}</div>
-					<div className="panel-desc-item">{formatLocalTime(staticAirport?.timezone || "UTC")}</div>
+					<div className="panel-desc-item">{time}</div>
 				</div>
 			</div>
 		</div>

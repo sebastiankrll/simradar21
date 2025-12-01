@@ -4,19 +4,25 @@ import type { AirportLong } from "@sk/types/vatsim";
 import { resetMap } from "@/components/Map/utils/events";
 import "./AirportPanel.css";
 import type { StaticAirport } from "@sk/types/db";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getCachedAirport } from "@/storage/cache";
 import { AirportTitle } from "./AirportTitle";
+import { setHeight } from "../helpers";
+import { AirportWeather } from "./AirportWeather";
+import { AirportStatus } from "./AirportStatus";
+import { parseMetar } from "metar-taf-parser";
 
 export interface AirportPanelStatic {
 	airport: StaticAirport | null;
 }
+type AccordionSection = "weather" | "stats" | "controllers" | null;
 
 export default function AirportPanel({ initialAirport }: { initialAirport: AirportLong }) {
 	const [airport, setAirport] = useState<AirportLong>(initialAirport);
 	const [data, setData] = useState<AirportPanelStatic>({
 		airport: null,
 	});
+	const parsedMetar = airport.metar ? parseMetar(airport.metar) : null;
 
 	const [shared, setShared] = useState(false);
 	const onShareClick = () => {
@@ -24,6 +30,21 @@ export default function AirportPanel({ initialAirport }: { initialAirport: Airpo
 		setShared(true);
 		setTimeout(() => setShared(false), 2000);
 	};
+
+	const weatherRef = useRef<HTMLDivElement>(null);
+	const statsRef = useRef<HTMLDivElement>(null);
+	const controllersRef = useRef<HTMLDivElement>(null);
+
+	const [openSection, setOpenSection] = useState<AccordionSection>(null);
+	const toggleSection = (section: AccordionSection) => {
+		setOpenSection(openSection === section ? null : section);
+	};
+
+	useEffect(() => {
+		setHeight(weatherRef, openSection === "weather");
+		setHeight(statsRef, openSection === "stats");
+		setHeight(controllersRef, openSection === "controllers");
+	}, [openSection]);
 
 	useEffect(() => {
 		Promise.all([getCachedAirport(initialAirport.icao)]).then(([airport]) => {
@@ -47,7 +68,25 @@ export default function AirportPanel({ initialAirport }: { initialAirport: Airpo
 				</button>
 			</div>
 			<AirportTitle staticAirport={data.airport} />
-			<div className="panel-container main scrollable"></div>
+			<AirportStatus airport={airport} parsedMetar={parsedMetar} />
+			<div className="panel-container main scrollable">
+				<button
+					className={`panel-container-header${openSection === "weather" ? " open" : ""}`}
+					type="button"
+					onClick={() => toggleSection("weather")}
+				>
+					<p>Weather & METAR</p>
+					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+						<title>Weather & METAR</title>
+						<path
+							fillRule="evenodd"
+							d="M11.842 18 .237 7.26a.686.686 0 0 1 0-1.038.8.8 0 0 1 1.105 0L11.842 16l10.816-9.704a.8.8 0 0 1 1.105 0 .686.686 0 0 1 0 1.037z"
+							clipRule="evenodd"
+						></path>
+					</svg>
+				</button>
+				<AirportWeather airport={airport} openSection={openSection} ref={weatherRef} />
+			</div>
 			<div className="panel-navigation">
 				<button className={`panel-navigation-button`} type="button" onClick={() => {}}>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">

@@ -1,0 +1,49 @@
+#panel-airport-status {
+	flex-flow: column;
+	gap: 0.5rem;
+}
+#panel-airport-status-weather,
+#panel-airport-status-flights {
+	display: flex;
+	border-radius: 0.5rem;
+	background: var(--color-light-grey);
+	border: 1px solid var(--color-border);
+	padding: 4px 0rem;
+	width: 100%;
+}
+
+#panel-airport-status-flights {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+}
+
+.panel-airport-status-item {
+	display: flex;
+	flex-flow: column;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	font-size: 12px;
+}
+
+.panel-airport-status-item p:first-child {
+	font-weight: 700;
+}
+
+.panel-airport-status-item p:last-child {
+    padding: 0px 2px;
+}
+
+.panel-airport-status-item p.green {
+	background: var(--color-green);
+	color: white;
+}
+
+.panel-airport-status-item p.yellow {
+	background: var(--color-yellow);
+}
+
+.panel-airport-status-item p.red {
+	background: var(--color-red);
+	color: white;
+}
