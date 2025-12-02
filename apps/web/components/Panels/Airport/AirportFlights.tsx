@@ -91,7 +91,12 @@ function List({ icao, dir }: { icao: string; dir: "dep" | "arr" }) {
 			) : (
 				<>
 					<div ref={topRef} style={{ height: 1 }} />
-					<button type="button" onClick={() => fetchPreviousPage()} disabled={!hasPreviousPage || isFetchingPreviousPage}>
+					<button
+						className="panel-airport-flights-page"
+						type="button"
+						onClick={() => fetchPreviousPage()}
+						disabled={!hasPreviousPage || isFetchingPreviousPage}
+					>
 						{isFetchingPreviousPage ? "Loading earlier..." : hasPreviousPage ? "Load Earlier" : "No earlier"}
 					</button>
 
@@ -105,7 +110,7 @@ function List({ icao, dir }: { icao: string; dir: "dep" | "arr" }) {
 						))}
 					</div>
 
-					<button type="button" onClick={() => fetchNextPage()} disabled={!hasNextPage || isFetchingNextPage}>
+					<button className="panel-airport-flights-page" type="button" onClick={() => fetchNextPage()} disabled={!hasNextPage || isFetchingNextPage}>
 						{isFetchingNextPage ? "Loading later..." : hasNextPage ? "Load Later" : "No later"}
 					</button>
 					<div ref={bottomRef} style={{ height: 1 }} />

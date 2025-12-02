@@ -92,12 +92,30 @@
 #panel-airport-flights {
 	background: var(--color-light-grey);
 	position: relative;
+	display: flex;
+	flex-flow: column;
+	align-items: center;
+	gap: 4px;
 }
 
 #panel-airport-flights-list {
 	display: flex;
 	flex-flow: column;
 	gap: 4px;
+}
+
+.panel-airport-flights-page {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--color-blue);
+	color: white;
+	width: 100%;
+	min-height: 30px;
+}
+
+.panel-airport-flights-page:hover {
+	background: var(--color-green);
 }
 
 .panel-airport-flights-item {
@@ -158,6 +176,7 @@
 
 .panel-airport-flights-icon p {
 	font-weight: 800;
+    font-size: 1.2rem;
 }
 
 .panel-airport-flights-main {
