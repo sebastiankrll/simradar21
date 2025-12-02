@@ -6,6 +6,8 @@ import { fromLonLat, transformExtent } from "ol/proj";
 import RBush from "rbush";
 import type { PilotProperties } from "@/types/ol";
 import { pilotMainSource } from "./dataLayers";
+import { getMapView } from "./init";
+import { initTrackFeatures } from "./trackFeatures";
 
 interface RBushPilotFeature {
 	minX: number;
@@ -147,4 +149,27 @@ export function setPilotFeatures(extent: Extent): void {
 
 	pilotMainSource.clear();
 	pilotMainSource.addFeatures(features);
+}
+
+export function moveToPilotFeature(id: string): Feature<Point> | null {
+	let feature = pilotMainSource.getFeatureById(`pilot_${id}`) as Feature<Point> | null;
+	if (!feature) {
+		feature = pilotMap.get(id) || null;
+	}
+
+	const view = getMapView();
+	const geom = feature?.getGeometry();
+	const coords = geom?.getCoordinates();
+	if (!coords) return null;
+
+	view?.animate({
+		center: coords,
+		duration: 200,
+		zoom: 8,
+	});
+
+	initTrackFeatures(id);
+	addHighlightedPilot(id);
+
+	return feature;
 }

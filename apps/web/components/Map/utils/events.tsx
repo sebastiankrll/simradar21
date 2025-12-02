@@ -7,10 +7,10 @@ import { fromLonLat, toLonLat } from "ol/proj";
 import { createRoot, type Root } from "react-dom/client";
 import { getAirportShort, getCachedAirline, getCachedAirport, getCachedFir, getCachedTracon, getControllerMerged } from "@/storage/cache";
 import { AirportOverlay, PilotOverlay, SectorOverlay } from "../components/Overlay/Overlays";
-import { addHighlightedAirport, clearHighlightedAirport } from "./airportFeatures";
-import { airportMainSource, firSource, pilotMainSource, setFeatures, trackSource, traconSource } from "./dataLayers";
+import { addHighlightedAirport, clearHighlightedAirport, moveToAirportFeature } from "./airportFeatures";
+import { firSource, pilotMainSource, setFeatures, trackSource, traconSource } from "./dataLayers";
 import { getMap, getMapView } from "./init";
-import { addHighlightedPilot, clearHighlightedPilot } from "./pilotFeatures";
+import { addHighlightedPilot, clearHighlightedPilot, moveToPilotFeature } from "./pilotFeatures";
 import { initTrackFeatures } from "./trackFeatures";
 
 export type NavigateFn = (href: string) => void;
@@ -36,7 +36,7 @@ let clickedOverlay: Overlay | null = null;
 let hoveredOverlay: Overlay | null = null;
 let hovering = false;
 
-export function onPointerMove(evt: MapBrowserEvent): void {
+export async function onPointerMove(evt: MapBrowserEvent): Promise<void> {
 	if (hovering) return;
 	hovering = true;
 
@@ -62,10 +62,8 @@ export function onPointerMove(evt: MapBrowserEvent): void {
 	}
 
 	if (feature && feature !== hoveredFeature && feature !== clickedFeature) {
-		createOverlay(feature).then((overlay) => {
-			hoveredOverlay = overlay;
-			map?.addOverlay(overlay);
-		});
+		hoveredOverlay = await createOverlay(feature);
+		map?.addOverlay(hoveredOverlay);
 	}
 
 	if (feature !== hoveredFeature) {
@@ -82,7 +80,7 @@ export function onPointerMove(evt: MapBrowserEvent): void {
 	hovering = false;
 }
 
-export function onClick(evt: MapBrowserEvent): void {
+export async function onClick(evt: MapBrowserEvent): Promise<void> {
 	const map = evt.map;
 	const pixel = evt.pixel;
 
@@ -98,10 +96,8 @@ export function onClick(evt: MapBrowserEvent): void {
 	}
 
 	if (feature && feature !== clickedFeature) {
-		createOverlay(feature).then((overlay) => {
-			clickedOverlay = overlay;
-			map?.addOverlay(overlay);
-		});
+		clickedOverlay = await createOverlay(feature);
+		map?.addOverlay(clickedOverlay);
 
 		hoveredOverlay && map.removeOverlay(hoveredOverlay);
 		hoveredOverlay = null;
@@ -141,6 +137,7 @@ export function onClick(evt: MapBrowserEvent): void {
 		if (id) {
 			const strippedId = id.toString().replace(/^airport_/, "");
 			navigate?.(`/airport/${strippedId}`);
+			addHighlightedAirport(strippedId);
 		}
 	}
 }
@@ -369,34 +366,29 @@ export function followPilotOnMap(id: string, toggle: "route" | "follow" | null):
 
 function clearMap(): void {
 	trackSource.clear();
-
 	toggleControllerSectorHover(clickedFeature, false, "clicked");
-
 	clearHighlightedAirport();
 	clearHighlightedPilot();
-
 	if (followInterval) {
 		clearInterval(followInterval);
 		followInterval = null;
 	}
-
 	lastExtent = null;
 }
 
-export function resetMap(): void {
+export function resetMap(nav: boolean = true): void {
 	clearMap();
-
 	const map = getMap();
-
 	if (clickedOverlay) {
 		map?.removeOverlay(clickedOverlay);
 		clickedOverlay = null;
 	}
-
 	clickedFeature?.set("clicked", false);
 	clickedFeature = null;
 
-	navigate?.(`/`);
+	if (nav) {
+		navigate?.(`/`);
+	}
 }
 
 export async function setHoveredPilot(id: string | null): Promise<void> {
@@ -429,12 +421,13 @@ export function setClickedFeature(path: string): void {
 		return;
 	}
 
+	resetMap(false);
+
 	if (type === "pilot") {
-		clickedFeature = pilotMainSource.getFeatureById(`pilot_${id}`) as Feature<Point> | null;
-		initTrackFeatures(id);
+		clickedFeature = moveToPilotFeature(id);
 	}
 	if (type === "airport") {
-		clickedFeature = airportMainSource.getFeatureById(`airport_${id}`) as Feature<Point> | null;
+		clickedFeature = moveToAirportFeature(id);
 	}
 
 	if (clickedFeature) {

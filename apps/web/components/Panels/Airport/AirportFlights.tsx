@@ -7,10 +7,10 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
+import { setHoveredPilot } from "@/components/Map/utils/events";
 import Spinner from "@/components/Spinner/Spinner";
 import { getCachedAirline, getCachedAirport } from "@/storage/cache";
 import { getDelayColor } from "../Pilot/PilotTimes";
-import { setHoveredPilot } from "@/components/Map/utils/events";
 
 type ApiPage = {
 	items: PilotLong[];
