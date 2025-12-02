@@ -88,3 +88,102 @@
 	width: fit-content;
 	padding: 0px 2px;
 }
+
+#panel-airport-flights {
+	background: var(--color-light-grey);
+}
+
+#panel-airport-flights-list {
+	display: flex;
+	flex-flow: column;
+	gap: 4px;
+}
+
+.panel-airport-flights-item {
+	display: flex;
+	background: white;
+	border-top: 1px solid var(--color-border);
+	border-bottom: 1px solid var(--color-border);
+	gap: 4px;
+}
+
+.panel-airport-flights-item:hover {
+	background: var(--color-main-text);
+}
+
+.panel-airport-flights-item:hover * {
+	color: white;
+}
+
+.panel-airport-flights-delay {
+	min-height: 100%;
+	width: 4px;
+}
+
+.panel-airport-flights-delay.green {
+	background: var(--color-green);
+}
+
+.panel-airport-flights-delay.yellow {
+	background: var(--color-yellow);
+}
+
+.panel-airport-flights-delay.red {
+	background: var(--color-red);
+}
+
+.panel-airport-flights-times {
+	display: flex;
+	flex-flow: column;
+	justify-content: center;
+	width: 60px;
+}
+
+.panel-airport-flights-times p {
+	text-align: center;
+}
+
+.panel-airport-flights-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 40px;
+	aspect-ratio: 1 / 1;
+	background-color: white;
+	border: 1px solid var(--color-border);
+	box-sizing: border-box;
+	margin: 2px 0px;
+}
+
+.panel-airport-flights-icon p {
+	font-weight: 800;
+}
+
+.panel-airport-flights-main {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	grid-template-rows: repeat(2, 1fr);
+	width: 100%;
+	gap: 0px 20px;
+	padding: 2px 0px;
+	padding-right: 4px;
+}
+
+.panel-airport-flights-main p {
+	display: flex;
+	align-items: center;
+}
+
+.panel-airport-flights-main p:first-child {
+	display: block;
+	text-align: start;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-weight: 700;
+}
+
+.panel-airport-flights-main p:nth-child(2n) {
+	justify-content: end;
+	font-size: 12px;
+}

@@ -149,12 +149,11 @@ app.get("/data/airport/:icao/flights", async (req, res) => {
 	try {
 		const icao = String(req.params.icao).toUpperCase();
 		const direction = (String(req.query.direction || "dep").toLowerCase() === "arr" ? "arr" : "dep") as "dep" | "arr";
-		const limit = Math.max(1, Math.min(200, Number(req.query.limit) || 50));
+		const limit = Math.max(1, Math.min(200, Number(req.query.limit) || 20));
 		const cursor = typeof req.query.cursor === "string" ? req.query.cursor : undefined;
+		const afterCursor = typeof req.query.afterCursor === "string" ? req.query.afterCursor : undefined;
 
-		// console.log(`Requested ${direction === "dep" ? "departures" : "arrivals"} for airport: ${icao}`);
-
-		const data = await pgGetAirportPilots(icao, direction, limit, cursor);
+		const data = await pgGetAirportPilots(icao, direction, limit, cursor, afterCursor);
 		res.json(data);
 	} catch (err) {
 		console.error(err);

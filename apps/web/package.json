@@ -12,6 +12,8 @@
 	"dependencies": {
 		"@geoblocks/ol-maplibre-layer": "^1.0.3",
 		"@sk/types": "*",
+		"@tanstack/react-query": "^5.90.11",
+		"@tanstack/react-query-devtools": "^5.91.1",
 		"dexie": "^4.2.1",
 		"maplibre-gl": "^5.13.0",
 		"metar-taf-parser": "^9.1.2",
@@ -20,6 +22,7 @@
 		"pako": "^2.1.0",
 		"react": "19.2.0",
 		"react-dom": "19.2.0",
+		"react-intersection-observer": "^10.0.0",
 		"recharts": "^3.5.1"
 	},
 	"devDependencies": {

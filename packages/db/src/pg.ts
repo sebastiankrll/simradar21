@@ -9,7 +9,7 @@ const pool = new Pool({
 	port: Number(process.env.POSTGRES_PORT || 5432),
 });
 
-async function pgInitTrackPointsTable() {
+export async function pgInitTrackPointsTable() {
 	const createTableQuery = `
       CREATE TABLE IF NOT EXISTS track_points (
         id TEXT NOT NULL,
@@ -95,7 +95,7 @@ export async function pgGetTrackPointsByid(id: string): Promise<TrackPoint[]> {
 	}
 }
 
-async function pgInitPilotsTable() {
+export async function pgInitPilotsTable() {
 	const createTableQuery = `
     CREATE TABLE IF NOT EXISTS pilots (
       id TEXT PRIMARY KEY,
@@ -241,7 +241,8 @@ export async function pgGetAirportPilots(
 	direction: "dep" | "arr",
 	limit: number,
 	cursor?: string,
-): Promise<{ items: PilotLong[]; nextCursor: string | null }> {
+	afterCursor?: string,
+): Promise<{ items: PilotLong[]; nextCursor: string | null; prevCursor: string | null }> {
 	let whereCursor = "";
 	const params: any[] = [icao];
 	let paramIdx = 2;
@@ -249,10 +250,17 @@ export async function pgGetAirportPilots(
 	const dirCol = direction === "dep" ? "dep_icao" : "arr_icao";
 	const timeCol = direction === "dep" ? "sched_off_block" : "sched_on_block";
 
+	let isLoadingNewer = false;
+
 	if (cursor) {
 		const [tsStr, id] = Buffer.from(cursor, "base64").toString("utf8").split("|");
+		whereCursor = `AND (${timeCol}, id) > ($${paramIdx++}, $${paramIdx++})`;
+		params.push(new Date(tsStr), id);
+	} else if (afterCursor) {
+		const [tsStr, id] = Buffer.from(afterCursor, "base64").toString("utf8").split("|");
 		whereCursor = `AND (${timeCol}, id) < ($${paramIdx++}, $${paramIdx++})`;
 		params.push(new Date(tsStr), id);
+		isLoadingNewer = true;
 	}
 
 	const q = `
@@ -261,22 +269,42 @@ export async function pgGetAirportPilots(
         WHERE ${dirCol} = $1
         AND ${timeCol} IS NOT NULL
         ${whereCursor}
-        ORDER BY ${timeCol} DESC, id DESC
+        ORDER BY ${timeCol} ${isLoadingNewer ? "DESC" : "ASC"}, id ${isLoadingNewer ? "DESC" : "ASC"}
         LIMIT $${paramIdx}
     `;
 	params.push(limit + 1);
 
-	const { rows } = await pool.query(q, params);
+	let { rows } = await pool.query(q, params);
+
+	// If loading newer (earlier times), reverse to maintain chronological order
+	if (isLoadingNewer) {
+		rows = rows.reverse();
+	}
 
 	let nextCursor: string | null = null;
-	const items = rows;
+	let prevCursor: string | null = null;
+	const items = rows as any[];
+
 	if (items.length > limit) {
-		const tail = items.pop();
+		if (isLoadingNewer) {
+			items.shift();
+		} else {
+			items.pop();
+		}
+	}
+
+	if (!isLoadingNewer && items.length > 0) {
+		const tail = items[items.length - 1];
 		const tailTime = tail[timeCol];
 		nextCursor = Buffer.from(`${new Date(tailTime).toISOString()}|${tail.id}`).toString("base64");
 	}
 
-	// Parse JSON fields back to objects
+	if (items.length > 0) {
+		const head = items[0];
+		const headTime = head[timeCol];
+		prevCursor = Buffer.from(`${new Date(headTime).toISOString()}|${head.id}`).toString("base64");
+	}
+
 	const pilots: PilotLong[] = items.map((r: any) => ({
 		id: r.id,
 		cid: r.cid,
@@ -304,7 +332,7 @@ export async function pgGetAirportPilots(
 		timestamp: new Date(r.last_update),
 	}));
 
-	return { items: pilots, nextCursor };
+	return { items: pilots, nextCursor, prevCursor };
 }
 
 export async function pgCleanupStalePilots(): Promise<void> {
@@ -319,8 +347,3 @@ export async function pgCleanupStalePilots(): Promise<void> {
 		console.error("Error cleaning up stale pilots:", err);
 	}
 }
-
-(async () => {
-	await pgInitTrackPointsTable();
-	await pgInitPilotsTable();
-})();

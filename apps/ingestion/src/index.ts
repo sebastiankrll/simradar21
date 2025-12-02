@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { pgCleanupStalePilots, pgUpsertPilots, pgUpsertTrackPoints } from "@sk/db/pg";
+import { pgCleanupStalePilots, pgInitPilotsTable, pgInitTrackPointsTable, pgUpsertPilots, pgUpsertTrackPoints } from "@sk/db/pg";
 import { rdsPubWsDelta, rdsSetMultiple, rdsSetSingle } from "@sk/db/redis";
 import type { TrackPoint, VatsimData, VatsimTransceivers, WsAll, WsDelta } from "@sk/types/vatsim";
 import axios from "axios";
@@ -12,14 +12,21 @@ const VATSIM_DATA_URL = "https://data.vatsim.net/v3/vatsim-data.json";
 const VATSIM_TRANSCEIVERS_URL = "https://data.vatsim.net/v3/transceivers-data.json";
 const FETCH_INTERVAL = 5_000;
 
+let pgInitialized = false;
 let updating = false;
 let lastVatsimUpdate = 0;
 let lastPgCleanUp = 0;
 
 async function fetchVatsimData(): Promise<void> {
 	if (updating) return;
-
 	updating = true;
+
+	if (!pgInitialized) {
+		await pgInitPilotsTable();
+		await pgInitTrackPointsTable();
+		pgInitialized = true;
+	}
+
 	try {
 		const vatsimResponse = await axios.get<VatsimData>(VATSIM_DATA_URL);
 		const vatsimData = vatsimResponse.data;
