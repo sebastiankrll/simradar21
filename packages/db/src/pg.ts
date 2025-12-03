@@ -331,6 +331,7 @@ export async function pgGetAirportPilots(
 		flight_plan: r.flight_plan,
 		route: r.route,
 		times: r.times,
+		ghost: false,
 		logon_time: new Date(r.logon_time),
 		timestamp: new Date(r.last_update),
 	}));
