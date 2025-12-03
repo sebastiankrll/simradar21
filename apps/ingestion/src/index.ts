@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { pgInsertTrackPoints } from "@sk/db/pg";
+import { pgCleanupStalePilots, pgInitPilotsTable, pgInitTrackPointsTable, pgUpsertPilots, pgUpsertTrackPoints } from "@sk/db/pg";
 import { rdsPubWsDelta, rdsSetMultiple, rdsSetSingle } from "@sk/db/redis";
 import type { TrackPoint, VatsimData, VatsimTransceivers, WsAll, WsDelta } from "@sk/types/vatsim";
 import axios from "axios";
@@ -12,26 +12,35 @@ const VATSIM_DATA_URL = "https://data.vatsim.net/v3/vatsim-data.json";
 const VATSIM_TRANSCEIVERS_URL = "https://data.vatsim.net/v3/transceivers-data.json";
 const FETCH_INTERVAL = 5_000;
 
+let pgInitialized = false;
 let updating = false;
-let lastUpdateTimestamp = "2000-01-01T00:00:00.00000Z";
+let lastVatsimUpdate = 0;
+let lastPgCleanUp = 0;
 
 async function fetchVatsimData(): Promise<void> {
 	if (updating) return;
-
 	updating = true;
+
+	if (!pgInitialized) {
+		await pgInitPilotsTable();
+		await pgInitTrackPointsTable();
+		pgInitialized = true;
+	}
+
 	try {
 		const vatsimResponse = await axios.get<VatsimData>(VATSIM_DATA_URL);
 		const vatsimData = vatsimResponse.data;
+		const timestmap = new Date(vatsimData.general.update_timestamp).getTime();
 
-		if (new Date(vatsimData.general.update_timestamp) > new Date(lastUpdateTimestamp)) {
-			lastUpdateTimestamp = vatsimData.general.update_timestamp;
+		if (timestmap > lastVatsimUpdate) {
+			lastVatsimUpdate = timestmap;
 
 			const transceiversResponse = await axios.get<VatsimTransceivers[]>(VATSIM_TRANSCEIVERS_URL);
 			vatsimData.transceivers = transceiversResponse.data;
 
 			const pilotsLong = await mapPilots(vatsimData);
 			const [controllersLong, controllersMerged] = await mapControllers(vatsimData, pilotsLong);
-			const airportsLong = mapAirports(pilotsLong);
+			const airportsLong = await mapAirports(pilotsLong);
 
 			// Publish minimal websocket data on redis ws:short
 			const delta: WsDelta = {
@@ -67,12 +76,19 @@ async function fetchVatsimData(): Promise<void> {
 				heading: p.heading,
 				timestamp: p.timestamp,
 			}));
-			pgInsertTrackPoints(trackPoints);
+			await pgUpsertTrackPoints(trackPoints);
+			await pgUpsertPilots(pilotsLong);
+
+			const now = Date.now();
+			if (now > lastPgCleanUp + 30 * 60 * 1000) {
+				lastPgCleanUp = now;
+				await pgCleanupStalePilots();
+			}
 
 			// Update dashboard data
 			updateDashboardData(vatsimData, controllersLong);
 
-			console.log(`✅ Retrieved ${vatsimData.pilots.length} pilots and ${vatsimData.controllers.length} controllers.`);
+			// console.log(`✅ Retrieved ${vatsimData.pilots.length} pilots and ${vatsimData.controllers.length} controllers.`);
 		} else {
 			// console.log("Nothing changed.")
 		}
