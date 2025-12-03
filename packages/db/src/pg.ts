@@ -116,7 +116,7 @@ export async function pgInitPilotsTable() {
       groundspeed DOUBLE PRECISION NOT NULL,
       vertical_speed DOUBLE PRECISION NOT NULL,
       heading DOUBLE PRECISION NOT NULL,
-      transponder INTEGER NOT NULL,
+      transponder TEXT NOT NULL,
       frequency INTEGER NOT NULL,
       qnh_i_hg DOUBLE PRECISION NOT NULL,
       qnh_mb DOUBLE PRECISION NOT NULL,

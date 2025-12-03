@@ -144,7 +144,7 @@ export interface PilotShort {
 	vertical_speed: number;
 	heading: number;
 	aircraft: string;
-	transponder: number;
+	transponder: string;
 	frequency: number;
 	route: string;
 	ghost: boolean;

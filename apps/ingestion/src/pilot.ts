@@ -105,7 +105,7 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 			vertical_speed: 0,
 			heading: pilot.heading,
 			timestamp: new Date(pilot.last_updated),
-			transponder: Number(pilot.transponder),
+			transponder: pilot.transponder,
 			frequency: Number(transceiver?.frequency.toString().slice(0, 6)) || 122_800,
 			qnh_i_hg: pilot.qnh_i_hg,
 			qnh_mb: pilot.qnh_mb,
