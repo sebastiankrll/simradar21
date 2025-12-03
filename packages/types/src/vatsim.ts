@@ -147,6 +147,7 @@ export interface PilotShort {
 	transponder: number;
 	frequency: number;
 	route: string;
+	ghost: boolean;
 }
 
 export interface PilotLong extends PilotShort {
@@ -185,7 +186,7 @@ export interface PilotTimes {
 	touch_down: Date;
 	sched_on_block: Date;
 	on_block: Date;
-	state: string;
+	state: "Boarding" | "Taxi Out" | "Climb" | "Cruise" | "Descent" | "Taxi In" | "On Block";
 	stop_counter: number;
 }
 
@@ -226,8 +227,10 @@ export interface AirportShort {
 }
 
 export interface AirportLong extends AirportShort {
-	busiest_route: string;
-	total_routes: number;
+	busiest: { departure: string; arrival: string };
+	unique: { departures: number; arrivals: number };
+	metar: string | null;
+	taf: string | null;
 }
 
 export interface AirportTraffic {

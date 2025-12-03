@@ -11,7 +11,8 @@ let pilotId: string | null = null;
 let lastPoint: [number, number] | null = null;
 let currentIndex: number = 0;
 
-export async function initTrackFeatures(id: string): Promise<void> {
+export async function initTrackFeatures(id: string | null): Promise<void> {
+	if (!id) return;
 	const trackPoints = await fetchTrackPoints(id.replace("pilot_", ""));
 	const trackFeatures: Feature<LineString>[] = [];
 

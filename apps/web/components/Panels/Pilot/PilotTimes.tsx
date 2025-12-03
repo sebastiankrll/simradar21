@@ -12,7 +12,7 @@ function getTime(time: string | Date | undefined) {
 	return `${hours}:${minutes}`;
 }
 
-function getDelayColor(scheduled: string | Date | undefined, actual: string | Date | undefined) {
+export function getDelayColor(scheduled: string | Date | undefined, actual: string | Date | undefined) {
 	if (!scheduled || !actual) {
 		return null;
 	}

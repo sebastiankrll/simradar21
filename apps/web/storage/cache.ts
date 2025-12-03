@@ -1,9 +1,9 @@
 import type { FIRFeature, SimAwareTraconFeature, StaticAirline, StaticAirport } from "@sk/types/db";
-import type { AirportShort, ControllerMerged, TrackPoint, WsAll, WsDelta } from "@sk/types/vatsim";
+import type { AirportShort, ControllerLong, ControllerMerged, TrackPoint, WsAll, WsDelta } from "@sk/types/vatsim";
 import { initAirportFeatures } from "@/components/Map/utils/airportFeatures";
 import { initControllerFeatures, updateControllerFeatures } from "@/components/Map/utils/controllerFeatures";
 import { setFeatures } from "@/components/Map/utils/dataLayers";
-import { updateOverlays } from "@/components/Map/utils/events";
+import { setClickedFeature, updateOverlays } from "@/components/Map/utils/events";
 import { getMapView } from "@/components/Map/utils/init";
 import { initPilotFeatures, updatePilotFeatures } from "@/components/Map/utils/pilotFeatures";
 import { updateTrackFeatures } from "@/components/Map/utils/trackFeatures";
@@ -17,8 +17,14 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 let airportsShort: AirportShort[] = [];
 let controllersMerged: ControllerMerged[] = [];
+let initialized = false;
 
-export async function initData(setStatus?: StatusSetter): Promise<void> {
+export async function initData(setStatus: StatusSetter, pathname: string): Promise<void> {
+	if (initialized) {
+		setClickedFeature(pathname);
+		return;
+	}
+
 	await dxInitDatabases();
 	setStatus?.((prev) => ({ ...prev, indexedDB: true }));
 
@@ -41,6 +47,13 @@ export async function initData(setStatus?: StatusSetter): Promise<void> {
 	wsClient.addListener((msg) => {
 		updateCache(msg);
 	});
+
+	setClickedFeature(pathname);
+	initialized = true;
+}
+
+export function cacheIsInitialized(): boolean {
+	return initialized;
 }
 
 export async function updateCache(delta: WsDelta): Promise<void> {
@@ -133,4 +146,26 @@ export async function fetchTrackPoints(id: string): Promise<TrackPoint[]> {
 	trackPointsPending = null;
 
 	return trackPointsCache;
+}
+
+export async function getControllersLong(id: string): Promise<ControllerLong[]> {
+	const airportIds = controllersMerged
+		.filter((c) => c.id === `airport_${id}` || c.id === `tracon_${id}`)
+		.map((c) => c.controllers.map((ctl) => ctl.callsign));
+
+	const firIds = controllersMerged.filter((c) => c.id === `fir_${id}`).map((c) => c.controllers.map((ctl) => ctl.callsign));
+
+	if (airportIds.length === 0 && firIds.length === 0) {
+		return [];
+	}
+	let response: Response;
+	if (firIds.length === 0) {
+		response = await fetch(`${BASE_URL}/data/controllers/${airportIds.flat().join(",")}`);
+	} else if (airportIds.length === 0) {
+		response = await fetch(`${BASE_URL}/data/controllers/${firIds.flat().join(",")}`);
+	} else {
+		response = await fetch(`${BASE_URL}/data/controllers/${airportIds.flat().join(",")},${firIds.flat().join(",")}`);
+	}
+
+	return (await response.json()) as ControllerLong[];
 }

@@ -1,6 +1,6 @@
 import "dotenv/config";
-import { pgGetTrackPointsByid } from "@sk/db/pg";
-import { rdsGetRingStorage, rdsGetSingle } from "@sk/db/redis";
+import { pgGetAirportPilots, pgGetTrackPointsByid } from "@sk/db/pg";
+import { rdsGetMultiple, rdsGetRingStorage, rdsGetSingle } from "@sk/db/redis";
 import cors from "cors";
 import express from "express";
 
@@ -59,7 +59,7 @@ app.get("/data/init", async (_req, res) => {
 app.get("/data/pilot/:id", async (req, res) => {
 	try {
 		const { id } = req.params;
-		console.log("Requested pilot:", id);
+		// console.log("Requested pilot:", id);
 
 		const pilot = await rdsGetSingle(`pilot:${id}`);
 		if (!pilot) return res.status(404).json({ error: "Pilot not found" });
@@ -74,7 +74,7 @@ app.get("/data/pilot/:id", async (req, res) => {
 app.get("/data/airport/:icao", async (req, res) => {
 	try {
 		const { icao } = req.params;
-		console.log("Requested airport:", icao);
+		// console.log("Requested airport:", icao);
 
 		const airport = await rdsGetSingle(`airport:${icao}`);
 		if (!airport) return res.status(404).json({ error: "Airport not found" });
@@ -86,15 +86,16 @@ app.get("/data/airport/:icao", async (req, res) => {
 	}
 });
 
-app.get("/data/controller/:callsign", async (req, res) => {
+app.get("/data/controllers/:callsigns", async (req, res) => {
 	try {
-		const { callsign } = req.params;
-		console.log("Requested controller:", callsign);
+		const { callsigns } = req.params;
+		// console.log("Requested controller:", callsigns);
 
-		const controller = await rdsGetSingle(`controller:${callsign}`);
-		if (!controller) return res.status(404).json({ error: "Controller not found" });
+		const controllers = await rdsGetMultiple("controller", callsigns.split(","));
+		const validControllers = controllers.filter((controller) => controller !== null);
+		if (!validControllers) return res.status(404).json({ error: "Controller not found" });
 
-		res.json(controller);
+		res.json(validControllers);
 	} catch (err) {
 		console.error(err);
 		res.status(500).json({ error: "Internal server error" });
@@ -104,7 +105,7 @@ app.get("/data/controller/:callsign", async (req, res) => {
 app.get("/data/track/:id", async (req, res) => {
 	try {
 		const { id } = req.params;
-		console.log("Requested track:", id);
+		// console.log("Requested track:", id);
 
 		const trackPoints = await pgGetTrackPointsByid(id);
 
@@ -118,7 +119,7 @@ app.get("/data/track/:id", async (req, res) => {
 app.get("/data/aircraft/:reg", async (req, res) => {
 	try {
 		const { reg } = req.params;
-		console.log("Requested aircraft:", reg);
+		// console.log("Requested aircraft:", reg);
 
 		const aircraft = await rdsGetSingle(`fleet:${reg}`);
 		if (!aircraft) return res.status(404).json({ error: "Aircraft not found" });
@@ -138,6 +139,23 @@ app.get("/data/dashboard/", async (_req, res) => {
 		if (!stats || !history || !events) return res.status(404).json({ error: "Dashboard data not found" });
 
 		res.json({ stats, history, events });
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ error: "Internal server error" });
+	}
+});
+
+// GET /data/airport/<icao>/flights?direction=<direction>&limit=<limit>&cursor=<base64string>
+app.get("/data/airport/:icao/flights", async (req, res) => {
+	try {
+		const icao = String(req.params.icao).toUpperCase();
+		const direction = (String(req.query.direction || "dep").toLowerCase() === "arr" ? "arr" : "dep") as "dep" | "arr";
+		const limit = Math.max(1, Math.min(200, Number(req.query.limit) || 20));
+		const cursor = typeof req.query.cursor === "string" ? req.query.cursor : undefined;
+		const afterCursor = typeof req.query.afterCursor === "string" ? req.query.afterCursor : undefined;
+
+		const data = await pgGetAirportPilots(icao, direction, limit, cursor, afterCursor);
+		res.json(data);
 	} catch (err) {
 		console.error(err);
 		res.status(500).json({ error: "Internal server error" });

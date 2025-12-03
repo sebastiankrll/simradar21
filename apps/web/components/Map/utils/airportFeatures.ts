@@ -6,6 +6,7 @@ import RBush from "rbush";
 import { dxGetAllAirports } from "@/storage/dexie";
 import type { AirportProperties } from "@/types/ol";
 import { airportMainSource } from "./dataLayers";
+import { getMapView } from "./init";
 
 interface RBushAirportFeature {
 	minX: number;
@@ -110,4 +111,26 @@ function getVisibleSizes(zoom: number): string[] {
 	if (zoom > 6.5) return ["medium_airport", "large_airport"];
 	if (zoom > 4.5) return ["large_airport"];
 	return [];
+}
+
+export function moveToAirportFeature(id: string): Feature<Point> | null {
+	let feature = airportMainSource.getFeatureById(`airport_${id}`) as Feature<Point> | null;
+	if (!feature) {
+		feature = airportRBush.all().find((a) => a.feature.getId() === `airport_${id}`)?.feature || null;
+	}
+
+	const view = getMapView();
+	const geom = feature?.getGeometry();
+	const coords = geom?.getCoordinates();
+	if (!coords) return null;
+
+	view?.animate({
+		center: coords,
+		duration: 200,
+		zoom: 8,
+	});
+
+	addHighlightedAirport(id);
+
+	return feature;
 }
