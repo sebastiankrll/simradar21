@@ -108,7 +108,7 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 			latitude: pilot.latitude,
 			longitude: pilot.longitude,
 			altitude_agl: transceiver?.heightAglM ? Math.round(transceiver.heightAglM * 3.28084) : pilot.altitude,
-			altitude_ms: transceiver?.heightMslM ? Math.round(transceiver.heightMslM * 3.28084) : pilot.altitude,
+			altitude_ms: pilot.altitude,
 			groundspeed: pilot.groundspeed,
 			vertical_speed: 0,
 			heading: pilot.heading,
