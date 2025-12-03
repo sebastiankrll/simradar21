@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { pgGetAirportPilots, pgGetTrackPointsByid } from "@sk/db/pg";
-import { rdsGetRingStorage, rdsGetSingle } from "@sk/db/redis";
+import { rdsGetMultiple, rdsGetRingStorage, rdsGetSingle } from "@sk/db/redis";
 import cors from "cors";
 import express from "express";
 
@@ -86,15 +86,16 @@ app.get("/data/airport/:icao", async (req, res) => {
 	}
 });
 
-app.get("/data/controller/:callsign", async (req, res) => {
+app.get("/data/controllers/:callsigns", async (req, res) => {
 	try {
-		const { callsign } = req.params;
-		// console.log("Requested controller:", callsign);
+		const { callsigns } = req.params;
+		// console.log("Requested controller:", callsigns);
 
-		const controller = await rdsGetSingle(`controller:${callsign}`);
-		if (!controller) return res.status(404).json({ error: "Controller not found" });
+		const controllers = await rdsGetMultiple("controller", callsigns.split(","));
+		const validControllers = controllers.filter((controller) => controller !== null);
+		if (!validControllers) return res.status(404).json({ error: "Controller not found" });
 
-		res.json(controller);
+		res.json(validControllers);
 	} catch (err) {
 		console.error(err);
 		res.status(500).json({ error: "Internal server error" });

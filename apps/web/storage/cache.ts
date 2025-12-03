@@ -1,5 +1,5 @@
 import type { FIRFeature, SimAwareTraconFeature, StaticAirline, StaticAirport } from "@sk/types/db";
-import type { AirportShort, ControllerMerged, TrackPoint, WsAll, WsDelta } from "@sk/types/vatsim";
+import type { AirportShort, ControllerLong, ControllerMerged, TrackPoint, WsAll, WsDelta } from "@sk/types/vatsim";
 import { initAirportFeatures } from "@/components/Map/utils/airportFeatures";
 import { initControllerFeatures, updateControllerFeatures } from "@/components/Map/utils/controllerFeatures";
 import { setFeatures } from "@/components/Map/utils/dataLayers";
@@ -24,7 +24,6 @@ export async function initData(setStatus: StatusSetter, pathname: string): Promi
 		setClickedFeature(pathname);
 		return;
 	}
-	initialized = true;
 
 	await dxInitDatabases();
 	setStatus?.((prev) => ({ ...prev, indexedDB: true }));
@@ -50,6 +49,11 @@ export async function initData(setStatus: StatusSetter, pathname: string): Promi
 	});
 
 	setClickedFeature(pathname);
+	initialized = true;
+}
+
+export function cacheIsInitialized(): boolean {
+	return initialized;
 }
 
 export async function updateCache(delta: WsDelta): Promise<void> {
@@ -142,4 +146,26 @@ export async function fetchTrackPoints(id: string): Promise<TrackPoint[]> {
 	trackPointsPending = null;
 
 	return trackPointsCache;
+}
+
+export async function getControllersLong(id: string): Promise<ControllerLong[]> {
+	const airportIds = controllersMerged
+		.filter((c) => c.id === `airport_${id}` || c.id === `tracon_${id}`)
+		.map((c) => c.controllers.map((ctl) => ctl.callsign));
+
+	const firIds = controllersMerged.filter((c) => c.id === `fir_${id}`).map((c) => c.controllers.map((ctl) => ctl.callsign));
+
+	if (airportIds.length === 0 && firIds.length === 0) {
+		return [];
+	}
+	let response: Response;
+	if (firIds.length === 0) {
+		response = await fetch(`${BASE_URL}/data/controllers/${airportIds.flat().join(",")}`);
+	} else if (airportIds.length === 0) {
+		response = await fetch(`${BASE_URL}/data/controllers/${firIds.flat().join(",")}`);
+	} else {
+		response = await fetch(`${BASE_URL}/data/controllers/${airportIds.flat().join(",")},${firIds.flat().join(",")}`);
+	}
+
+	return (await response.json()) as ControllerLong[];
 }

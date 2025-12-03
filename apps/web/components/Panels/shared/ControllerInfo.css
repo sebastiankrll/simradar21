@@ -1,0 +1,36 @@
+.panel-section-content.controllers {
+	display: flex;
+	flex-flow: column;
+	gap: 4px;
+	background: var(--color-light-grey);
+}
+
+.panel-controller-item {
+	display: flex;
+	flex-flow: column;
+	border-left: 4px solid var(--color-light-text);
+	background: white;
+	border-top: 1px solid var(--color-border);
+	border-bottom: 1px solid var(--color-border);
+	padding: 4px;
+}
+
+.panel-controller-title {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	background: rgb(238, 240, 245);
+	padding: 2px 5px;
+}
+
+.panel-controller-title p {
+	font-size: 12px;
+}
+
+.panel-controller-title p:nth-child(-n + 2) {
+	font-weight: 700;
+}
+
+.panel-controller-content {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+}

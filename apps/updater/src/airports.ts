@@ -5,7 +5,7 @@ import csvParser from "csv-parser";
 import { find as findTimezone } from "geo-tz";
 
 const CSV_URL = "https://ourairports.com/data/airports.csv";
-const MANUAL_VERSION = "1.0.2";
+const MANUAL_VERSION = "1.0.3";
 
 let version: string | null = null;
 
@@ -34,6 +34,7 @@ export async function updateAirports(): Promise<void> {
 			iata: a.iata_code,
 			size: a.type,
 			name: a.name,
+			city: a.municipality,
 			country: a.iso_country,
 			latitude: Number(a.latitude_deg),
 			longitude: Number(a.longitude_deg),

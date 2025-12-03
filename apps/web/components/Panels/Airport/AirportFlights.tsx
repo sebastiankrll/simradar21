@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import { setHoveredPilot } from "@/components/Map/utils/events";
 import Spinner from "@/components/Spinner/Spinner";
-import { getCachedAirline, getCachedAirport } from "@/storage/cache";
+import { cacheIsInitialized, getCachedAirline, getCachedAirport } from "@/storage/cache";
 import { getDelayColor } from "../Pilot/PilotTimes";
 
 type ApiPage = {
@@ -115,9 +115,18 @@ function ListItem({ pilot, dir }: { pilot: PilotLong; dir: "dep" | "arr" }) {
 	useEffect(() => {
 		const airlineCode = pilot.callsign.slice(0, 3).toUpperCase();
 		const icao = dir === "dep" ? pilot.flight_plan?.arrival.icao : pilot.flight_plan?.departure.icao;
-		Promise.all([getCachedAirline(airlineCode || ""), getCachedAirport(icao || "")]).then(([airline, airport]) => {
+
+		const loadData = async () => {
+			while (!cacheIsInitialized()) {
+				await new Promise((resolve) => setTimeout(resolve, 50));
+			}
+
+			const [airline, airport] = await Promise.all([getCachedAirline(airlineCode || ""), getCachedAirport(icao || "")]);
+
 			setData({ airline, airport });
-		});
+		};
+
+		loadData();
 	}, [pilot, dir]);
 
 	const getTime = (time: Date | string | undefined): string => {

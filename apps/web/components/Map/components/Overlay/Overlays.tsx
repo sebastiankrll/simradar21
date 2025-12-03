@@ -65,7 +65,7 @@ export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; ai
 	);
 }
 
-const getControllerColor = (facility: number): string => {
+export function getControllerColor(facility: number): string {
 	switch (facility) {
 		case -1:
 			return "rgb(255, 138, 43)";
@@ -75,10 +75,12 @@ const getControllerColor = (facility: number): string => {
 			return "rgb(11, 211, 167)";
 		case 4:
 			return "rgb(234, 89, 121)";
+		case 5:
+			return "rgb(222, 89, 234)";
 		default:
 			return "rgb(255, 138, 43)";
 	}
-};
+}
 
 export function AirportOverlay({
 	cached,

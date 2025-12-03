@@ -27,6 +27,7 @@ export interface StaticAirport {
 	iata: string;
 	size: string;
 	name: string;
+	city: string;
 	country: string;
 	latitude: number;
 	longitude: number;
