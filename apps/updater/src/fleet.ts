@@ -33,14 +33,14 @@ export async function updateFleets(): Promise<void> {
 				itemsBuffer.push(value);
 
 				if (itemsBuffer.length >= CHUNK) {
-					await rdsSetMultiple(itemsBuffer, "fleet", (a) => a.registration);
+					await rdsSetMultiple(itemsBuffer, "static_fleet", (a) => a.registration);
 					itemsBuffer.length = 0;
 				}
 			}
 		});
 
 		if (itemsBuffer.length > 0) {
-			await rdsSetMultiple(itemsBuffer, "fleet", (a) => a.registration);
+			await rdsSetMultiple(itemsBuffer, "static_fleet", (a) => a.registration);
 		}
 
 		await rdsSetSingle("static_fleets:version", version || "1.0.0");
