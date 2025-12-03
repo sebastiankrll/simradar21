@@ -84,7 +84,7 @@ let deleted: string[] = [];
 let updated: PilotShort[] = [];
 let added: PilotShort[] = [];
 
-export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong[]> {
+export async function mapPilots(latestVatsimData: VatsimData): Promise<[PilotLong[], PilotLong[]]> {
 	deleted = [];
 	updated = [];
 	added = [];
@@ -132,6 +132,7 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 				route: `${pilot.flight_plan?.departure || "N/A"} -- ${pilot.flight_plan?.arrival || "N/A"}`,
 				logon_time: new Date(pilot.logon_time),
 				times: null,
+				live: true,
 				...updatedFields,
 			};
 			// console.log("Missed cache, re-creating...")
@@ -146,6 +147,10 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 	const pilotsLong = await Promise.all(pilotsLongPromises);
 
 	const deletedLong = cached.filter((a) => !pilotsLong.some((b) => b.id === a.id));
+	deletedLong.forEach((p) => {
+		p.live = false;
+	});
+
 	const addedLong = pilotsLong.filter((a) => !cached.some((b) => b.id === a.id));
 	const updatedLong = pilotsLong.filter((a) => cached.some((b) => b.id === a.id));
 
@@ -154,7 +159,7 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 	deleted = deletedLong.map((p) => p.id);
 	cached = pilotsLong;
 
-	return pilotsLong;
+	return [pilotsLong, deletedLong];
 }
 
 function getPilotId(pilot: VatsimPilot): string {
@@ -163,7 +168,9 @@ function getPilotId(pilot: VatsimPilot): string {
 	const plan = pilot.flight_plan;
 	const variable = `${plan?.aircraft_short}_${plan?.departure}_${plan?.arrival}_${plan?.deptime}`;
 
-	const digest = createHash("sha256").update(`${base}${plan ? `_${variable}` : ""}`).digest();
+	const digest = createHash("sha256")
+		.update(`${base}${plan ? `_${variable}` : ""}`)
+		.digest();
 	const b64url = digest.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 	return b64url.slice(0, 10);
 }

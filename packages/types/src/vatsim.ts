@@ -162,6 +162,7 @@ export interface PilotLong extends PilotShort {
 	logon_time: Date;
 	times: PilotTimes | null;
 	timestamp: Date;
+	live: boolean;
 }
 
 export interface PilotFlightPlan {
