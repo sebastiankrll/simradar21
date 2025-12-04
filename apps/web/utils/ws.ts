@@ -15,6 +15,7 @@ interface WsClientConfig {
 	autoReconnect?: boolean;
 	reconnectDelay?: number;
 	maxReconnectAttempts?: number;
+	pauseWhenHidden?: boolean;
 }
 
 class WsClient {
@@ -27,24 +28,60 @@ class WsClient {
 	private isManualClose = false;
 	private messageBuffer: WsDelta[] = [];
 	private config: Required<WsClientConfig>;
+	private isConnecting = false;
+	private isPageHidden = false;
 
 	constructor(config: WsClientConfig = {}) {
 		this.config = {
 			autoReconnect: config.autoReconnect ?? true,
 			reconnectDelay: config.reconnectDelay ?? RECONNECT_DELAY,
 			maxReconnectAttempts: config.maxReconnectAttempts ?? MAX_RECONNECT_ATTEMPTS,
+			pauseWhenHidden: config.pauseWhenHidden ?? true,
 		};
+
+		if (this.config.pauseWhenHidden) {
+			this.setupVisibilityListener();
+		}
 
 		this.connect();
 	}
 
+	private setupVisibilityListener(): void {
+		if (typeof document === "undefined") return;
+
+		document.addEventListener("visibilitychange", () => {
+			this.isPageHidden = document.hidden;
+
+			if (document.hidden) {
+				console.log("📱 Page hidden, pausing WebSocket...");
+				this.disconnect();
+			} else {
+				console.log("📱 Page visible, resuming WebSocket...");
+				if (!this.isConnected() && !this.isConnecting) {
+					this.reconnect();
+				}
+			}
+		});
+	}
+
 	private connect(): void {
+		if (this.isPageHidden && this.config.pauseWhenHidden) {
+			console.warn("Page is hidden, skipping connection");
+			return;
+		}
+
+		if (this.isConnecting) {
+			console.warn("Connection already in progress");
+			return;
+		}
+
 		if (this.ws && this.ws.readyState === WebSocket.OPEN) {
 			console.warn("Already connected");
 			return;
 		}
 
 		try {
+			this.isConnecting = true;
 			this.notifyStatusListeners("connecting");
 			this.ws = new WebSocket(WS_URL);
 			this.ws.binaryType = "arraybuffer";
@@ -55,6 +92,7 @@ class WsClient {
 			this.ws.onmessage = (e) => this.handleMessage(e);
 		} catch (err) {
 			console.error("Failed to create WebSocket:", err);
+			this.isConnecting = false;
 			this.notifyStatusListeners("error");
 			this.scheduleReconnect();
 		}
@@ -62,6 +100,7 @@ class WsClient {
 
 	private handleOpen(): void {
 		console.log("✅ WebSocket connected");
+		this.isConnecting = false;
 		this.reconnectAttempts = 0;
 		this.isManualClose = false;
 		this.notifyStatusListeners("connected");
@@ -71,15 +110,17 @@ class WsClient {
 
 	private handleError(err: Event): void {
 		console.error("❌ WebSocket error:", err);
+		this.isConnecting = false;
 		this.notifyStatusListeners("error");
 	}
 
 	private handleClose(): void {
 		console.log("WebSocket disconnected");
+		this.isConnecting = false;
 		this.stopHeartbeat();
 		this.notifyStatusListeners("disconnected");
 
-		if (!this.isManualClose && this.config.autoReconnect) {
+		if (!this.isManualClose && this.config.autoReconnect && !this.isPageHidden) {
 			this.scheduleReconnect();
 		}
 	}
@@ -104,7 +145,6 @@ class WsClient {
 				}
 			});
 
-			// Reset heartbeat timeout on successful message
 			this.resetHeartbeatTimeout();
 		} catch (err) {
 			console.error("Failed to parse message:", err);
@@ -112,6 +152,11 @@ class WsClient {
 	}
 
 	private scheduleReconnect(): void {
+		if (this.isPageHidden && this.config.pauseWhenHidden) {
+			console.log("Page is hidden, not scheduling reconnect");
+			return;
+		}
+
 		if (this.reconnectAttempts >= this.config.maxReconnectAttempts) {
 			console.error(`❌ Max reconnection attempts reached (${this.config.maxReconnectAttempts}). Stopping reconnection.`);
 			this.notifyStatusListeners("error");
@@ -120,7 +165,6 @@ class WsClient {
 
 		this.reconnectAttempts++;
 
-		// Exponential backoff with jitter
 		const delay = Math.min(this.config.reconnectDelay * 2 ** (this.reconnectAttempts - 1), MAX_RECONNECT_DELAY);
 		const jitter = delay * 0.1 * Math.random();
 		const totalDelay = delay + jitter;
@@ -145,7 +189,6 @@ class WsClient {
 			clearTimeout(this.heartbeatTimeout);
 		}
 
-		// Check for messages every 60 seconds
 		this.heartbeatTimeout = setTimeout(() => {
 			if (this.isConnected()) {
 				console.warn("⚠️  No messages received in 60 seconds, reconnecting...");
@@ -201,6 +244,7 @@ class WsClient {
 
 	public disconnect(): void {
 		this.isManualClose = true;
+		this.isConnecting = false;
 		this.stopHeartbeat();
 
 		if (this.reconnectTimeout) {
@@ -223,12 +267,16 @@ class WsClient {
 
 	public getMetrics(): {
 		connected: boolean;
+		connecting: boolean;
+		hidden: boolean;
 		listeners: number;
 		reconnectAttempts: number;
 		url: string;
 	} {
 		return {
 			connected: this.isConnected(),
+			connecting: this.isConnecting,
+			hidden: this.isPageHidden,
 			listeners: this.listeners.size,
 			reconnectAttempts: this.reconnectAttempts,
 			url: WS_URL,
@@ -240,4 +288,5 @@ export const wsClient = new WsClient({
 	autoReconnect: true,
 	reconnectDelay: RECONNECT_DELAY,
 	maxReconnectAttempts: MAX_RECONNECT_ATTEMPTS,
+	pauseWhenHidden: true,
 });
