@@ -7,6 +7,7 @@ import { DashboardEvents } from "./DashboardEvents";
 import { DashboardHistory } from "./DashboardHistory";
 import { DashboardStats } from "./DashboardStats";
 import "./DashboardPanel.css";
+import { fetchApi } from "@/utils/api";
 
 function storeOpenSections(sections: string[]) {
 	if (typeof window === "undefined") return;
@@ -28,8 +29,6 @@ function getStoredOpenSections(): string[] {
 	return [];
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
-
 export default function DashboardPanel({ initialData }: { initialData: DashboardData }) {
 	const [data, setData] = useState<DashboardData>(initialData);
 	const historyRef = useRef<HTMLDivElement>(null);
@@ -46,14 +45,9 @@ export default function DashboardPanel({ initialData }: { initialData: Dashboard
 	useEffect(() => {
 		setOpenSection(getStoredOpenSections());
 		const fetchInterval = setInterval(async () => {
-			const newData = fetch(`${BASE_URL}/data/dashboard`, { cache: "no-store" })
-				.then((res) => {
-					if (!res.ok) return null;
-					return res.json();
-				})
-				.catch(() => null);
+			const newData = await fetchApi<DashboardData>("/data/dashboard");
 			if (newData) {
-				setData(await newData);
+				setData(newData);
 			}
 		}, 60000);
 

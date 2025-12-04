@@ -5,6 +5,7 @@ import type { PilotLong, TrackPoint, WsDelta } from "@sk/types/vatsim";
 import { useEffect, useRef, useState } from "react";
 import { fetchTrackPoints, getCachedAirline, getCachedAirport } from "@/storage/cache";
 import "./PilotPanel.css";
+import { fetchApi } from "@/utils/api";
 import { wsClient } from "@/utils/ws";
 import { followPilotOnMap, resetMap, showRouteOnMap } from "../../Map/utils/events";
 import { setHeight } from "../helpers";
@@ -24,8 +25,6 @@ export interface PilotPanelStatic {
 }
 type AccordionSection = "info" | "charts" | "pilot" | null;
 type MapInteraction = "route" | "follow" | null;
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 function onStatsClick(cid: number) {
 	window.open(`https://stats.vatsim.net/stats/${cid}`, "_blank");
@@ -112,11 +111,8 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 
 		const fetchPilot = async () => {
 			try {
-				const res = await fetch(`${BASE_URL}/data/pilot/${pilot.id}`);
-				if (res.ok) {
-					const updatedPilot: PilotLong = await res.json();
-					setPilot(updatedPilot);
-				}
+				const updatedPilot = await fetchApi<PilotLong>(`/data/pilot/${pilot.id}`);
+				setPilot(updatedPilot);
 			} catch (error) {
 				console.error("Failed to fetch pilot data:", error);
 			}
