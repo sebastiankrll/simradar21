@@ -122,7 +122,10 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 			}
 		};
 
-		wsClient.addListener(onDelta);
+		const handleMessage = (delta: WsDelta) => {
+			onDelta(delta);
+		};
+		wsClient.addListener(handleMessage);
 		const interval = setInterval(fetchPilot, 60_000);
 
 		return () => {

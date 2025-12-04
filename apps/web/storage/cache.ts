@@ -44,9 +44,10 @@ export async function initData(setStatus: StatusSetter, pathname: string): Promi
 	}
 	setStatus?.((prev) => ({ ...prev, initMap: true }));
 
-	wsClient.addListener((msg) => {
-		updateCache(msg);
-	});
+	const handleMessage = (delta: WsDelta) => {
+		updateCache(delta);
+	};
+	wsClient.addListener(handleMessage);
 
 	setClickedFeature(pathname);
 	initialized = true;
