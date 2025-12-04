@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { pgGetAirportPilots, pgGetTrackPointsByid } from "@sk/db/pg";
-import { rdsGetMultiple, rdsGetRingStorage, rdsGetSingle } from "@sk/db/redis";
+import { rdsGetMultiple, rdsGetRingStorage, rdsGetSingle, rdsShutdown, rdsHealthCheck } from "@sk/db/redis";
 import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
@@ -27,6 +27,76 @@ const asyncHandler =
 	(req: express.Request, res: express.Response, next: express.NextFunction) => {
 		Promise.resolve(fn(req, res, next)).catch(next);
 	};
+
+// Health check endpoints
+app.get(
+	"/health",
+	asyncHandler(async (_req, res) => {
+		const startTime = Date.now();
+		const health = {
+			status: "ok",
+			timestamp: new Date().toISOString(),
+			uptime: process.uptime(),
+			services: {
+				redis: "unknown",
+			},
+		};
+
+		try {
+			const isHealthy = await rdsHealthCheck();
+			health.services.redis = isHealthy ? "ok" : "error";
+			if (!isHealthy) health.status = "degraded";
+		} catch (_err) {
+			health.services.redis = "error";
+			health.status = "degraded";
+		}
+
+		const responseTime = Date.now() - startTime;
+		const statusCode = health.status === "ok" ? 200 : 503;
+
+		res.status(statusCode).json({
+			...health,
+			responseTime: `${responseTime}ms`,
+		});
+	}),
+);
+
+app.get(
+	"/health/live",
+	asyncHandler(async (_req, res) => {
+		res.json({
+			status: "alive",
+			timestamp: new Date().toISOString(),
+		});
+	}),
+);
+
+app.get(
+	"/health/ready",
+	asyncHandler(async (_req, res) => {
+		try {
+			const isHealthy = await rdsHealthCheck();
+			if (!isHealthy) {
+				res.status(503).json({
+					status: "not-ready",
+					reason: "Redis connection failed",
+					timestamp: new Date().toISOString(),
+				});
+				return;
+			}
+			res.json({
+				status: "ready",
+				timestamp: new Date().toISOString(),
+			});
+		} catch (_err) {
+			res.status(503).json({
+				status: "not-ready",
+				reason: "Redis connection failed",
+				timestamp: new Date().toISOString(),
+			});
+		}
+	}),
+);
 
 app.get(
 	"/static/versions",
@@ -208,6 +278,24 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 });
 
 const PORT = process.env.API_PORT || 3001;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
 	console.log(`Express API listening on port ${PORT}`);
 });
+
+const gracefulShutdown = async (signal: string) => {
+	console.log(`\n${signal} signal received: closing HTTP server`);
+	server.close(async () => {
+		console.log("HTTP server closed");
+		await rdsShutdown();
+		process.exit(0);
+	});
+
+	// Force shutdown after 10 seconds
+	setTimeout(() => {
+		console.error("Forced shutdown after timeout");
+		process.exit(1);
+	}, 10000);
+};
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
