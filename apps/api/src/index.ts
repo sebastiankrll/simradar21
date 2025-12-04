@@ -3,10 +3,22 @@ import { pgGetAirportPilots, pgGetTrackPointsByid } from "@sk/db/pg";
 import { rdsGetMultiple, rdsGetRingStorage, rdsGetSingle } from "@sk/db/redis";
 import cors from "cors";
 import express from "express";
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
+
+const limiter = rateLimit({
+	windowMs: 60_000,
+	max: 60,
+	message: "Too many requests from this endpoint, please try again later.",
+	standardHeaders: true,
+	legacyHeaders: false,
+});
 
 const app = express();
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use(limiter);
 
 app.get("/static/versions", async (_req, res) => {
 	try {
