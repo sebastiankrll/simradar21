@@ -174,7 +174,7 @@ app.get(
 app.get(
 	"/data/pilot/:id",
 	asyncHandler(async (req, res) => {
-		const id = validateString(req.params.id, "Pilot ID", 1, 50);
+		const id = validateString(req.params.id, "Pilot ID", 1, 10);
 
 		const pilot = await rdsGetSingle(`pilot:${id}`);
 		if (!pilot) {
@@ -204,8 +204,7 @@ app.get(
 app.get(
 	"/data/controllers/:callsigns",
 	asyncHandler(async (req, res) => {
-		const callsigns = validateString(req.params.callsigns, "Callsigns", 1, 100);
-		const callsignArray = callsigns.split(",").map((cs) => validateCallsign(cs.trim()));
+		const callsignArray = req.params.callsigns.split(",").map((cs) => validateCallsign(cs.trim()));
 
 		if (callsignArray.length === 0) {
 			res.status(400).json({ error: "At least one callsign is required" });
@@ -226,7 +225,7 @@ app.get(
 app.get(
 	"/data/track/:id",
 	asyncHandler(async (req, res) => {
-		const id = validateString(req.params.id, "Track ID", 1, 50);
+		const id = validateString(req.params.id, "Track ID", 1, 10);
 
 		const trackPoints = await pgGetTrackPointsByid(id);
 		if (!trackPoints || trackPoints.length === 0) {
@@ -241,7 +240,7 @@ app.get(
 app.get(
 	"/data/aircraft/:reg",
 	asyncHandler(async (req, res) => {
-		const reg = validateString(req.params.reg, "Aircraft Registration", 1, 20).toUpperCase();
+		const reg = validateString(req.params.reg, "Aircraft Registration", 1, 10).toUpperCase();
 
 		const aircraft = await rdsGetSingle(`static_fleet:${reg}`);
 		if (!aircraft) {
