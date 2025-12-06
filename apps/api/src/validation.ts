@@ -28,7 +28,7 @@ export function validateICAO(icao: any): string {
 }
 
 export function validateCallsign(callsign: any): string {
-	const validated = validateString(callsign, "Callsign", 1, 10);
+	const validated = validateString(callsign, "Callsign", 1, 20);
 	if (!/^[A-Z0-9_]+$/.test(validated)) {
 		throw { status: 400, message: "Callsign must contain only uppercase letters, numbers, and underscores" };
 	}
