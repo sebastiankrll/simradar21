@@ -66,7 +66,7 @@ export async function dxInitDatabases(): Promise<void> {
 }
 
 async function fetchStaticData(type: string): Promise<any> {
-	return await fetchApi<any>(`/static/data/${type}`);
+	return await fetchApi<any>(`/static/${type}`);
 }
 
 async function storeData(data: any[], db: EntityTable<any, "id">): Promise<void> {
