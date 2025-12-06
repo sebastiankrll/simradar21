@@ -1,6 +1,6 @@
 import "dotenv/config";
-import { pgGetAirportPilots, pgGetTrackPointsByid, pgHealthCheck, pgShutdown } from "@sk/db/pg";
-import { rdsGetMultiple, rdsGetRingStorage, rdsGetSingle, rdsHealthCheck, rdsShutdown } from "@sk/db/redis";
+import { pgGetAirportPilots, pgGetTrackPointsByid, pgHealthCheck, pgShutdown } from "@sr24/db/pg";
+import { rdsGetMultiple, rdsGetRingStorage, rdsGetSingle, rdsHealthCheck, rdsShutdown } from "@sr24/db/redis";
 import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";

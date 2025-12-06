@@ -1,4 +1,4 @@
-import type { WsDelta } from "@sk/types/vatsim";
+import type { WsDelta } from "@sr24/types/vatsim";
 import Redis from "ioredis";
 
 // Connection pool with retry logic

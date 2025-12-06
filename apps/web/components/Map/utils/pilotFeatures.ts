@@ -1,4 +1,4 @@
-import type { PilotDelta, PilotShort } from "@sk/types/vatsim";
+import type { PilotDelta, PilotShort } from "@sr24/types/vatsim";
 import { Feature } from "ol";
 import type { Extent } from "ol/extent";
 import { Point } from "ol/geom";

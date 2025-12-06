@@ -1,5 +1,5 @@
 {
-	"name": "@sk/db",
+	"name": "@sr24/db",
 	"type": "module",
 	"version": "1.0.0",
 	"exports": {
@@ -19,12 +19,12 @@
 		"format-and-lint:fix": "biome check . --write"
 	},
 	"devDependencies": {
-		"@sk/typescript-config": "*",
+		"@sr24/typescript-config": "*",
 		"@types/pg": "^8.15.6",
 		"typescript": "^5.9.3"
 	},
 	"dependencies": {
-		"@sk/types": "*",
+		"@sr24/types": "*",
 		"ioredis": "^5.8.2",
 		"pg": "^8.16.3"
 	}

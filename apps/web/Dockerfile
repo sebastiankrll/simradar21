@@ -9,7 +9,7 @@ WORKDIR /app
 FROM base AS prepare
 RUN npm install turbo --global
 COPY . .
-RUN turbo prune @sk/web --docker
+RUN turbo prune @sr24/web --docker
 
 FROM base AS builder
 # First install the dependencies (as they change less often)

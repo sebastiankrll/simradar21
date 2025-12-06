@@ -1,4 +1,4 @@
-import type { PilotLong } from "@sk/types/vatsim";
+import type { PilotLong } from "@sr24/types/vatsim";
 
 export function PilotUser({ pilot, openSection, ref }: { pilot: PilotLong; openSection: string | null; ref: React.Ref<HTMLDivElement> }) {
 	return (

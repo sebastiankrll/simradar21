@@ -1,4 +1,4 @@
-import type { PilotLong, TrackPoint } from "@sk/types/vatsim";
+import type { PilotLong, TrackPoint } from "@sr24/types/vatsim";
 import { Pool } from "pg";
 
 const pool = new Pool({
@@ -45,6 +45,9 @@ export async function pgShutdown(): Promise<void> {
 
 export async function pgInitTrackPointsTable() {
 	try {
+		await pool.query(`CREATE EXTENSION IF NOT EXISTS timescaledb;`);
+
+		// Create table if not exists
 		await pool.query(`
       CREATE TABLE IF NOT EXISTS track_points (
         id VARCHAR(10) NOT NULL,

@@ -1,6 +1,6 @@
-import type { ControllerLong } from "@sk/types/vatsim";
+import type { ControllerLong } from "@sr24/types/vatsim";
 import "./ControllerInfo.css";
-import type { SimAwareTraconFeature, StaticAirport } from "@sk/types/db";
+import type { SimAwareTraconFeature, StaticAirport } from "@sr24/types/db";
 import { getControllerColor } from "@/components/Map/components/Overlay/Overlays";
 
 function getControllerName(facility: number, tracon: SimAwareTraconFeature | null, airport: StaticAirport | null): string {

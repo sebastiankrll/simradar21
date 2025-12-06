@@ -1,4 +1,4 @@
-import type { AirportLong } from "@sk/types/vatsim";
+import type { AirportLong } from "@sr24/types/vatsim";
 import { getDelayColor } from "./AirportStatus";
 
 export function AirportConnections({ airport }: { airport: AirportLong }) {

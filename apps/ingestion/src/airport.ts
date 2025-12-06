@@ -1,6 +1,6 @@
 import { promisify } from "node:util";
 import * as zlib from "node:zlib";
-import type { AirportDelta, AirportLong, AirportShort, PilotLong } from "@sk/types/vatsim";
+import type { AirportDelta, AirportLong, AirportShort, PilotLong } from "@sr24/types/vatsim";
 import axios from "axios";
 import { parseStringPromise } from "xml2js";
 

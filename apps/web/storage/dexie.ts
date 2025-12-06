@@ -1,4 +1,4 @@
-import type { FIRFeature, SimAwareTraconFeature, StaticAirline, StaticAirport } from "@sk/types/db";
+import type { FIRFeature, SimAwareTraconFeature, StaticAirline, StaticAirport } from "@sr24/types/db";
 import Dexie, { type EntityTable } from "dexie";
 import { fetchApi } from "@/utils/api";
 

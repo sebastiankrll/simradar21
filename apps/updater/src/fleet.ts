@@ -1,6 +1,6 @@
 import { pipeline } from "node:stream/promises";
-import { rdsGetSingle, rdsSetMultiple, rdsSetSingle } from "@sk/db/redis";
-import type { StaticAircraft } from "@sk/types/db";
+import { rdsGetSingle, rdsSetMultiple, rdsSetSingle } from "@sr24/db/redis";
+import type { StaticAircraft } from "@sr24/types/db";
 import axios from "axios";
 import StreamJson from "stream-json";
 import StreamArray from "stream-json/streamers/StreamArray.js";

@@ -1,4 +1,4 @@
-import type { StaticAirport } from "@sk/types/db";
+import type { StaticAirport } from "@sr24/types/db";
 import { type Feature, type MapBrowserEvent, Overlay, type View } from "ol";
 import type BaseEvent from "ol/events/Event";
 import { boundingExtent, type Extent } from "ol/extent";

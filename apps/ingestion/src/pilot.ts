@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { rdsGetMultiple, rdsGetSingle } from "@sk/db/redis";
-import type { StaticAirport } from "@sk/types/db";
+import { rdsGetMultiple, rdsGetSingle } from "@sr24/db/redis";
+import type { StaticAirport } from "@sr24/types/db";
 import type {
 	PilotDelta,
 	PilotFlightPlan,
@@ -10,7 +10,7 @@ import type {
 	VatsimData,
 	VatsimPilot,
 	VatsimPilotFlightPlan,
-} from "@sk/types/vatsim";
+} from "@sr24/types/vatsim";
 import { haversineDistance } from "./utils/helpers.js";
 
 const TAXI_TIME_MS = 5 * 60 * 1000;

@@ -1,6 +1,6 @@
 "use client";
 
-import type { DashboardData } from "@sk/types/vatsim";
+import type { DashboardData } from "@sr24/types/vatsim";
 import { useEffect, useRef, useState } from "react";
 import { setHeight } from "../helpers";
 import { DashboardEvents } from "./DashboardEvents";

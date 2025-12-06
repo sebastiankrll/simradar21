@@ -1,4 +1,4 @@
-import { rdsGetSingle, rdsSetSingle } from "@sk/db/redis";
+import { rdsGetSingle, rdsSetSingle } from "@sr24/db/redis";
 import axios from "axios";
 
 const RELEASE_URL = "https://api.github.com/repos/sebastiankrll/simradar24-data/releases/latest";

@@ -1,4 +1,4 @@
-import type { AirportLong } from "@sk/types/vatsim";
+import type { AirportLong } from "@sr24/types/vatsim";
 import type { IAltimeter, IMetar, Visibility } from "metar-taf-parser";
 
 function getAltimeter(altimeter: IAltimeter | undefined): string {

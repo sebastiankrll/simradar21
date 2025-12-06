@@ -8,7 +8,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 RUN npm install turbo --global
 COPY . .
-RUN turbo prune @sk/updater --docker
+RUN turbo prune @sr24/updater --docker
 
 # Add lockfile and package.json's of isolated subworkspace
 FROM base AS installer

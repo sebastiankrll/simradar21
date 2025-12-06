@@ -1,5 +1,5 @@
-import { rdsGetSingle, rdsSetSingle } from "@sk/db/redis";
-import type { SimAwareTraconFeature } from "@sk/types/db";
+import { rdsGetSingle, rdsSetSingle } from "@sr24/db/redis";
+import type { SimAwareTraconFeature } from "@sr24/types/db";
 import axios from "axios";
 
 const RELEASE_URL = "https://api.github.com/repos/vatsimnetwork/simaware-tracon-project/releases/latest";

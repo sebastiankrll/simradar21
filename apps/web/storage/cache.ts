@@ -1,5 +1,5 @@
-import type { FIRFeature, SimAwareTraconFeature, StaticAirline, StaticAirport } from "@sk/types/db";
-import type { AirportShort, ControllerLong, ControllerMerged, TrackPoint, WsAll, WsDelta } from "@sk/types/vatsim";
+import type { FIRFeature, SimAwareTraconFeature, StaticAirline, StaticAirport } from "@sr24/types/db";
+import type { AirportShort, ControllerLong, ControllerMerged, TrackPoint, WsAll, WsDelta } from "@sr24/types/vatsim";
 import { initAirportFeatures } from "@/components/Map/utils/airportFeatures";
 import { initControllerFeatures, updateControllerFeatures } from "@/components/Map/utils/controllerFeatures";
 import { setFeatures } from "@/components/Map/utils/dataLayers";

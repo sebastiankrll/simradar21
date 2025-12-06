@@ -1,5 +1,5 @@
 {
-	"extends": "@sk/typescript-config/base.json",
+	"extends": "@sr24/typescript-config/base.json",
 	"compilerOptions": {
 		"outDir": "dist",
 		"rootDir": "src"

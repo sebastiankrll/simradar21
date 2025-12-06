@@ -1,4 +1,4 @@
-import type { PilotLong } from "@sk/types/vatsim";
+import type { PilotLong } from "@sr24/types/vatsim";
 
 export function PilotTelemetry({ pilot }: { pilot: PilotLong }) {
 	const roundedVS = Math.round(pilot.vertical_speed / 50) * 50;

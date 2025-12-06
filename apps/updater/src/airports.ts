@@ -1,5 +1,5 @@
-import { rdsGetSingle, rdsSetMultiple, rdsSetSingle } from "@sk/db/redis";
-import type { OurAirportsCsv, StaticAirport } from "@sk/types/db";
+import { rdsGetSingle, rdsSetMultiple, rdsSetSingle } from "@sr24/db/redis";
+import type { OurAirportsCsv, StaticAirport } from "@sr24/types/db";
 import axios from "axios";
 import csvParser from "csv-parser";
 import { find as findTimezone } from "geo-tz";

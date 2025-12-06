@@ -1,4 +1,4 @@
-import type { StaticAirport } from "@sk/types/db";
+import type { StaticAirport } from "@sr24/types/db";
 import { useEffect, useState } from "react";
 import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
 

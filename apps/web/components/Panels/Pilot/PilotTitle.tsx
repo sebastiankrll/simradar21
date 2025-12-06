@@ -1,4 +1,4 @@
-import type { PilotLong } from "@sk/types/vatsim";
+import type { PilotLong } from "@sr24/types/vatsim";
 import type { PilotPanelStatic } from "./PilotPanel";
 
 export function PilotTitle({ pilot, data }: { pilot: PilotLong; data: PilotPanelStatic }) {

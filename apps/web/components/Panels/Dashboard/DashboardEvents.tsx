@@ -1,4 +1,4 @@
-import type { VatsimEvent } from "@sk/types/vatsim";
+import type { VatsimEvent } from "@sr24/types/vatsim";
 
 export function DashboardEvents({ events, ref, openSection }: { events: VatsimEvent[]; ref: React.Ref<HTMLDivElement>; openSection: string[] }) {
 	return (

@@ -1,5 +1,5 @@
-import { rdsSetRingStorage, rdsSetSingle } from "@sk/db/redis";
-import type { ControllerLong, DashboardStats, VatsimData, VatsimEventData } from "@sk/types/vatsim";
+import { rdsSetRingStorage, rdsSetSingle } from "@sr24/db/redis";
+import type { ControllerLong, DashboardStats, VatsimData, VatsimEventData } from "@sr24/types/vatsim";
 import axios from "axios";
 
 const VATSIM_EVENT_URL = "https://my.vatsim.net/api/v2/events/latest";

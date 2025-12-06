@@ -1,5 +1,5 @@
 {
-	"name": "@sk/api",
+	"name": "@sr24/api",
 	"type": "module",
 	"scripts": {
 		"start": "node dist/index.js",
@@ -9,7 +9,7 @@
 		"format-and-lint:fix": "biome check . --write"
 	},
 	"devDependencies": {
-		"@sk/typescript-config": "*",
+		"@sr24/typescript-config": "*",
 		"@types/cors": "^2.8.19",
 		"@types/express": "^5.0.5",
 		"@types/ws": "^8.18.1",
@@ -17,7 +17,7 @@
 		"typescript": "^5.9.3"
 	},
 	"dependencies": {
-		"@sk/db": "*",
+		"@sr24/db": "*",
 		"cors": "^2.8.5",
 		"dotenv": "^17.2.3",
 		"express": "^5.1.0",

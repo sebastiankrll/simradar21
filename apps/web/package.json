@@ -1,5 +1,5 @@
 {
-	"name": "@sk/web",
+	"name": "@sr24/web",
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
@@ -11,7 +11,7 @@
 	},
 	"dependencies": {
 		"@geoblocks/ol-maplibre-layer": "^1.0.3",
-		"@sk/types": "*",
+		"@sr24/types": "*",
 		"@tanstack/react-query": "^5.90.11",
 		"@tanstack/react-query-devtools": "^5.91.1",
 		"dexie": "^4.2.1",
@@ -27,7 +27,7 @@
 		"swr": "^2.3.7"
 	},
 	"devDependencies": {
-		"@sk/typescript-config": "*",
+		"@sr24/typescript-config": "*",
 		"@tailwindcss/postcss": "^4",
 		"@types/geojson": "^7946.0.16",
 		"@types/node": "^20",

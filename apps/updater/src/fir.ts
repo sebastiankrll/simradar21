@@ -1,5 +1,5 @@
-import { rdsGetSingle, rdsSetSingle } from "@sk/db/redis";
-import type { FIRFeature, FIRProperties, VatSpyDat, VatSpyFIRFeatureCollection } from "@sk/types/db";
+import { rdsGetSingle, rdsSetSingle } from "@sr24/db/redis";
+import type { FIRFeature, FIRProperties, VatSpyDat, VatSpyFIRFeatureCollection } from "@sr24/types/db";
 import axios from "axios";
 
 const RELEASE_URL = "https://api.github.com/repos/vatsimnetwork/vatspy-data-project/releases/latest";

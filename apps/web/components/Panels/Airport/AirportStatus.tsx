@@ -1,4 +1,4 @@
-import type { AirportLong } from "@sk/types/vatsim";
+import type { AirportLong } from "@sr24/types/vatsim";
 import { CloudQuantity, Descriptive, type IMetar, Intensity, type IWind, Phenomenon } from "metar-taf-parser";
 
 function getConditions(metar: IMetar): string {

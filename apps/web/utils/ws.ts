@@ -1,6 +1,6 @@
 // lib/wsClient.ts
 
-import type { WsDelta } from "@sk/types/vatsim";
+import type { WsDelta } from "@sr24/types/vatsim";
 import Pako from "pako";
 
 const WS_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "ws://localhost:3002";

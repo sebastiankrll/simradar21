@@ -1,4 +1,4 @@
-import type { PilotShort } from "@sk/types/vatsim";
+import type { PilotShort } from "@sr24/types/vatsim";
 
 export type PilotProperties = Omit<PilotShort, "longitude" | "latitude"> & {
 	type: "pilot";

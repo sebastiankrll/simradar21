@@ -1,4 +1,4 @@
-import type { StaticAirport } from "@sk/types/db";
+import type { StaticAirport } from "@sr24/types/db";
 import { useRouter } from "next/navigation";
 
 export function PilotAirport({ airport }: { airport: StaticAirport | null }) {

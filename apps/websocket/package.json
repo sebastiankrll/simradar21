@@ -1,5 +1,5 @@
 {
-	"name": "@sk/websocket",
+	"name": "@sr24/websocket",
 	"type": "module",
 	"scripts": {
 		"start": "node dist/index.js",
@@ -9,14 +9,14 @@
 		"format-and-lint:fix": "biome check . --write"
 	},
 	"devDependencies": {
-		"@sk/typescript-config": "*",
+		"@sr24/typescript-config": "*",
 		"@types/ws": "^8.18.1",
 		"tsup": "^8.5.0",
 		"typescript": "^5.9.3"
 	},
 	"dependencies": {
-		"@sk/db": "*",
-		"@sk/types": "*",
+		"@sr24/db": "*",
+		"@sr24/types": "*",
 		"ws": "^8.18.3"
 	}
 }

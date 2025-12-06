@@ -1,5 +1,5 @@
 {
-	"name": "@sk/types",
+	"name": "@sr24/types",
 	"version": "1.0.0",
 	"exports": {
 		"./db": "./src/db.ts",
@@ -12,7 +12,7 @@
 		"format-and-lint:fix": "biome check . --write"
 	},
 	"devDependencies": {
-		"@sk/typescript-config": "*",
+		"@sr24/typescript-config": "*",
 		"@types/geojson": "^7946.0.16",
 		"typescript": "^5.9.3"
 	}

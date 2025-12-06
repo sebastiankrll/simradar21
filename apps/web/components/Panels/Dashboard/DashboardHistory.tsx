@@ -1,4 +1,4 @@
-import type { DashboardData } from "@sk/types/vatsim";
+import type { DashboardData } from "@sr24/types/vatsim";
 import { Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 export function DashboardHistory({ history }: { history: DashboardData["history"] }) {

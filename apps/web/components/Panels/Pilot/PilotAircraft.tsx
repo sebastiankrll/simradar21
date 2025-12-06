@@ -1,5 +1,5 @@
-import type { StaticAircraft } from "@sk/types/db";
-import type { PilotLong } from "@sk/types/vatsim";
+import type { StaticAircraft } from "@sr24/types/db";
+import type { PilotLong } from "@sr24/types/vatsim";
 import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
 
 export function PilotAircraft({ pilot, aircraft }: { pilot: PilotLong; aircraft: StaticAircraft | undefined }) {

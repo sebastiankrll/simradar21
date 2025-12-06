@@ -1,5 +1,5 @@
-import type { StaticAirport } from "@sk/types/db";
-import type { PilotLong } from "@sk/types/vatsim";
+import type { StaticAirport } from "@sr24/types/db";
+import type { PilotLong } from "@sr24/types/vatsim";
 import { haversineDistance } from "@/utils/helpers";
 
 function formatTimeDelta(minutes: number): string {

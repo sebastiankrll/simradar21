@@ -1,7 +1,7 @@
 "use client";
 
-import type { StaticAirline, StaticAirport } from "@sk/types/db";
-import type { PilotLong } from "@sk/types/vatsim";
+import type { StaticAirline, StaticAirport } from "@sr24/types/db";
+import type { PilotLong } from "@sr24/types/vatsim";
 import { type InfiniteData, QueryClientProvider, useInfiniteQuery } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useRouter } from "next/navigation";

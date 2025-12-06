@@ -1,4 +1,4 @@
-import type { TrackPoint } from "@sk/types/vatsim";
+import type { TrackPoint } from "@sr24/types/vatsim";
 import { Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 export function PilotCharts({
