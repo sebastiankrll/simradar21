@@ -11,9 +11,7 @@ const client = createClient({
 	.on("connect", () => console.log("✅ Connected to Redis"));
 
 export async function rdsConnect(): Promise<void> {
-	if (!client.isOpen) {
-		await client.connect();
-	}
+	await client.connect();
 }
 
 // Health check
