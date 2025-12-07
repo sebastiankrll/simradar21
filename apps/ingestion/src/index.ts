@@ -1,12 +1,12 @@
 import "dotenv/config";
-import { pgCleanupStalePilots, pgInitPilotsTable, pgUpsertPilots } from "@sr24/db/pg";
+import { pgUpsertPilots } from "@sr24/db/pg";
 import { rdsConnect, rdsPub, rdsSetMultiple, rdsSetMultipleTimeSeries, rdsSetSingle } from "@sr24/db/redis";
 import type { TrackPoint, VatsimData, VatsimTransceivers, WsAll, WsDelta } from "@sr24/types/vatsim";
 import axios from "axios";
-import { getAirportDelta, getAirportShort, mapAirports } from "./airport.js";
-import { getControllerDelta, mapControllers } from "./controller.js";
-import { updateDashboardData } from "./dashboard.js";
-import { getPilotDelta, getPilotShort, mapPilots } from "./pilot.js";
+import { getAirportDelta, getAirportShort, mapAirports } from "./airport";
+import { getControllerDelta, mapControllers } from "./controller";
+import { updateDashboardData } from "./dashboard";
+import { getPilotDelta, getPilotShort, mapPilots } from "./pilot";
 
 const VATSIM_DATA_URL = "https://data.vatsim.net/v3/vatsim-data.json";
 const VATSIM_TRANSCEIVERS_URL = "https://data.vatsim.net/v3/transceivers-data.json";
@@ -15,14 +15,13 @@ const FETCH_INTERVAL = 5_000;
 let dbsInitialized = false;
 let updating = false;
 let lastVatsimUpdate = 0;
-let lastPgCleanUp = 0;
+// let lastPgCleanUp = 0;
 
 async function fetchVatsimData(): Promise<void> {
 	if (updating) return;
 	updating = true;
 
 	if (!dbsInitialized) {
-		await pgInitPilotsTable();
 		await rdsConnect();
 		dbsInitialized = true;
 	}
@@ -64,11 +63,11 @@ async function fetchVatsimData(): Promise<void> {
 			rdsSetMultiple(airportsLong, "airport", (a) => a.icao, "airports:live", 120);
 
 			await pgUpsertPilots([...pilotsLong, ...deletedPilotsLong]);
-			const now = Date.now();
-			if (now > lastPgCleanUp + 30 * 60 * 1000) {
-				lastPgCleanUp = now;
-				await pgCleanupStalePilots();
-			}
+			// const now = Date.now();
+			// if (now > lastPgCleanUp + 30 * 60 * 1000) {
+			// 	lastPgCleanUp = now;
+			// 	await pgCleanupStalePilots();
+			// }
 
 			const trackPoints: TrackPoint[] = pilotsLong.map((p) => ({
 				id: p.id,
