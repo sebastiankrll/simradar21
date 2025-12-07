@@ -26,6 +26,11 @@ services:
       - redis_data:/data
     networks:
       - sr24_backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   prisma:
     build:
@@ -81,8 +86,10 @@ services:
       REDIS_PORT: 6379
       TRUST_PROXY: "true"
     depends_on:
-      - timescaledb
-      - redis
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - traefik_proxy
       - sr24_backend
@@ -111,8 +118,10 @@ services:
       REDIS_PORT: 6379
       TRUST_PROXY: "true"
     depends_on:
-      - timescaledb
-      - redis
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - traefik_proxy
       - sr24_backend
@@ -143,8 +152,10 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
     depends_on:
-      - timescaledb
-      - redis
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - sr24_backend
     labels:
@@ -166,8 +177,10 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
     depends_on:
-      - timescaledb
-      - redis
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - sr24_backend
     labels:
