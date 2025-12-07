@@ -3,10 +3,10 @@ import { pgDeleteStalePilots, pgUpsertPilots } from "@sr24/db/pg";
 import { rdsConnect, rdsPub, rdsSetMultiple, rdsSetMultipleTimeSeries, rdsSetSingle } from "@sr24/db/redis";
 import type { TrackPoint, VatsimData, VatsimTransceivers, WsAll, WsDelta } from "@sr24/types/vatsim";
 import axios from "axios";
-import { getAirportDelta, getAirportShort, mapAirports } from "./airport";
-import { getControllerDelta, mapControllers } from "./controller";
-import { updateDashboardData } from "./dashboard";
-import { getPilotDelta, getPilotShort, mapPilots } from "./pilot";
+import { getAirportDelta, getAirportShort, mapAirports } from "./airport.js";
+import { getControllerDelta, mapControllers } from "./controller.js";
+import { updateDashboardData } from "./dashboard.js";
+import { getPilotDelta, getPilotShort, mapPilots } from "./pilot.js";
 
 const VATSIM_DATA_URL = "https://data.vatsim.net/v3/vatsim-data.json";
 const VATSIM_TRANSCEIVERS_URL = "https://data.vatsim.net/v3/transceivers-data.json";
