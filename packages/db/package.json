@@ -14,7 +14,7 @@
 	},
 	"scripts": {
 		"dev": "tsc --watch",
-		"build": "tsc",
+		"build": "tsc && shx cp -r src/generated dist/generated",
 		"prebuild": "prisma generate",
 		"format-and-lint": "biome check .",
 		"format-and-lint:fix": "biome check . --write",
@@ -26,6 +26,7 @@
 		"@sr24/typescript-config": "*",
 		"@types/pg": "^8.15.6",
 		"prisma": "^7.1.0",
+		"shx": "^0.4.0",
 		"tsup": "^8.5.1",
 		"typescript": "^5.9.3"
 	},
@@ -33,9 +34,9 @@
 		"@prisma/adapter-pg": "^7.1.0",
 		"@prisma/client": "^7.1.0",
 		"@sr24/types": "*",
+		"dotenv": "^17.2.3",
 		"ioredis": "^5.8.2",
 		"pg": "^8.16.3",
-		"redis": "^5.10.0",
-		"dotenv": "^17.2.3"
+		"redis": "^5.10.0"
 	}
 }
