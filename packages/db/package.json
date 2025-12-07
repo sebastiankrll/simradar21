@@ -3,8 +3,14 @@
 	"type": "module",
 	"version": "1.0.0",
 	"exports": {
-		"./pg": "./src/pg.ts",
-		"./redis": "./src/redis.ts"
+		"./pg": {
+			"types": "./src/pg.ts",
+			"default": "./dist/pg.js"
+		},
+		"./redis": {
+			"types": "./src/redis.ts",
+			"default": "./dist/redis.js"
+		}
 	},
 	"scripts": {
 		"dev": "tsc --watch",
