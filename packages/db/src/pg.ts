@@ -213,16 +213,20 @@ export async function pgFindAirportFlights(
 	}
 }
 
-// export async function pgCleanupStalePilots(): Promise<void> {
-// 	try {
-// 		await pool.query(`
-//       DELETE FROM pilots
-//       WHERE last_update < NOW() - INTERVAL '24 hours'
-//       RETURNING id
-//     `);
-// 		// console.log(`🗑️  Cleaned up ${result.rowCount} stale pilots`);
-// 	} catch (err) {
-// 		console.error("Error cleaning up stale pilots:", err);
-// 		throw err;
-// 	}
-// }
+export async function pgDeleteStalePilots(): Promise<void> {
+	try {
+		const deleted = await prisma.pilot.deleteMany({
+			where: {
+				last_update: {
+					lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+				},
+			},
+		});
+
+		if (deleted.count === 0) return;
+		console.log(`🗑️  Cleaned up ${deleted.count} stale pilots`);
+	} catch (err) {
+		console.error("Error cleaning up stale pilots:", err);
+		throw err;
+	}
+}

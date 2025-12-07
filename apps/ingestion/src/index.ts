@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { pgUpsertPilots } from "@sr24/db/pg";
+import { pgDeleteStalePilots, pgUpsertPilots } from "@sr24/db/pg";
 import { rdsConnect, rdsPub, rdsSetMultiple, rdsSetMultipleTimeSeries, rdsSetSingle } from "@sr24/db/redis";
 import type { TrackPoint, VatsimData, VatsimTransceivers, WsAll, WsDelta } from "@sr24/types/vatsim";
 import axios from "axios";
@@ -15,7 +15,7 @@ const FETCH_INTERVAL = 5_000;
 let dbsInitialized = false;
 let updating = false;
 let lastVatsimUpdate = 0;
-// let lastPgCleanUp = 0;
+let lastPgCleanUp = 0;
 
 async function fetchVatsimData(): Promise<void> {
 	if (updating) return;
@@ -63,11 +63,11 @@ async function fetchVatsimData(): Promise<void> {
 			rdsSetMultiple(airportsLong, "airport", (a) => a.icao, "airports:live", 120);
 
 			await pgUpsertPilots([...pilotsLong, ...deletedPilotsLong]);
-			// const now = Date.now();
-			// if (now > lastPgCleanUp + 30 * 60 * 1000) {
-			// 	lastPgCleanUp = now;
-			// 	await pgCleanupStalePilots();
-			// }
+			const now = Date.now();
+			if (now > lastPgCleanUp + 60 * 60 * 1000) {
+				lastPgCleanUp = now;
+				await pgDeleteStalePilots();
+			}
 
 			const trackPoints: TrackPoint[] = pilotsLong.map((p) => ({
 				id: p.id,
