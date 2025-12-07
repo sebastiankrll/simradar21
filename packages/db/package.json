@@ -3,27 +3,29 @@
 	"type": "module",
 	"version": "1.0.0",
 	"exports": {
-		"./pg": {
-			"types": "./src/pg.ts",
-			"default": "./dist/pg.js"
-		},
-		"./redis": {
-			"types": "./src/redis.ts",
-			"default": "./dist/redis.js"
-		}
+		"./pg": "./src/pg.ts",
+		"./redis": "./src/redis.ts"
 	},
 	"scripts": {
 		"dev": "tsc --watch",
 		"build": "tsc",
+		"prebuild": "prisma generate",
 		"format-and-lint": "biome check .",
-		"format-and-lint:fix": "biome check . --write"
+		"format-and-lint:fix": "biome check . --write",
+		"db:generate": "prisma generate",
+		"db:migrate": "prisma migrate dev",
+		"db:deploy": "prisma migrate deploy"
 	},
 	"devDependencies": {
 		"@sr24/typescript-config": "*",
 		"@types/pg": "^8.15.6",
+		"prisma": "^7.1.0",
+		"tsup": "^8.5.1",
 		"typescript": "^5.9.3"
 	},
 	"dependencies": {
+		"@prisma/adapter-pg": "^7.1.0",
+		"@prisma/client": "^7.1.0",
 		"@sr24/types": "*",
 		"ioredis": "^5.8.2",
 		"pg": "^8.16.3",

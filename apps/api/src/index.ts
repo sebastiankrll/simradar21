@@ -1,11 +1,11 @@
 import "dotenv/config";
-import { pgGetAirportPilots, pgHealthCheck, pgShutdown } from "@sr24/db/pg";
+import { pgFindAirportFlights, pgHealthCheck, pgShutdown } from "@sr24/db/pg";
 import { rdsConnect, rdsGetMultiple, rdsGetRing, rdsGetSingle, rdsGetTimeSeries, rdsHealthCheck, rdsShutdown } from "@sr24/db/redis";
 import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
-import { validateCallsign, validateICAO, validateNumber, validateString } from "./validation.js";
+import { validateCallsign, validateICAO, validateNumber, validateString } from "./validation";
 
 rdsConnect();
 
@@ -276,11 +276,11 @@ app.get(
 	asyncHandler(async (req, res) => {
 		const icao = validateICAO(req.params.icao).toUpperCase();
 		const direction = (String(req.query.direction || "dep").toLowerCase() === "arr" ? "arr" : "dep") as "dep" | "arr";
-		const limit = validateNumber(req.query.limit || 20, "Limit", 1, 200);
-		const cursor = typeof req.query.cursor === "string" ? validateString(req.query.cursor, "Cursor", 1, 100) : undefined;
-		const afterCursor = typeof req.query.afterCursor === "string" ? validateString(req.query.afterCursor, "AfterCursor", 1, 100) : undefined;
+		const limit = validateNumber(req.query.limit || 20, "Limit", 1, 30);
+		const cursor = req.query.cursor as string | undefined;
+		const backwards = req.query.backwards === "true";
 
-		const data = await pgGetAirportPilots(icao, direction, limit, cursor, afterCursor);
+		const data = await pgFindAirportFlights(icao, direction, limit, cursor, backwards);
 		res.json(data);
 	}),
 );

@@ -1,12 +1,12 @@
 import "dotenv/config";
-import { pgCleanupStalePilots, pgInitPilotsTable, pgUpsertPilots } from "@sr24/db/pg";
+import { pgDeleteStalePilots, pgUpsertPilots } from "@sr24/db/pg";
 import { rdsConnect, rdsPub, rdsSetMultiple, rdsSetMultipleTimeSeries, rdsSetSingle } from "@sr24/db/redis";
 import type { TrackPoint, VatsimData, VatsimTransceivers, WsAll, WsDelta } from "@sr24/types/vatsim";
 import axios from "axios";
-import { getAirportDelta, getAirportShort, mapAirports } from "./airport.js";
-import { getControllerDelta, mapControllers } from "./controller.js";
-import { updateDashboardData } from "./dashboard.js";
-import { getPilotDelta, getPilotShort, mapPilots } from "./pilot.js";
+import { getAirportDelta, getAirportShort, mapAirports } from "./airport";
+import { getControllerDelta, mapControllers } from "./controller";
+import { updateDashboardData } from "./dashboard";
+import { getPilotDelta, getPilotShort, mapPilots } from "./pilot";
 
 const VATSIM_DATA_URL = "https://data.vatsim.net/v3/vatsim-data.json";
 const VATSIM_TRANSCEIVERS_URL = "https://data.vatsim.net/v3/transceivers-data.json";
@@ -22,7 +22,6 @@ async function fetchVatsimData(): Promise<void> {
 	updating = true;
 
 	if (!dbsInitialized) {
-		await pgInitPilotsTable();
 		await rdsConnect();
 		dbsInitialized = true;
 	}
@@ -65,9 +64,9 @@ async function fetchVatsimData(): Promise<void> {
 
 			await pgUpsertPilots([...pilotsLong, ...deletedPilotsLong]);
 			const now = Date.now();
-			if (now > lastPgCleanUp + 30 * 60 * 1000) {
+			if (now > lastPgCleanUp + 60 * 60 * 1000) {
 				lastPgCleanUp = now;
-				await pgCleanupStalePilots();
+				await pgDeleteStalePilots();
 			}
 
 			const trackPoints: TrackPoint[] = pilotsLong.map((p) => ({

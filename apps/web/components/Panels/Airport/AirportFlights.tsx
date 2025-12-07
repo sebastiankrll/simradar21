@@ -13,14 +13,9 @@ import { fetchApi } from "@/utils/api";
 import { getDelayColor } from "../Pilot/PilotTimes";
 import { queryClient } from "./AirportPanel";
 
-type ApiPage = {
-	items: PilotLong[];
-	nextCursor: string | null;
-	prevCursor: string | null;
-};
-type PageParam = { cursor?: string; afterCursor?: string };
-
 const LIMIT = 20;
+
+type PageParam = { cursor?: string; backwards?: boolean };
 
 function normalizeDirection(direction: string): "dep" | "arr" {
 	const d = direction.toLowerCase();
@@ -51,24 +46,30 @@ function List({ icao, dir }: { icao: string; dir: "dep" | "arr" }) {
 		fetchPreviousPage,
 		hasNextPage,
 		hasPreviousPage,
-	} = useInfiniteQuery<ApiPage, Error, InfiniteData<ApiPage>, readonly [string, string, "dep" | "arr"], PageParam>({
+	} = useInfiniteQuery<PilotLong[], Error, InfiniteData<PilotLong[]>, readonly [string, string, "dep" | "arr"], PageParam>({
 		queryKey: ["airport-flights", icao.toUpperCase(), dir] as const,
 		queryFn: async ({ pageParam }) => {
 			const params = new URLSearchParams({ direction: dir, limit: String(LIMIT) });
-			if (pageParam?.cursor) params.set("cursor", pageParam.cursor);
-			if (pageParam?.afterCursor) params.set("afterCursor", pageParam.afterCursor);
 
-			const json = await fetchApi<ApiPage>(`/data/airport/${icao.toUpperCase()}/flights?${params.toString()}`);
+			if (pageParam?.cursor) {
+				params.set("cursor", pageParam.cursor);
+				if (pageParam.backwards) params.set("backwards", "true");
+			}
 
-			json.nextCursor = json.nextCursor && json.nextCursor.length > 0 ? json.nextCursor : null;
-			json.prevCursor = json.prevCursor && json.prevCursor.length > 0 ? json.prevCursor : null;
-
-			return json;
+			return await fetchApi<PilotLong[]>(`/data/airport/${icao.toUpperCase()}/flights?${params.toString()}`);
 		},
-		initialPageParam: {} as PageParam,
-		getNextPageParam: (lastPage) => (lastPage.nextCursor && lastPage.nextCursor.length > 0 ? { cursor: lastPage.nextCursor } : undefined),
-		getPreviousPageParam: (firstPage) =>
-			firstPage.prevCursor && firstPage.prevCursor.length > 0 ? { afterCursor: firstPage.prevCursor } : undefined,
+		initialPageParam: {},
+		getNextPageParam: (lastPage) => {
+			if (!lastPage || lastPage.length < LIMIT) return undefined;
+			const lastPilot = lastPage[lastPage.length - 1];
+			return { cursor: lastPilot.id, backwards: false };
+		},
+		getPreviousPageParam: (firstPage, allPages) => {
+			if (!firstPage || firstPage.length === 0) return undefined;
+			if (allPages.length > 1 && firstPage.length < LIMIT) return undefined;
+			const firstPilot = firstPage[0];
+			return { cursor: firstPilot.id, backwards: true };
+		},
 		staleTime: 10_000,
 		gcTime: 30_000,
 	});
@@ -91,7 +92,7 @@ function List({ icao, dir }: { icao: string; dir: "dep" | "arr" }) {
 					<div id="panel-airport-flights-list">
 						{data?.pages.map((page, i) => (
 							<Fragment key={i}>
-								{page.items.map((p) => (
+								{page.map((p) => (
 									<ListItem key={p.id} pilot={p} dir={dir} />
 								))}
 							</Fragment>
@@ -117,6 +118,7 @@ function ListItem({ pilot, dir }: { pilot: PilotLong; dir: "dep" | "arr" }) {
 		airport: null,
 	});
 	useEffect(() => {
+		if (!pilot.flight_plan?.departure) console.log(pilot);
 		const airlineCode = pilot.callsign.slice(0, 3).toUpperCase();
 		const icao = dir === "dep" ? pilot.flight_plan?.arrival.icao : pilot.flight_plan?.departure.icao;
 

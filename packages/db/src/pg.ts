@@ -1,35 +1,18 @@
+import { PrismaPg } from "@prisma/adapter-pg";
 import type { PilotLong } from "@sr24/types/vatsim";
-import { Pool } from "pg";
+import { PrismaClient } from "./generated/prisma/client.js";
 
-const pool = new Pool({
-	user: process.env.POSTGRES_USER,
-	host: process.env.POSTGRES_HOST,
-	database: process.env.POSTGRES_DB,
-	password: process.env.POSTGRES_PASSWORD,
-	port: Number(process.env.POSTGRES_PORT || 5432),
-	max: 100,
-	min: 10,
-	idleTimeoutMillis: 10000,
-	connectionTimeoutMillis: 3000,
-	statement_timeout: 5000,
-	query_timeout: 5000,
-	application_name: "simradar24-api",
-	keepAlive: true,
-	keepAliveInitialDelayMillis: 10000,
+const adapter = new PrismaPg({
+	connectionString: `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DB}?schema=public`,
 });
-
-pool.on("error", (err) => {
-	console.error("Unexpected error on idle client", err);
-});
-
-pool.on("connect", () => {
-	console.log("✅ Connected to PostgreSQL");
+const prisma = new PrismaClient({
+	adapter,
 });
 
 // Health check
 export async function pgHealthCheck(): Promise<boolean> {
 	try {
-		await pool.query("SELECT 1");
+		await prisma.$queryRaw`SELECT 1`;
 		return true;
 	} catch (err) {
 		console.error("PostgreSQL health check failed:", err);
@@ -39,251 +22,162 @@ export async function pgHealthCheck(): Promise<boolean> {
 
 // Graceful shutdown
 export async function pgShutdown(): Promise<void> {
-	await pool.end();
+	await prisma.$disconnect();
 	console.log("PostgreSQL connection pool closed");
-}
-
-export async function pgInitPilotsTable() {
-	const createTableQuery = `
-    CREATE TABLE IF NOT EXISTS pilots (
-      id TEXT PRIMARY KEY,
-      cid INTEGER NOT NULL,
-      callsign TEXT NOT NULL,
-      name TEXT NOT NULL,
-      aircraft TEXT NOT NULL,
-      server TEXT NOT NULL,
-      pilot_rating TEXT NOT NULL,
-      military_rating TEXT NOT NULL,
-      latitude DOUBLE PRECISION NOT NULL,
-      longitude DOUBLE PRECISION NOT NULL,
-      altitude_agl DOUBLE PRECISION NOT NULL,
-      altitude_ms DOUBLE PRECISION NOT NULL,
-      groundspeed DOUBLE PRECISION NOT NULL,
-      vertical_speed DOUBLE PRECISION NOT NULL,
-      heading DOUBLE PRECISION NOT NULL,
-      transponder TEXT NOT NULL,
-      frequency INTEGER NOT NULL,
-      qnh_i_hg DOUBLE PRECISION NOT NULL,
-      qnh_mb DOUBLE PRECISION NOT NULL,
-      flight_plan JSONB,
-      route TEXT NOT NULL,
-      dep_icao TEXT,
-      arr_icao TEXT,
-      times JSONB,
-      sched_off_block TIMESTAMPTZ,
-      sched_on_block TIMESTAMPTZ,
-      logon_time TIMESTAMPTZ NOT NULL,
-      last_update TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      live BOOLEAN NOT NULL DEFAULT FALSE
-    );
-  `;
-
-	try {
-		await pool.query(createTableQuery);
-		await pool.query(`CREATE INDEX IF NOT EXISTS pilots_dep_idx ON pilots (dep_icao, sched_off_block DESC, id DESC)`);
-		await pool.query(`CREATE INDEX IF NOT EXISTS pilots_arr_idx ON pilots (arr_icao, sched_on_block DESC, id DESC)`);
-		await pool.query(`CREATE INDEX IF NOT EXISTS pilots_callsign_idx ON pilots (callsign, last_update DESC)`);
-		await pool.query(`CREATE INDEX IF NOT EXISTS pilots_last_update_idx ON pilots (last_update)`);
-		await pool.query(`CREATE INDEX IF NOT EXISTS pilots_live_idx ON pilots (live, last_update DESC)`);
-
-		console.log("✅ Pilots table initialized with index");
-	} catch (err) {
-		console.error("Error initializing pilots table:", err);
-		throw err;
-	}
 }
 
 export async function pgUpsertPilots(pilots: PilotLong[]): Promise<void> {
 	if (!pilots.length) return;
 
-	const BATCH_SIZE = 100;
-	// let totalUpserted = 0;
+	const BATCH_SIZE = 1000;
+
+	for (let i = 0; i < pilots.length; i += BATCH_SIZE) {
+		const batch = pilots.slice(i, i + BATCH_SIZE);
+		await pgUpsertPilotsBatch(batch);
+	}
+}
+
+async function pgUpsertPilotsBatch(pilots: PilotLong[]): Promise<void> {
+	if (!pilots.length) return;
+
+	const values: string[] = [];
+	const params: any[] = [];
+
+	pilots.forEach((p, idx) => {
+		const baseIdx = idx * 30;
+		values.push(`(
+			$${baseIdx + 1}, $${baseIdx + 2}, $${baseIdx + 3}, $${baseIdx + 4}, $${baseIdx + 5},
+			$${baseIdx + 6}, $${baseIdx + 7}, $${baseIdx + 8}, $${baseIdx + 9}, $${baseIdx + 10},
+			$${baseIdx + 11}, $${baseIdx + 12}, $${baseIdx + 13}, $${baseIdx + 14}, $${baseIdx + 15},
+			$${baseIdx + 16}, $${baseIdx + 17}, $${baseIdx + 18}, $${baseIdx + 19}, $${baseIdx + 20},
+			$${baseIdx + 21}, $${baseIdx + 22}, $${baseIdx + 23}, $${baseIdx + 24}, $${baseIdx + 25}, $${baseIdx + 26},
+			$${baseIdx + 27}, $${baseIdx + 28}, $${baseIdx + 29}, $${baseIdx + 30}
+		)`);
+
+		params.push(
+			// ---- PilotShort ----
+			p.id,
+			p.callsign,
+			p.latitude,
+			p.longitude,
+			p.altitude_agl,
+			p.altitude_ms,
+			p.groundspeed,
+			p.vertical_speed,
+			p.heading,
+			p.aircraft,
+			p.transponder,
+			p.frequency,
+			p.route,
+			p.ghost,
+			// ---- PilotLong ----
+			p.cid,
+			p.name,
+			p.server,
+			p.pilot_rating,
+			p.military_rating,
+			p.qnh_i_hg,
+			p.qnh_mb,
+			JSON.stringify(p.flight_plan),
+			JSON.stringify(p.times),
+			p.logon_time,
+			p.timestamp,
+			p.live,
+			// ---- Indexes ----
+			p.times?.sched_off_block || null,
+			p.times?.sched_on_block || null,
+			p.flight_plan?.departure.icao || null,
+			p.flight_plan?.arrival.icao || null,
+		);
+	});
+
+	const query = `
+		INSERT INTO "Pilot" (
+			pilot_id, callsign, latitude, longitude, altitude_agl,
+			altitude_ms, groundspeed, vertical_speed, heading, aircraft,
+			transponder, frequency, route, ghost, cid,
+			name, server, pilot_rating, military_rating, qnh_i_hg,
+			qnh_mb, flight_plan, times, logon_time, last_update, live,
+			sched_off_block, sched_on_block, dep_icao, arr_icao
+		)
+		VALUES ${values.join(",")}
+		ON CONFLICT (pilot_id) DO UPDATE SET
+			callsign = EXCLUDED.callsign,
+			latitude = EXCLUDED.latitude,
+			longitude = EXCLUDED.longitude,
+			altitude_agl = EXCLUDED.altitude_agl,
+			altitude_ms = EXCLUDED.altitude_ms,
+			groundspeed = EXCLUDED.groundspeed,
+			vertical_speed = EXCLUDED.vertical_speed,
+			heading = EXCLUDED.heading,
+			aircraft = EXCLUDED.aircraft,
+			transponder = EXCLUDED.transponder,
+			frequency = EXCLUDED.frequency,
+			route = EXCLUDED.route,
+			ghost = EXCLUDED.ghost,
+			cid = EXCLUDED.cid,
+			name = EXCLUDED.name,
+			server = EXCLUDED.server,
+			pilot_rating = EXCLUDED.pilot_rating,
+			military_rating = EXCLUDED.military_rating,
+			qnh_i_hg = EXCLUDED.qnh_i_hg,
+			qnh_mb = EXCLUDED.qnh_mb,
+			flight_plan = EXCLUDED.flight_plan,
+			times = EXCLUDED.times,
+			logon_time = EXCLUDED.logon_time,
+			last_update = EXCLUDED.last_update,
+			live = EXCLUDED.live,
+			sched_off_block = EXCLUDED.sched_off_block,
+			sched_on_block = EXCLUDED.sched_on_block,
+			dep_icao = EXCLUDED.dep_icao,
+			arr_icao = EXCLUDED.arr_icao
+	`;
 
 	try {
-		for (let i = 0; i < pilots.length; i += BATCH_SIZE) {
-			const batch = pilots.slice(i, i + BATCH_SIZE);
-			const cols = `(
-        id, cid, callsign, name, aircraft, server, pilot_rating, military_rating,
-        latitude, longitude, altitude_agl, altitude_ms, groundspeed, vertical_speed,
-        heading, transponder, frequency, qnh_i_hg, qnh_mb,
-        flight_plan, route, dep_icao, arr_icao, times, sched_off_block, sched_on_block,
-        logon_time, last_update, live
-      )`;
-
-			const values: any[] = [];
-			const placeholders: string[] = [];
-
-			batch.forEach((p, idx) => {
-				const paramIdx = idx * 29;
-				const params = Array.from({ length: 29 }, (_, j) => `$${paramIdx + j + 1}`);
-				placeholders.push(`(${params.join(", ")})`);
-
-				values.push(
-					p.id,
-					p.cid,
-					p.callsign,
-					p.name,
-					p.aircraft,
-					p.server,
-					p.pilot_rating,
-					p.military_rating,
-					p.latitude,
-					p.longitude,
-					p.altitude_agl,
-					p.altitude_ms,
-					p.groundspeed,
-					p.vertical_speed,
-					p.heading,
-					p.transponder,
-					p.frequency,
-					p.qnh_i_hg,
-					p.qnh_mb,
-					p.flight_plan ? JSON.stringify(p.flight_plan) : null,
-					p.route,
-					p.flight_plan?.departure?.icao || null,
-					p.flight_plan?.arrival?.icao || null,
-					p.times ? JSON.stringify(p.times) : null,
-					p.times?.sched_off_block || null,
-					p.times?.sched_on_block || null,
-					p.logon_time,
-					p.timestamp,
-					p.live,
-				);
-			});
-
-			const query = `
-        INSERT INTO pilots ${cols}
-        VALUES ${placeholders.join(",")}
-        ON CONFLICT (id) DO UPDATE SET
-            cid = EXCLUDED.cid,
-            callsign = EXCLUDED.callsign,
-            name = EXCLUDED.name,
-            aircraft = EXCLUDED.aircraft,
-            server = EXCLUDED.server,
-            pilot_rating = EXCLUDED.pilot_rating,
-            military_rating = EXCLUDED.military_rating,
-            latitude = EXCLUDED.latitude,
-            longitude = EXCLUDED.longitude,
-            altitude_agl = EXCLUDED.altitude_agl,
-            altitude_ms = EXCLUDED.altitude_ms,
-            groundspeed = EXCLUDED.groundspeed,
-            vertical_speed = EXCLUDED.vertical_speed,
-            heading = EXCLUDED.heading,
-            transponder = EXCLUDED.transponder,
-            frequency = EXCLUDED.frequency,
-            qnh_i_hg = EXCLUDED.qnh_i_hg,
-            qnh_mb = EXCLUDED.qnh_mb,
-            flight_plan = EXCLUDED.flight_plan,
-            route = EXCLUDED.route,
-            dep_icao = EXCLUDED.dep_icao,
-            arr_icao = EXCLUDED.arr_icao,
-            times = EXCLUDED.times,
-            sched_off_block = EXCLUDED.sched_off_block,
-            sched_on_block = EXCLUDED.sched_on_block,
-            logon_time = EXCLUDED.logon_time,
-            last_update = EXCLUDED.last_update,
-            live = EXCLUDED.live
-      `;
-
-			await pool.query(query, values);
-			// totalUpserted += result.rowCount || 0;
-		}
-
-		// console.log(`✅ Upserted ${totalUpserted} pilots`);
+		await prisma.$executeRawUnsafe(query, ...params);
 	} catch (err) {
-		console.error("Error upserting pilots:", err);
+		console.error("Error upserting pilot batch:", err);
 		throw err;
 	}
 }
 
-export async function pgGetAirportPilots(
+export async function pgFindAirportFlights(
 	icao: string,
 	direction: "dep" | "arr",
 	limit: number,
 	cursor?: string,
-	afterCursor?: string,
-): Promise<{ items: PilotLong[]; nextCursor: string | null; prevCursor: string | null }> {
+	backwards?: boolean,
+): Promise<PilotLong[]> {
 	try {
-		let whereCursor = "";
-		const params: any[] = [icao];
-		let paramIdx = 2;
-
 		const dirCol = direction === "dep" ? "dep_icao" : "arr_icao";
 		const timeCol = direction === "dep" ? "sched_off_block" : "sched_on_block";
 
-		let isLoadingNewer = false;
-
-		if (cursor) {
-			const [tsStr, id] = Buffer.from(cursor, "base64").toString("utf8").split("|");
-			whereCursor = `AND (${timeCol}, id) > ($${paramIdx++}, $${paramIdx++})`;
-			params.push(new Date(tsStr), id);
-		} else if (afterCursor) {
-			const [tsStr, id] = Buffer.from(afterCursor, "base64").toString("utf8").split("|");
-			whereCursor = `AND (${timeCol}, id) < ($${paramIdx++}, $${paramIdx++})`;
-			params.push(new Date(tsStr), id);
-			isLoadingNewer = true;
-		} else {
-			whereCursor = `AND ${timeCol} >= NOW()`;
+		const where: any = {
+			[dirCol]: icao,
+			[timeCol]: { not: null },
+		};
+		if (!cursor) {
+			where[timeCol] = { gte: new Date() };
 		}
 
-		const q = `
-        SELECT *
-        FROM pilots
-        WHERE ${dirCol} = $1
-        AND ${timeCol} IS NOT NULL
-        ${whereCursor}
-        ORDER BY ${timeCol} ${isLoadingNewer ? "DESC" : "ASC"}, id ${isLoadingNewer ? "DESC" : "ASC"}
-        LIMIT $${paramIdx}
-      `;
-		params.push(limit + 1);
+		const results = await prisma.pilot.findMany({
+			take: backwards ? -(limit + 1) : limit + 1,
+			skip: cursor ? 1 : 0,
+			cursor: cursor
+				? {
+						pilot_id: cursor,
+					}
+				: undefined,
+			where,
+			orderBy: {
+				[timeCol]: "asc",
+			},
+		});
 
-		let { rows } = await pool.query(q, params);
-
-		const hadMoreThanLimit = rows.length > limit;
-
-		if (isLoadingNewer) {
-			rows = rows.reverse();
-		}
-
-		let nextCursor: string | null = null;
-		let prevCursor: string | null = null;
-		const items = rows as any[];
-
-		if (hadMoreThanLimit) {
-			if (isLoadingNewer) {
-				items.shift();
-			} else {
-				items.pop();
-			}
-		}
-
-		if (!isLoadingNewer && hadMoreThanLimit && items.length > 0) {
-			const tail = items[items.length - 1];
-			const tailTime = tail[timeCol];
-			nextCursor = Buffer.from(`${new Date(tailTime).toISOString()}|${tail.id}`).toString("base64");
-		}
-
-		if (items.length > 0) {
-			if (!isLoadingNewer) {
-				const head = items[0];
-				const headTime = head[timeCol];
-				prevCursor = Buffer.from(`${new Date(headTime).toISOString()}|${head.id}`).toString("base64");
-			} else if (hadMoreThanLimit) {
-				const head = items[0];
-				const headTime = head[timeCol];
-				prevCursor = Buffer.from(`${new Date(headTime).toISOString()}|${head.id}`).toString("base64");
-			}
-		}
-
-		const pilots: PilotLong[] = items.map((r: any) => ({
-			id: r.id,
-			cid: r.cid,
+		const pilots: PilotLong[] = results.map((r) => ({
+			// ---- PilotShort ----
+			id: r.pilot_id,
 			callsign: r.callsign,
-			name: r.name,
-			aircraft: r.aircraft,
-			server: r.server,
-			pilot_rating: r.pilot_rating,
-			military_rating: r.military_rating,
 			latitude: r.latitude,
 			longitude: r.longitude,
 			altitude_agl: r.altitude_agl,
@@ -291,34 +185,46 @@ export async function pgGetAirportPilots(
 			groundspeed: r.groundspeed,
 			vertical_speed: r.vertical_speed,
 			heading: r.heading,
+			aircraft: r.aircraft,
 			transponder: r.transponder,
 			frequency: r.frequency,
+			route: r.route,
+			ghost: r.ghost,
+
+			// ---- PilotLong ----
+			cid: r.cid,
+			name: r.name,
+			server: r.server,
+			pilot_rating: r.pilot_rating,
+			military_rating: r.military_rating,
 			qnh_i_hg: r.qnh_i_hg,
 			qnh_mb: r.qnh_mb,
-			flight_plan: r.flight_plan,
-			route: r.route,
-			times: r.times,
-			ghost: false,
-			logon_time: new Date(r.logon_time),
-			timestamp: new Date(r.last_update),
+			flight_plan: r.flight_plan as any,
+			times: r.times as any,
+			logon_time: r.logon_time,
+			timestamp: r.last_update,
 			live: r.live,
 		}));
 
-		return { items: pilots, nextCursor, prevCursor };
+		return pilots;
 	} catch (err) {
 		console.error("Error fetching airport pilots:", err);
 		throw err;
 	}
 }
 
-export async function pgCleanupStalePilots(): Promise<void> {
+export async function pgDeleteStalePilots(): Promise<void> {
 	try {
-		await pool.query(`
-      DELETE FROM pilots 
-      WHERE last_update < NOW() - INTERVAL '24 hours'
-      RETURNING id
-    `);
-		// console.log(`🗑️  Cleaned up ${result.rowCount} stale pilots`);
+		const deleted = await prisma.pilot.deleteMany({
+			where: {
+				last_update: {
+					lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+				},
+			},
+		});
+
+		if (deleted.count === 0) return;
+		console.log(`🗑️  Cleaned up ${deleted.count} stale pilots`);
 	} catch (err) {
 		console.error("Error cleaning up stale pilots:", err);
 		throw err;

@@ -1,7 +1,7 @@
 import { rdsGetSingle } from "@sr24/db/redis";
 import type { FIRFeature, SimAwareTraconFeature } from "@sr24/types/db";
 import type { ControllerDelta, ControllerLong, ControllerMerged, ControllerShort, PilotLong, VatsimData } from "@sr24/types/vatsim";
-import { haversineDistance } from "./utils/helpers.js";
+import { haversineDistance } from "./utils/helpers";
 
 let cachedMerged: ControllerMerged[] = [];
 let deleted: string[] = [];
