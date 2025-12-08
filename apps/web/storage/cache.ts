@@ -14,7 +14,7 @@ import { dxGetAirline, dxGetAirport, dxGetFirs, dxGetTracons, dxInitDatabases } 
 
 type StatusSetter = (status: Partial<StatusMap> | ((prev: Partial<StatusMap>) => Partial<StatusMap>)) => void;
 
-let airportsShort: AirportShort[] = [];
+let airportsShort: Required<AirportShort>[] = [];
 let controllersMerged: ControllerMerged[] = [];
 let initialized = false;
 
@@ -65,7 +65,7 @@ export async function updateCache(delta: WsDelta): Promise<void> {
 		...delta.airports.added,
 		...delta.airports.updated.map((a) => {
 			const existing = airportsShort.find((ap) => ap.icao === a.icao);
-			return { ...existing, ...a };
+			return { ...existing, ...(a as Required<AirportShort>) };
 		}),
 	];
 
@@ -85,7 +85,7 @@ export async function updateCache(delta: WsDelta): Promise<void> {
 	updateOverlays();
 }
 
-export function getAirportShort(id: string): AirportShort | null {
+export function getAirportShort(id: string): Required<AirportShort> | null {
 	return airportsShort.find((a) => a.icao === id) || null;
 }
 
