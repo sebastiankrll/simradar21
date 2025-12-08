@@ -175,7 +175,6 @@ function setPilotDelta(pilotsLong: PilotLong[]): void {
 			const pilotShort = getPilotShort(p, cachedPilot);
 			if (Object.keys(pilotShort).length > 1) {
 				updated.push(pilotShort);
-				console.log(pilotShort);
 			}
 		}
 	}

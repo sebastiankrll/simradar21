@@ -8,22 +8,25 @@ let updated: ControllerMerged[] = [];
 let added: ControllerMerged[] = [];
 
 export async function mapControllers(vatsimData: VatsimData, pilotsLong: PilotLong[]): Promise<[ControllerLong[], ControllerMerged[]]> {
-	const controllersLong: ControllerLong[] = vatsimData.controllers.map((controller) => {
-		return {
-			callsign: controller.callsign,
-			frequency: parseFrequencyToKHz(controller.frequency),
-			facility: controller.facility,
-			atis: controller.text_atis,
-			connections: 0,
-			cid: controller.cid,
-			name: controller.name,
-			rating: controller.rating,
-			server: controller.server,
-			visual_range: controller.visual_range,
-			logon_time: new Date(controller.logon_time),
-			timestamp: new Date(controller.last_updated),
-		};
-	});
+	const controllersLong: ControllerLong[] = vatsimData.controllers
+		.map((controller) => {
+			if (controller.facility === 0 && !controller.callsign.includes("OBS")) return null;
+			return {
+				callsign: controller.callsign,
+				frequency: parseFrequencyToKHz(controller.frequency),
+				facility: controller.facility,
+				atis: controller.text_atis,
+				connections: 0,
+				cid: controller.cid,
+				name: controller.name,
+				rating: controller.rating,
+				server: controller.server,
+				visual_range: controller.visual_range,
+				logon_time: new Date(controller.logon_time),
+				timestamp: new Date(controller.last_updated),
+			};
+		})
+		.filter((c) => c !== null);
 
 	getConnectionsCount(vatsimData, controllersLong, pilotsLong);
 
@@ -64,11 +67,9 @@ function setControllerDelta(merged: ControllerMerged[]): void {
 			for (const controller of m.controllers) {
 				const cachedController = cachedMerged.controllers.find((c) => c.callsign === controller.callsign);
 				const controllerShort = getControllerShort(controller, cachedController);
-				if (Object.keys(controllerShort).length > 1) {
-					updatedControllers.push(controllerShort);
-				}
+				updatedControllers.push(controllerShort);
 			}
-			
+
 			if (updatedControllers.length > 0) {
 				updated.push({
 					id: m.id,
@@ -92,10 +93,9 @@ function getControllerShort(controller: ControllerShort, cachedController?: Cont
 			connections: controller.connections,
 		};
 	} else {
-		const controllerShort: ControllerShort = { callsign: controller.callsign };
+		const controllerShort: ControllerShort = { callsign: controller.callsign, facility: controller.facility };
 
 		if (controller.frequency !== cachedController.frequency) controllerShort.frequency = controller.frequency;
-		if (controller.facility !== cachedController.facility) controllerShort.facility = controller.facility;
 		if (JSON.stringify(controller.atis) !== JSON.stringify(cachedController.atis)) controllerShort.atis = controller.atis;
 		if (controller.connections !== cachedController.connections) controllerShort.connections = controller.connections;
 

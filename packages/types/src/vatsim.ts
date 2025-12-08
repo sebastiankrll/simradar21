@@ -200,7 +200,7 @@ interface PilotAirport {
 export interface ControllerShort {
 	callsign: string;
 	frequency?: number;
-	facility?: number;
+	facility: number;
 	atis?: string[] | null;
 	connections?: number;
 }
