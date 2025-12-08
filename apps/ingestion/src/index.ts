@@ -1,7 +1,9 @@
 import "dotenv/config";
+import { promisify } from "node:util";
+import { gzip } from "node:zlib";
 import { pgDeleteStalePilots, pgUpsertPilots } from "@sr24/db/pg";
 import { rdsConnect, rdsPub, rdsSetMultiple, rdsSetMultipleTimeSeries, rdsSetSingle } from "@sr24/db/redis";
-import type { TrackPoint, VatsimData, VatsimTransceivers, WsAll, WsDelta } from "@sr24/types/vatsim";
+import type { AirportShort, PilotShort, TrackPoint, VatsimData, VatsimTransceivers, WsAll, WsDelta } from "@sr24/types/vatsim";
 import axios from "axios";
 import { getAirportDelta, getAirportShort, mapAirports } from "./airport.js";
 import { getControllerDelta, mapControllers } from "./controller.js";
@@ -11,6 +13,8 @@ import { getPilotDelta, getPilotShort, mapPilots } from "./pilot.js";
 const VATSIM_DATA_URL = "https://data.vatsim.net/v3/vatsim-data.json";
 const VATSIM_TRANSCEIVERS_URL = "https://data.vatsim.net/v3/transceivers-data.json";
 const FETCH_INTERVAL = 5_000;
+
+const gzipAsync = promisify(gzip);
 
 let dbsInitialized = false;
 let updating = false;
@@ -47,15 +51,17 @@ async function fetchVatsimData(): Promise<void> {
 				airports: getAirportDelta(),
 				controllers: getControllerDelta(),
 			};
-			rdsPub("ws:delta", delta);
+			const gzDelta = await gzipAsync(JSON.stringify(delta));
+			rdsPub("ws:delta", gzDelta.toString("base64"));
 
 			// Set full websocket data on redis ws:all
 			const all: WsAll = {
-				pilots: pilotsLong.map(getPilotShort),
-				airports: airportsLong.map(getAirportShort),
+				pilots: pilotsLong.map((p) => getPilotShort(p) as Required<PilotShort>),
+				airports: airportsLong.map((a) => getAirportShort(a) as Required<AirportShort>),
 				controllers: controllersMerged,
 			};
-			rdsSetSingle("ws:all", all);
+			const gzAll = await gzipAsync(JSON.stringify(all));
+			rdsSetSingle("ws:all", gzAll.toString("base64"));
 
 			// Set pilots, controllers and airports data in redis
 			rdsSetMultiple(pilotsLong, "pilot", (p) => p.id, "pilots:live", 120);

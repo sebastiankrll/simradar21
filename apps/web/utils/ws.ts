@@ -129,14 +129,8 @@ class WsClient {
 		try {
 			const compressed = new Uint8Array(event.data);
 			const decompressed = Pako.ungzip(compressed, { to: "string" });
-			const parsed = JSON.parse(decompressed);
+			const data = JSON.parse(decompressed);
 
-			if (!parsed.data) {
-				console.warn("Invalid message format: missing data field");
-				return;
-			}
-
-			const data: WsDelta = parsed.data;
 			this.listeners.forEach((listener) => {
 				try {
 					listener(data);

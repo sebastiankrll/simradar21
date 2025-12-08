@@ -3,28 +3,30 @@ import type { FIRFeature, SimAwareTraconFeature } from "@sr24/types/db";
 import type { ControllerDelta, ControllerLong, ControllerMerged, ControllerShort, PilotLong, VatsimData } from "@sr24/types/vatsim";
 import { haversineDistance } from "./utils/helpers.js";
 
-let cachedMerged: ControllerMerged[] = [];
-let deleted: string[] = [];
+let cached: ControllerMerged[] = [];
 let updated: ControllerMerged[] = [];
 let added: ControllerMerged[] = [];
 
 export async function mapControllers(vatsimData: VatsimData, pilotsLong: PilotLong[]): Promise<[ControllerLong[], ControllerMerged[]]> {
-	const controllersLong: ControllerLong[] = vatsimData.controllers.map((controller) => {
-		return {
-			callsign: controller.callsign,
-			frequency: parseFrequencyToKHz(controller.frequency),
-			facility: controller.facility,
-			atis: controller.text_atis,
-			connections: 0,
-			cid: controller.cid,
-			name: controller.name,
-			rating: controller.rating,
-			server: controller.server,
-			visual_range: controller.visual_range,
-			logon_time: new Date(controller.logon_time),
-			timestamp: new Date(controller.last_updated),
-		};
-	});
+	const controllersLong: ControllerLong[] = vatsimData.controllers
+		.map((controller) => {
+			if (controller.facility === 0 && !controller.callsign.includes("OBS")) return null;
+			return {
+				callsign: controller.callsign,
+				frequency: parseFrequencyToKHz(controller.frequency),
+				facility: controller.facility,
+				atis: controller.text_atis,
+				connections: 0,
+				cid: controller.cid,
+				name: controller.name,
+				rating: controller.rating,
+				server: controller.server,
+				visual_range: controller.visual_range,
+				logon_time: new Date(controller.logon_time),
+				timestamp: new Date(controller.last_updated),
+			};
+		})
+		.filter((c) => c !== null);
 
 	getConnectionsCount(vatsimData, controllersLong, pilotsLong);
 
@@ -46,19 +48,63 @@ export async function mapControllers(vatsimData: VatsimData, pilotsLong: PilotLo
 	});
 
 	const merged = await mergeControllers(controllersLong);
+	setControllerDelta(merged);
 
-	const deletedMerged = cachedMerged.filter((a) => !merged.some((b) => b.id === a.id));
-	deleted = deletedMerged.map((c) => c.id);
-	added = merged.filter((a) => !cachedMerged.some((b) => b.id === a.id));
-	updated = merged.filter((a) => cachedMerged.some((b) => b.id === a.id));
-
-	cachedMerged = merged;
 	return [controllersLong, merged];
+}
+
+function setControllerDelta(merged: ControllerMerged[]): void {
+	added = [];
+	updated = [];
+
+	for (const m of merged) {
+		const cachedMerged = cached.find((c) => c.id === m.id);
+		if (!cachedMerged) {
+			added.push(m);
+		} else {
+			const updatedControllers: ControllerShort[] = [];
+
+			for (const controller of m.controllers) {
+				const cachedController = cachedMerged.controllers.find((c) => c.callsign === controller.callsign);
+				const controllerShort = getControllerShort(controller, cachedController);
+				updatedControllers.push(controllerShort);
+			}
+
+			if (updatedControllers.length > 0) {
+				updated.push({
+					id: m.id,
+					facility: m.facility,
+					controllers: updatedControllers,
+				});
+			}
+		}
+	}
+
+	cached = merged;
+}
+
+function getControllerShort(controller: ControllerShort, cachedController?: ControllerShort): ControllerShort {
+	if (!cachedController) {
+		return {
+			callsign: controller.callsign,
+			frequency: controller.frequency,
+			facility: controller.facility,
+			atis: controller.atis,
+			connections: controller.connections,
+		};
+	} else {
+		const controllerShort: ControllerShort = { callsign: controller.callsign, facility: controller.facility };
+
+		if (controller.frequency !== cachedController.frequency) controllerShort.frequency = controller.frequency;
+		if (JSON.stringify(controller.atis) !== JSON.stringify(cachedController.atis)) controllerShort.atis = controller.atis;
+		if (controller.connections !== cachedController.connections) controllerShort.connections = controller.connections;
+
+		return controllerShort;
+	}
 }
 
 export function getControllerDelta(): ControllerDelta {
 	return {
-		deleted,
 		added,
 		updated,
 	};

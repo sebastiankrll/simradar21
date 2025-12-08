@@ -1,7 +1,5 @@
 import { createServer } from "node:http";
-import { createGzip } from "node:zlib";
 import { rdsHealthCheck, rdsShutdown, rdsSub } from "@sr24/db/redis";
-import type { WsDelta } from "@sr24/types/vatsim";
 import { WebSocket, WebSocketServer } from "ws";
 
 interface ClientContext {
@@ -171,89 +169,32 @@ const heartbeatInterval = setInterval(() => {
 	});
 }, 30000);
 
-function sendWsDelta(data: WsDelta): void {
-	// const startTime = Date.now();
-	let successCount = 0;
-	let errorCount = 0;
-	let clientCount = 0;
+function sendWsDelta(compressedData: Buffer): void {
+	wss.clients.forEach((client) => {
+		if (client.readyState !== WebSocket.OPEN) return;
 
-	const gzip = createGzip();
-	const payload = JSON.stringify({
-		event: "ws:delta",
-		data: data,
-		timestamp: new Date().toISOString(),
-	});
+		const clientContext = clientContextMap.get(client);
+		if (!clientContext) return;
 
-	gzip.write(payload);
-	gzip.end();
-
-	const chunks: Buffer[] = [];
-	gzip.on("data", (chunk) => {
-		chunks.push(chunk);
-	});
-
-	gzip.on("error", (err) => {
-		console.error("Compression error:", err);
-	});
-
-	gzip.on("end", () => {
-		const compressedData = Buffer.concat(chunks);
-		// const originalSize = payload.length;
-		// const compressedSize = compressedData.length;
-		// const compressionRatio = ((1 - compressedSize / originalSize) * 100).toFixed(2);
-
-		wss.clients.forEach((client) => {
-			if (client.readyState !== WebSocket.OPEN) return;
-
-			const clientContext = clientContextMap.get(client);
-			if (!clientContext) return;
-
-			clientCount++;
-
-			try {
-				client.send(compressedData, (err) => {
-					if (err) {
-						console.error(`Failed to send to client ${clientContext.id}:`, err.message);
-						errorCount++;
-					} else {
-						clientContext.messagesSent++;
-						clientContext.lastMessageTime = new Date();
-						successCount++;
-					}
-
-					// Log only after all sends complete
-					if (successCount + errorCount === clientCount) {
-						// const duration = Date.now() - startTime;
-						// console.log(
-						// 	`📡 Delta broadcast: ${successCount}/${clientCount} sent, ${errorCount} failed (compression: ${compressionRatio}%, size: ${compressedSize}B, duration: ${duration}ms)`,
-						// );
-					}
-				});
-			} catch (err) {
-				console.error(`Error sending to client ${clientContext.id}:`, err);
-				errorCount++;
-
-				// Log if all sends complete
-				if (successCount + errorCount === clientCount) {
-					// const duration = Date.now() - startTime;
-					// console.log(
-					// 	`📡 Delta broadcast: ${successCount}/${clientCount} sent, ${errorCount} failed (compression: ${compressionRatio}%, size: ${compressedSize}B, duration: ${duration}ms)`,
-					// );
+		try {
+			client.send(compressedData, (err) => {
+				if (err) {
+					console.error(`Failed to send to client ${clientContext.id}:`, err.message);
+				} else {
+					clientContext.messagesSent++;
+					clientContext.lastMessageTime = new Date();
 				}
-			}
-		});
-
-		// Handle case with no clients
-		if (clientCount === 0) {
-			// console.log(`📡 Delta broadcast: no connected clients`);
+			});
+		} catch (err) {
+			console.error(`Error sending to client ${clientContext.id}:`, err);
 		}
 	});
 }
 
 rdsSub("ws:delta", (message: string) => {
 	try {
-		const data: WsDelta = JSON.parse(message);
-		sendWsDelta(data);
+		const compressedData = Buffer.from(message, "base64");
+		sendWsDelta(compressedData);
 	} catch (err) {
 		console.error("Error in rdsSubWsDelta callback:", err);
 	}

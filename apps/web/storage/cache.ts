@@ -31,8 +31,8 @@ export async function initData(setStatus: StatusSetter, pathname: string): Promi
 	setStatus?.((prev) => ({ ...prev, initData: true }));
 
 	await initAirportFeatures();
-	initPilotFeatures(data.pilots);
-	initControllerFeatures(data.controllers);
+	initPilotFeatures(data);
+	initControllerFeatures(data);
 
 	airportsShort = data.airports;
 	controllersMerged = data.controllers;
@@ -61,8 +61,26 @@ export async function updateCache(delta: WsDelta): Promise<void> {
 	updateControllerFeatures(delta.controllers);
 	updateTrackFeatures(delta.pilots);
 
-	airportsShort = [...delta.airports.added, ...delta.airports.updated];
-	controllersMerged = [...delta.controllers.added, ...delta.controllers.updated];
+	airportsShort = [
+		...delta.airports.added,
+		...delta.airports.updated.map((a) => {
+			const existing = airportsShort.find((ap) => ap.icao === a.icao);
+			return { ...existing, ...a };
+		}),
+	];
+
+	controllersMerged = [
+		...delta.controllers.added,
+		...delta.controllers.updated.map((c) => {
+			const existing = controllersMerged.find((cm) => cm.id === c.id);
+			const controllers = c.controllers.map((ctl) => {
+				const existingCtl = existing?.controllers.find((e) => e.callsign === ctl.callsign);
+				return { ...existingCtl, ...ctl };
+			});
+
+			return { ...c, controllers };
+		}),
+	];
 
 	updateOverlays();
 }

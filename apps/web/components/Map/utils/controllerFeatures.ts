@@ -1,5 +1,5 @@
 import type { FIRFeature, SimAwareTraconFeature } from "@sr24/types/db";
-import type { ControllerDelta, ControllerMerged } from "@sr24/types/vatsim";
+import type { ControllerDelta, ControllerMerged, WsAll } from "@sr24/types/vatsim";
 import Feature, { type FeatureLike } from "ol/Feature";
 import GeoJSON from "ol/format/GeoJSON";
 import { Circle, type MultiPolygon, Point, type Polygon } from "ol/geom";
@@ -39,6 +39,7 @@ export function getControllerLabelStyle(feature: FeatureLike, resolution: number
 
 const cachedTracons: Map<string, Feature<MultiPolygon | Polygon>> = new Map();
 const cachedFirs: Map<string, Feature<MultiPolygon>> = new Map();
+const controllerList: Set<string> = new Set();
 
 const readGeoJSONFeature = (geojson: SimAwareTraconFeature | FIRFeature, type: "tracon" | "fir", id: string) => {
 	const feature = new GeoJSON().readFeature(geojson, {
@@ -50,9 +51,10 @@ const readGeoJSONFeature = (geojson: SimAwareTraconFeature | FIRFeature, type: "
 	return feature;
 };
 
-export async function initControllerFeatures(controllers: ControllerMerged[]): Promise<void> {
-	for (const c of controllers) {
+export async function initControllerFeatures(data: WsAll): Promise<void> {
+	for (const c of data.controllers) {
 		const id = c.id.replace(/^(tracon_|airport_|fir_)/, "");
+		controllerList.add(c.id);
 
 		if (c.facility === "tracon") {
 			const traconFeature = await getCachedTracon(id);
@@ -109,33 +111,20 @@ export async function initControllerFeatures(controllers: ControllerMerged[]): P
 }
 
 export async function updateControllerFeatures(delta: ControllerDelta): Promise<void> {
+	const controllersInDelta = new Set<string>();
+
 	for (const c of delta.updated) {
-		const id = c.id.replace(/^(tracon_|airport_|fir_)/, "");
-		let feature: Feature<MultiPolygon | Polygon> | undefined;
-
-		if (c.facility === "tracon") {
-			feature = cachedTracons.get(id);
-		}
-
-		if (c.facility === "fir") {
-			feature = cachedFirs.get(id);
-		}
-
 		if (c.facility === "airport") {
-			const labelFeature = airportLabelSource.getFeatureById(`controller_${id}`);
-			if (labelFeature) {
-				airportLabelSource.removeFeature(labelFeature);
-			}
-			createAirportLabel(c);
+			updateAirportLabel(c);
 		}
 
-		if (feature) {
-			feature.setProperties({ type: c.facility });
-		}
+		controllersInDelta.add(c.id);
 	}
 
 	for (const c of delta.added) {
 		const id = c.id.replace(/^(tracon_|airport_|fir_)/, "");
+		controllersInDelta.add(c.id);
+		controllerList.add(c.id);
 
 		if (c.facility === "tracon") {
 			const traconFeature = await getCachedTracon(id);
@@ -185,32 +174,35 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 		}
 	}
 
-	for (const c of delta.deleted) {
-		const id = c.replace(/^(tracon_|airport_|fir_)/, "");
+	for (const id of controllerList) {
+		if (!controllersInDelta.has(id)) {
+			const shortId = id.replace(/^(tracon_|airport_|fir_)/, "");
+			controllerList.delete(id);
 
-		const labelFeature = controllerLabelSource.getFeatureById(`controller_${id}`);
-		if (labelFeature) {
-			controllerLabelSource.removeFeature(labelFeature);
-		}
+			const labelFeature = controllerLabelSource.getFeatureById(`controller_${shortId}`);
+			if (labelFeature) {
+				controllerLabelSource.removeFeature(labelFeature);
+			}
 
-		const tracon = cachedTracons.get(id);
-		if (tracon) {
-			traconSource.removeFeature(tracon);
-			cachedTracons.delete(id);
-			continue;
-		}
+			const tracon = cachedTracons.get(shortId);
+			if (tracon) {
+				traconSource.removeFeature(tracon);
+				cachedTracons.delete(shortId);
+				continue;
+			}
 
-		const fir = cachedFirs.get(id);
-		if (fir) {
-			firSource.removeFeature(fir);
-			cachedFirs.delete(id);
-			continue;
-		}
+			const fir = cachedFirs.get(shortId);
+			if (fir) {
+				firSource.removeFeature(fir);
+				cachedFirs.delete(shortId);
+				continue;
+			}
 
-		if (c.startsWith("airport_")) {
-			const airportLabel = airportLabelSource.getFeatureById(`controller_${id}`);
-			if (airportLabel) {
-				airportLabelSource.removeFeature(airportLabel);
+			if (id.startsWith("airport_")) {
+				const airportLabel = airportLabelSource.getFeatureById(`controller_${shortId}`);
+				if (airportLabel) {
+					airportLabelSource.removeFeature(airportLabel);
+				}
 			}
 		}
 	}
@@ -246,8 +238,33 @@ async function createAirportLabel(controllerMerged: ControllerMerged): Promise<v
 	const airport = await getCachedAirport(id);
 	if (!airport) return;
 
-	const stations = [0, 0, 0, 0];
+	const stations = getAirportLabelStations(controllerMerged);
 
+	const labelFeature = new Feature({
+		geometry: new Point(fromLonLat([airport.longitude, airport.latitude])),
+	});
+	const props: AirportLabelProperties = {
+		type: "airport",
+		size: getAirportSize(airport.size),
+		offset: parseInt(stations.join(""), 2) * 36,
+	};
+
+	labelFeature.setProperties(props);
+	labelFeature.setId(`controller_${id}`);
+	airportLabelSource.addFeature(labelFeature);
+}
+
+function updateAirportLabel(controllerMerged: ControllerMerged): void {
+	const id = controllerMerged.id.replace(/^(tracon_|airport_|fir_)/, "");
+	const labelFeature = airportLabelSource.getFeatureById(`controller_${id}`);
+	if (!labelFeature) return;
+
+	const stations = getAirportLabelStations(controllerMerged);
+	labelFeature.set("offset", parseInt(stations.join(""), 2) * 36);
+}
+
+function getAirportLabelStations(controllerMerged: ControllerMerged): number[] {
+	const stations = [0, 0, 0, 0];
 	controllerMerged.controllers.forEach((c) => {
 		if (c.facility === -1) {
 			stations[3] = 1;
@@ -263,16 +280,5 @@ async function createAirportLabel(controllerMerged: ControllerMerged): Promise<v
 		}
 	});
 
-	const labelFeature = new Feature({
-		geometry: new Point(fromLonLat([airport.longitude, airport.latitude])),
-	});
-	const props: AirportLabelProperties = {
-		type: "airport",
-		size: getAirportSize(airport.size),
-		offset: parseInt(stations.join(""), 2) * 36,
-	};
-
-	labelFeature.setProperties(props);
-	labelFeature.setId(`controller_${id}`);
-	airportLabelSource.addFeature(labelFeature);
+	return stations;
 }

@@ -135,22 +135,22 @@ export interface TrackPoint {
 
 export interface PilotShort {
 	id: string;
-	callsign: string;
-	latitude: number;
-	longitude: number;
-	altitude_agl: number;
-	altitude_ms: number;
-	groundspeed: number;
-	vertical_speed: number;
-	heading: number;
-	aircraft: string;
-	transponder: string;
-	frequency: number;
-	route: string;
-	ghost: boolean;
+	callsign?: string;
+	latitude?: number;
+	longitude?: number;
+	altitude_agl?: number;
+	altitude_ms?: number;
+	groundspeed?: number;
+	vertical_speed?: number;
+	heading?: number;
+	aircraft?: string;
+	transponder?: string;
+	frequency?: number;
+	route?: string;
+	ghost?: boolean;
 }
 
-export interface PilotLong extends PilotShort {
+export interface PilotLong extends Required<PilotShort> {
 	cid: number;
 	name: string;
 	server: string;
@@ -199,13 +199,13 @@ interface PilotAirport {
 
 export interface ControllerShort {
 	callsign: string;
-	frequency: number;
+	frequency?: number;
 	facility: number;
-	atis: string[] | null;
-	connections: number;
+	atis?: string[] | null;
+	connections?: number;
 }
 
-export interface ControllerLong extends ControllerShort {
+export interface ControllerLong extends Required<ControllerShort> {
 	cid: number;
 	name: string;
 	rating: number;
@@ -223,11 +223,11 @@ export interface ControllerMerged {
 
 export interface AirportShort {
 	icao: string;
-	dep_traffic: AirportTraffic;
-	arr_traffic: AirportTraffic;
+	dep_traffic?: AirportTraffic;
+	arr_traffic?: AirportTraffic;
 }
 
-export interface AirportLong extends AirportShort {
+export interface AirportLong extends Required<AirportShort> {
 	busiest: { departure: string; arrival: string };
 	unique: { departures: number; arrivals: number };
 	metar: string | null;
@@ -241,27 +241,24 @@ export interface AirportTraffic {
 }
 
 export interface PilotDelta {
-	deleted: string[];
 	updated: PilotShort[];
-	added: PilotShort[];
+	added: Required<PilotShort>[];
 }
 
 export interface ControllerDelta {
-	deleted: string[];
 	updated: ControllerMerged[];
-	added: ControllerMerged[];
+	added: Required<ControllerMerged>[];
 }
 
 export interface AirportDelta {
-	deleted: string[];
 	updated: AirportShort[];
-	added: AirportShort[];
+	added: Required<AirportShort>[];
 }
 
 export interface WsAll {
-	pilots: PilotShort[];
-	controllers: ControllerMerged[];
-	airports: AirportShort[];
+	pilots: Required<PilotShort>[];
+	controllers: Required<ControllerMerged>[];
+	airports: Required<AirportShort>[];
 }
 
 export interface WsDelta {
