@@ -80,15 +80,10 @@ const MILITARY_RATINGS = [
 ];
 
 let cached: PilotLong[] = [];
-let deleted: string[] = [];
 let updated: PilotShort[] = [];
 let added: PilotShort[] = [];
 
 export async function mapPilots(latestVatsimData: VatsimData): Promise<[PilotLong[], PilotLong[]]> {
-	deleted = [];
-	updated = [];
-	added = [];
-
 	const pilotsLongPromises: Promise<PilotLong>[] = latestVatsimData.pilots.map(async (pilot) => {
 		const id = getPilotId(pilot);
 		const cachedPilot = cached.find((c) => c.id === id);
@@ -145,19 +140,12 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<[PilotLon
 	});
 
 	const pilotsLong = await Promise.all(pilotsLongPromises);
-
 	const deletedLong = cached.filter((a) => !pilotsLong.some((b) => b.id === a.id));
 	deletedLong.forEach((p) => {
 		p.live = false;
 	});
 
-	const addedLong = pilotsLong.filter((a) => !cached.some((b) => b.id === a.id));
-	const updatedLong = pilotsLong.filter((a) => cached.some((b) => b.id === a.id));
-
-	added = addedLong.map(getPilotShort);
-	updated = updatedLong.map(getPilotShort);
-	deleted = deletedLong.map((p) => p.id);
-	cached = pilotsLong;
+	setPilotDelta(pilotsLong);
 
 	return [pilotsLong, deletedLong];
 }
@@ -175,31 +163,68 @@ function getPilotId(pilot: VatsimPilot): string {
 	return b64url.slice(0, 10);
 }
 
+function setPilotDelta(pilotsLong: PilotLong[]): void {
+	added = [];
+	updated = [];
+
+	for (const p of pilotsLong) {
+		const cachedPilot = cached.find((c) => c.id === p.id);
+		if (!cachedPilot) {
+			added.push(getPilotShort(p));
+		} else {
+			const pilotShort = getPilotShort(p, cachedPilot);
+			if (Object.keys(pilotShort).length > 1) {
+				updated.push(pilotShort);
+			}
+		}
+	}
+
+	cached = pilotsLong;
+}
+
 export function getPilotDelta(): PilotDelta {
 	return {
-		deleted,
 		added,
 		updated,
 	};
 }
 
-export function getPilotShort(p: PilotLong): PilotShort {
-	return {
-		id: p.id,
-		latitude: p.latitude,
-		longitude: p.longitude,
-		altitude_agl: p.altitude_agl,
-		altitude_ms: p.altitude_ms,
-		groundspeed: p.groundspeed,
-		vertical_speed: p.vertical_speed,
-		heading: p.heading,
-		callsign: p.callsign,
-		aircraft: p.aircraft,
-		transponder: p.transponder,
-		frequency: p.frequency,
-		route: p.route,
-		ghost: p.ghost,
-	};
+export function getPilotShort(p: PilotLong, c?: PilotLong): PilotShort {
+	if (!c) {
+		return {
+			id: p.id,
+			latitude: p.latitude,
+			longitude: p.longitude,
+			altitude_agl: p.altitude_agl,
+			altitude_ms: p.altitude_ms,
+			groundspeed: p.groundspeed,
+			vertical_speed: p.vertical_speed,
+			heading: p.heading,
+			callsign: p.callsign,
+			aircraft: p.aircraft,
+			transponder: p.transponder,
+			frequency: p.frequency,
+			route: p.route,
+			ghost: p.ghost,
+		};
+	} else {
+		return {
+			id: p.id,
+			latitude: p.latitude !== c.latitude ? p.latitude : undefined,
+			longitude: p.longitude !== c.longitude ? p.longitude : undefined,
+			altitude_agl: p.altitude_agl !== c.altitude_agl ? p.altitude_agl : undefined,
+			altitude_ms: p.altitude_ms !== c.altitude_ms ? p.altitude_ms : undefined,
+			groundspeed: p.groundspeed !== c.groundspeed ? p.groundspeed : undefined,
+			vertical_speed: p.vertical_speed !== c.vertical_speed ? p.vertical_speed : undefined,
+			heading: p.heading !== c.heading ? p.heading : undefined,
+			callsign: p.callsign !== c.callsign ? p.callsign : undefined,
+			aircraft: p.aircraft !== c.aircraft ? p.aircraft : undefined,
+			transponder: p.transponder !== c.transponder ? p.transponder : undefined,
+			frequency: p.frequency !== c.frequency ? p.frequency : undefined,
+			route: p.route !== c.route ? p.route : undefined,
+			ghost: p.ghost !== c.ghost ? p.ghost : undefined,
+		};
+	}
 }
 
 function calculateVerticalSpeed(current: PilotLong, cache: PilotLong | undefined): number {

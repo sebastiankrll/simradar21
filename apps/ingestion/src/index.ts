@@ -51,7 +51,7 @@ async function fetchVatsimData(): Promise<void> {
 
 			// Set full websocket data on redis ws:all
 			const all: WsAll = {
-				pilots: pilotsLong.map(getPilotShort),
+				pilots: pilotsLong.map((p) => getPilotShort(p)),
 				airports: airportsLong.map(getAirportShort),
 				controllers: controllersMerged,
 			};

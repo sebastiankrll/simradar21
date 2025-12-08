@@ -135,22 +135,22 @@ export interface TrackPoint {
 
 export interface PilotShort {
 	id: string;
-	callsign: string;
-	latitude: number;
-	longitude: number;
-	altitude_agl: number;
-	altitude_ms: number;
-	groundspeed: number;
-	vertical_speed: number;
-	heading: number;
-	aircraft: string;
-	transponder: string;
-	frequency: number;
-	route: string;
-	ghost: boolean;
+	callsign?: string;
+	latitude?: number;
+	longitude?: number;
+	altitude_agl?: number;
+	altitude_ms?: number;
+	groundspeed?: number;
+	vertical_speed?: number;
+	heading?: number;
+	aircraft?: string;
+	transponder?: string;
+	frequency?: number;
+	route?: string;
+	ghost?: boolean;
 }
 
-export interface PilotLong extends PilotShort {
+export interface PilotLong extends Required<PilotShort> {
 	cid: number;
 	name: string;
 	server: string;
@@ -241,19 +241,16 @@ export interface AirportTraffic {
 }
 
 export interface PilotDelta {
-	deleted: string[];
 	updated: PilotShort[];
 	added: PilotShort[];
 }
 
 export interface ControllerDelta {
-	deleted: string[];
 	updated: ControllerMerged[];
 	added: ControllerMerged[];
 }
 
 export interface AirportDelta {
-	deleted: string[];
 	updated: AirportShort[];
 	added: AirportShort[];
 }
