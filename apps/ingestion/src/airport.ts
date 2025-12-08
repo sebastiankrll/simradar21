@@ -31,7 +31,6 @@ const TAF_URL = "https://aviationweather.gov/data/cache/tafs.cache.xml.gz";
 const WEATHER_FETCH_INTERVAL = 600_000;
 
 let cached: AirportLong[] = [];
-let deleted: string[] = [];
 let updated: AirportShort[] = [];
 let added: AirportShort[] = [];
 
@@ -126,31 +125,50 @@ export async function mapAirports(pilotsLong: PilotLong[]): Promise<AirportLong[
 	}
 
 	const airportsLong = Object.values(airportRecord);
+	setAirportDelta(airportsLong);
 
-	const deletedLong = cached.filter((a) => !airportsLong.some((b) => b.icao === a.icao));
-	const addedLong = airportsLong.filter((a) => !cached.some((b) => b.icao === a.icao));
-	const updatedLong = airportsLong.filter((a) => cached.some((b) => b.icao === a.icao));
-
-	deleted = deletedLong.map((a) => a.icao);
-	added = addedLong.map(getAirportShort);
-	updated = updatedLong.map(getAirportShort);
-	// console.log(airportsLong[0])
-
-	cached = airportsLong;
 	return airportsLong;
 }
 
-export function getAirportShort(a: AirportLong): AirportShort {
-	return {
-		icao: a.icao,
-		dep_traffic: a.dep_traffic,
-		arr_traffic: a.arr_traffic,
-	};
+function setAirportDelta(airportsLong: AirportLong[]): void {
+	updated = [];
+	added = [];
+
+	for (const a of airportsLong) {
+		const cachedAirport = cached.find((c) => c.icao === a.icao);
+
+		if (!cachedAirport) {
+			added.push(getAirportShort(a));
+		} else {
+			const airportShort = getAirportShort(a, cachedAirport);
+			if (Object.keys(airportShort).length > 1) {
+				updated.push(airportShort);
+			}
+		}
+	}
+
+	cached = airportsLong;
+}
+
+export function getAirportShort(a: AirportLong, c?: AirportLong): AirportShort {
+	if (!c) {
+		return {
+			icao: a.icao,
+			dep_traffic: a.dep_traffic,
+			arr_traffic: a.arr_traffic,
+		};
+	} else {
+		const airportShort: AirportShort = { icao: a.icao };
+
+		if (JSON.stringify(a.dep_traffic) !== JSON.stringify(c.dep_traffic)) airportShort.dep_traffic = a.dep_traffic;
+		if (JSON.stringify(a.arr_traffic) !== JSON.stringify(c.arr_traffic)) airportShort.arr_traffic = a.arr_traffic;
+
+		return airportShort;
+	}
 }
 
 export function getAirportDelta(): AirportDelta {
 	return {
-		deleted,
 		added,
 		updated,
 	};

@@ -223,11 +223,11 @@ export interface ControllerMerged {
 
 export interface AirportShort {
 	icao: string;
-	dep_traffic: AirportTraffic;
-	arr_traffic: AirportTraffic;
+	dep_traffic?: AirportTraffic;
+	arr_traffic?: AirportTraffic;
 }
 
-export interface AirportLong extends AirportShort {
+export interface AirportLong extends Required<AirportShort> {
 	busiest: { departure: string; arrival: string };
 	unique: { departures: number; arrivals: number };
 	metar: string | null;
