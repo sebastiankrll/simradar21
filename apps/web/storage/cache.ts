@@ -31,8 +31,8 @@ export async function initData(setStatus: StatusSetter, pathname: string): Promi
 	setStatus?.((prev) => ({ ...prev, initData: true }));
 
 	await initAirportFeatures();
-	initPilotFeatures(data.pilots);
-	initControllerFeatures(data.controllers);
+	initPilotFeatures(data);
+	initControllerFeatures(data);
 
 	airportsShort = data.airports;
 	controllersMerged = data.controllers;

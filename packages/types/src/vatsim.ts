@@ -242,23 +242,23 @@ export interface AirportTraffic {
 
 export interface PilotDelta {
 	updated: PilotShort[];
-	added: PilotShort[];
+	added: Required<PilotShort>[];
 }
 
 export interface ControllerDelta {
 	updated: ControllerMerged[];
-	added: ControllerMerged[];
+	added: Required<ControllerMerged>[];
 }
 
 export interface AirportDelta {
 	updated: AirportShort[];
-	added: AirportShort[];
+	added: Required<AirportShort>[];
 }
 
 export interface WsAll {
-	pilots: PilotShort[];
-	controllers: ControllerMerged[];
-	airports: AirportShort[];
+	pilots: Required<PilotShort>[];
+	controllers: Required<ControllerMerged>[];
+	airports: Required<AirportShort>[];
 }
 
 export interface WsDelta {

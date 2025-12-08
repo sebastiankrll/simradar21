@@ -1,5 +1,5 @@
 import type { FIRFeature, SimAwareTraconFeature } from "@sr24/types/db";
-import type { ControllerDelta, ControllerMerged } from "@sr24/types/vatsim";
+import type { ControllerDelta, ControllerMerged, WsAll } from "@sr24/types/vatsim";
 import Feature, { type FeatureLike } from "ol/Feature";
 import GeoJSON from "ol/format/GeoJSON";
 import { Circle, type MultiPolygon, Point, type Polygon } from "ol/geom";
@@ -50,8 +50,8 @@ const readGeoJSONFeature = (geojson: SimAwareTraconFeature | FIRFeature, type: "
 	return feature;
 };
 
-export async function initControllerFeatures(controllers: ControllerMerged[]): Promise<void> {
-	for (const c of controllers) {
+export async function initControllerFeatures(data: WsAll): Promise<void> {
+	for (const c of data.controllers) {
 		const id = c.id.replace(/^(tracon_|airport_|fir_)/, "");
 
 		if (c.facility === "tracon") {

@@ -32,7 +32,7 @@ const WEATHER_FETCH_INTERVAL = 600_000;
 
 let cached: AirportLong[] = [];
 let updated: AirportShort[] = [];
-let added: AirportShort[] = [];
+let added: Required<AirportShort>[] = [];
 
 export async function mapAirports(pilotsLong: PilotLong[]): Promise<AirportLong[]> {
 	await updateWeather();
@@ -138,7 +138,7 @@ function setAirportDelta(airportsLong: AirportLong[]): void {
 		const cachedAirport = cached.find((c) => c.icao === a.icao);
 
 		if (!cachedAirport) {
-			added.push(getAirportShort(a));
+			added.push(getAirportShort(a) as Required<AirportShort>);
 		} else {
 			const airportShort = getAirportShort(a, cachedAirport);
 			if (Object.keys(airportShort).length > 1) {

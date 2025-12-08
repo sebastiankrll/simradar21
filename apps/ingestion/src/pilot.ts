@@ -81,7 +81,7 @@ const MILITARY_RATINGS = [
 
 let cached: PilotLong[] = [];
 let updated: PilotShort[] = [];
-let added: PilotShort[] = [];
+let added: Required<PilotShort>[] = [];
 
 export async function mapPilots(latestVatsimData: VatsimData): Promise<[PilotLong[], PilotLong[]]> {
 	const pilotsLongPromises: Promise<PilotLong>[] = latestVatsimData.pilots.map(async (pilot) => {
@@ -170,7 +170,7 @@ function setPilotDelta(pilotsLong: PilotLong[]): void {
 	for (const p of pilotsLong) {
 		const cachedPilot = cached.find((c) => c.id === p.id);
 		if (!cachedPilot) {
-			added.push(getPilotShort(p));
+			added.push(getPilotShort(p) as Required<PilotShort>);
 		} else {
 			const pilotShort = getPilotShort(p, cachedPilot);
 			if (Object.keys(pilotShort).length > 1) {

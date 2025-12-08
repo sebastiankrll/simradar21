@@ -1,10 +1,10 @@
 import type { PilotShort } from "@sr24/types/vatsim";
 
-export type PilotProperties = Omit<PilotShort, "longitude" | "latitude"> & {
+export interface PilotProperties extends Required<PilotShort> {
 	type: "pilot";
 	clicked: boolean;
 	hovered: boolean;
-};
+}
 
 export interface AirportProperties {
 	type: "airport";
