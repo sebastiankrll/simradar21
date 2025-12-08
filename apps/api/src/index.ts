@@ -169,7 +169,10 @@ app.get(
 			return;
 		}
 
-		res.json(all);
+		const buffer = Buffer.from(all, "base64");
+		res.setHeader("Content-Type", "application/octet-stream");
+		res.setHeader("Content-Encoding", "gzip");
+		res.send(buffer);
 	}),
 );
 
