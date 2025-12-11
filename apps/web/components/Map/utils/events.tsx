@@ -8,6 +8,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { getAirportShort, getCachedAirline, getCachedAirport, getCachedFir, getCachedTracon, getControllerMerged } from "@/storage/cache";
 import { AirportOverlay, PilotOverlay, SectorOverlay } from "../components/Overlay/Overlays";
 import { addHighlightedAirport, clearHighlightedAirport, moveToAirportFeature } from "./airportFeatures";
+import { moveToSectorFeature } from "./controllerFeatures";
 import { firSource, pilotMainSource, setFeatures, trackSource, traconSource } from "./dataLayers";
 import { getMap, getMapView } from "./init";
 import { addHighlightedPilot, clearHighlightedPilot, moveToPilotFeature } from "./pilotFeatures";
@@ -446,6 +447,10 @@ export function setClickedFeature(path: string): void {
 	}
 	if (type === "airport") {
 		clickedFeature = moveToAirportFeature(id);
+	}
+	if (type === "sector") {
+		clickedFeature = moveToSectorFeature(id);
+		toggleControllerSectorHover(clickedFeature, true, "clicked");
 	}
 
 	if (clickedFeature) {

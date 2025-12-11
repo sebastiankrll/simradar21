@@ -12,6 +12,7 @@ import { getCachedAirport, getCachedFir, getCachedTracon } from "@/storage/cache
 import type { AirportLabelProperties, ControllerLabelProperties } from "@/types/ol";
 import { getAirportSize } from "./airportFeatures";
 import { airportLabelSource, controllerLabelSource, firSource, traconSource } from "./dataLayers";
+import { getMapView } from "./init";
 
 export function getControllerLabelStyle(feature: FeatureLike, resolution: number): Style {
 	const label = feature.get("label") as string;
@@ -281,4 +282,22 @@ function getAirportLabelStations(controllerMerged: ControllerMerged): number[] {
 	});
 
 	return stations;
+}
+
+export function moveToSectorFeature(id: string): Feature<Point> | null {
+	console.log(controllerLabelSource.getFeatures());
+	const labelFeature = controllerLabelSource.getFeatureById(`sector_${id}`) as Feature<Point> | null;
+
+	const view = getMapView();
+	const geom = labelFeature?.getGeometry();
+	const coords = geom?.getCoordinates();
+	if (!coords) return null;
+
+	view?.animate({
+		center: coords,
+		duration: 200,
+		zoom: 7,
+	});
+
+	return labelFeature;
 }
