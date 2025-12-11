@@ -93,30 +93,37 @@ export function AirportOverlay({
 	short: Required<AirportShort> | null;
 	merged: ControllerMerged | null;
 }) {
-	const [activeController, setActiveController] = useState(null as string | null);
+	const [hoveredController, setHoveredController] = useState(null as string | null);
+	const [clickedController, setClickedController] = useState(null as string | null);
 
 	const controllers = merged?.controllers as Required<ControllerShort>[] | undefined;
 	const sortedControllers = controllers?.sort((a, b) => b.facility - a.facility);
 
 	return (
 		<div className="overlay-wrapper">
-			{activeController && (
+			{(clickedController || hoveredController) && (
 				<div className="overlay-atis">
 					<div className="overlay-atis-item">
-						{sortedControllers?.find((c) => c.callsign === activeController)?.atis?.join("\n") || "Currently unavailable"}
+						{sortedControllers?.find((c) => c.callsign === clickedController || c.callsign === hoveredController)?.atis?.join("\n") || "Currently unavailable"}
 					</div>
 				</div>
 			)}
 			{sortedControllers && sortedControllers.length > 0 && (
-				<div className="overlay-live controller" onPointerLeave={() => setActiveController(null)}>
+				<div className="overlay-live controller" onPointerLeave={() => setHoveredController(null)}>
 					{sortedControllers?.map((c) => {
 						return (
-							<div key={c.callsign} className="overlay-live-item controller" onPointerEnter={() => setActiveController(c.callsign)}>
+							<button
+								type="button"
+								key={c.callsign}
+								className={`overlay-live-item controller${clickedController === c.callsign ? " active" : ""}`}
+								onPointerEnter={() => setHoveredController(c.callsign)}
+								onClick={() => setClickedController(c.callsign)}
+							>
 								<div className="overlay-controller-color" style={{ backgroundColor: getControllerColor(c.facility) }}></div>
 								<div className="overlay-controller-callsign">{c.callsign}</div>
 								<div className="overlay-controller-frequency">{(c.frequency / 1000).toFixed(3)}</div>
 								<div className="overlay-controller-connections">{c.connections}</div>
-							</div>
+							</button>
 						);
 					})}
 				</div>
