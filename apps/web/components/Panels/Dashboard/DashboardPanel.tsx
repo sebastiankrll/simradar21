@@ -31,8 +31,6 @@ function getStoredOpenSections(): string[] {
 	return [];
 }
 
-let initialized = false;
-
 export default function DashboardPanel() {
 	const { data, isLoading } = useSWR<DashboardData>("/data/dashboard", fetchApi, { refreshInterval: 60_000 });
 
@@ -48,8 +46,7 @@ export default function DashboardPanel() {
 	};
 
 	useEffect(() => {
-		if (initialized || isLoading) return;
-		initialized = true;
+		if (isLoading) return;
 		setOpenSection(getStoredOpenSections());
 	}, [isLoading]);
 
