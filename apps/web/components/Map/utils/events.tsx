@@ -218,7 +218,10 @@ export function updateOverlays(): void {
 }
 
 async function updateOverlay(feature: Feature<Point>, overlay: Overlay): Promise<void> {
-	if (!feature || !overlay) return;
+	if (!feature || !overlay) {
+		resetMap(true);
+		return;
+	};
 
 	const geom = feature.getGeometry();
 	const coords = geom?.getCoordinates();

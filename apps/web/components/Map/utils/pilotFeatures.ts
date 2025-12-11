@@ -8,6 +8,7 @@ import type { PilotProperties } from "@/types/ol";
 import { pilotMainSource } from "./dataLayers";
 import { getMapView } from "./init";
 import { initTrackFeatures } from "./trackFeatures";
+import { resetMap } from "./events";
 
 interface RBushPilotFeature {
 	minX: number;
@@ -112,6 +113,11 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 		if (!pilotsInDelta.has(id)) {
 			pilotMap.delete(id);
 		}
+	}
+
+	if (highlightedPilot && !pilotMap.has(highlightedPilot)) {
+		highlightedPilot = null;
+		resetMap(true);
 	}
 
 	pilotRBush.clear();

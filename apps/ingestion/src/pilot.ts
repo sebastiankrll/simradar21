@@ -369,6 +369,11 @@ function mapPilotTimes(current: PilotLong, cache: PilotLong | undefined, vatsimP
 		stop_counter = 0;
 	}
 
+	// Moving, @"Taxi In", past scheduled on blocks
+	if (cache.times.state !== "Taxi In" && on_block.getTime() < now.getTime()) {
+		on_block = new Date(now.getTime() + TAXI_TIME_MS);
+	}
+
 	// Not moving, @"Taxi In"
 	if (current.groundspeed === 0 && cache.times.state === "Taxi In") {
 		if (stop_counter > 5) {

@@ -42,10 +42,13 @@ export default function PilotPanel({ id }: { id: string }) {
 		refreshInterval: 60_000,
 	});
 
+	const lastIdRef = useRef<string | null>(null);
+
 	const registration = pilotData?.flight_plan?.ac_reg;
 	const { data: aircraftData } = useSWR<StaticAircraft>(registration ? `/data/aircraft/${registration}` : null, fetchApi, {
 		revalidateIfStale: false,
 		revalidateOnFocus: false,
+		shouldRetryOnError: false,
 	});
 
 	const [trackPoints, setTrackPoints] = useState<TrackPoint[]>([]);
@@ -86,7 +89,8 @@ export default function PilotPanel({ id }: { id: string }) {
 	}, [openSection]);
 
 	useEffect(() => {
-		if (!pilotData) return;
+		if (!pilotData || lastIdRef.current === pilotData.id) return;
+		lastIdRef.current = pilotData.id;
 
 		const airlineCode = pilotData.callsign.slice(0, 3).toUpperCase();
 		Promise.all([
