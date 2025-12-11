@@ -179,7 +179,7 @@ export function getControllersApiRequest(id: string, type: "airport" | "sector")
 	}
 
 	if (type === "airport") {
-		return `/data/controllers/${airportIds.flat().join(",")},${traconIds.flat().join(",")}`;
+		return `/data/controllers/${airportIds.flat().join(",")}${traconIds.length > 0 ? "," : ""}${traconIds.flat().join(",")}`;
 	}
 	if (type === "sector" && firIds.length > 0) {
 		return `/data/controllers/${firIds.flat().join(",")}`;
