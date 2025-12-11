@@ -134,7 +134,11 @@ export function clearHighlightedPilot(): void {
 	highlightedPilot = null;
 }
 
-export function setPilotFeatures(extent: Extent): void {
+export function setPilotFeatures(extent: Extent, zoom: number): void {
+	if (zoom > 10) {
+		return;
+	}
+
 	const [minX, minY, maxX, maxY] = transformExtent(extent, "EPSG:3857", "EPSG:4326");
 	const pilotsByExtent = pilotRBush.search({ minX, minY, maxX, maxY });
 	const pilotsByAltitude = pilotsByExtent.sort((a, b) => (b.feature.get("altitude_agl") || 0) - (a.feature.get("altitude_agl") || 0)).slice(0, 300);
@@ -188,7 +192,7 @@ export function animatePilotFeatures(map: OlMap) {
 	const resolution = map.getView().getResolution() || 0;
 	let interval = 1000;
 	if (resolution > 1) {
-		interval = Math.max(resolution * 10, 50);
+		interval = Math.min(Math.max(resolution * 5, 40), 1000);
 	}
 
 	const now = Date.now();

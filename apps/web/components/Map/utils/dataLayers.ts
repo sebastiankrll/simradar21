@@ -107,5 +107,5 @@ export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
 
 export function setFeatures(extent: Extent, zoom: number): void {
 	setAirportFeatures(extent, zoom);
-	setPilotFeatures(extent);
+	setPilotFeatures(extent, zoom);
 }
