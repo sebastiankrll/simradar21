@@ -35,7 +35,7 @@ app.use(limiter);
 const asyncHandler =
 	(fn: (req: express.Request, res: express.Response, next: express.NextFunction) => Promise<void> | Promise<any>) =>
 	(req: express.Request, res: express.Response, next: express.NextFunction) => {
-		console.log(`Incoming request: ${req.method} ${req.originalUrl}`);
+		// console.log(`Incoming request: ${req.method} ${req.originalUrl}`);
 		Promise.resolve(fn(req, res, next)).catch(next);
 	};
 

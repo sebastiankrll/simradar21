@@ -112,7 +112,7 @@ class WsClient {
 		// Request latest data after reconnecting from visibility change
 		if (this.wasHiddenDisconnect) {
 			this.wasHiddenDisconnect = false;
-			console.log("🔄 Page returned to focus, requesting latest data via WebSocket");
+			// console.log("🔄 Page returned to focus, requesting latest data via WebSocket");
 			this.requestLatestData();
 		}
 	}
@@ -276,7 +276,7 @@ class WsClient {
 
 		try {
 			this.ws?.send(JSON.stringify({ type: "request-latest" }));
-			console.log("📤 Requested latest data via WebSocket");
+			// console.log("📤 Requested latest data via WebSocket");
 		} catch (err) {
 			console.error("Failed to request latest data:", err);
 		}

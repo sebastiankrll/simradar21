@@ -139,7 +139,7 @@ wss.on("connection", (ws: WebSocket, _req: any) => {
 			try {
 				const message = JSON.parse(msg.toString());
 				if (message.type === "request-latest") {
-					console.log(`📥 Client ${clientId} requested latest data`);
+					// console.log(`📥 Client ${clientId} requested latest data`);
 					sendLatestDelta(ws, clientContext);
 				}
 			} catch (_err) {
@@ -183,7 +183,7 @@ let latestDeltaCache: Buffer | null = null;
 
 function sendLatestDelta(ws: WebSocket, clientContext: ClientContext): void {
 	if (!latestDeltaCache) {
-		console.log(`No cached delta available for ${clientContext.id}`);
+		// console.log(`No cached delta available for ${clientContext.id}`);
 		return;
 	}
 
@@ -196,7 +196,7 @@ function sendLatestDelta(ws: WebSocket, clientContext: ClientContext): void {
 			} else {
 				clientContext.messagesSent++;
 				clientContext.lastMessageTime = new Date();
-				console.log(`✅ Sent latest delta to ${clientContext.id}`);
+				// console.log(`✅ Sent latest delta to ${clientContext.id}`);
 			}
 		});
 	} catch (err) {
