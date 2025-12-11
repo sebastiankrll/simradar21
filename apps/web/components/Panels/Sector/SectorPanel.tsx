@@ -26,10 +26,7 @@ export default function SectorPanel({ callsign }: { callsign: string }) {
 		shouldRetryOnError: false,
 	});
 
-	const [staticData, setStaticData] = useState<SectorPanelStatic>({
-		feature: null,
-		type: null,
-	});
+	const [staticData, setStaticData] = useState<SectorPanelStatic | null>(null);
 	const lastCallsignRef = useRef<string | null>(null);
 
 	useEffect(() => {
@@ -70,7 +67,7 @@ export default function SectorPanel({ callsign }: { callsign: string }) {
 		setHeight(controllersRef, openSection === "controllers");
 	}, [openSection]);
 
-	if (isLoading) return <Spinner />;
+	if (isLoading || !staticData) return <Spinner />;
 	if (!controllers || controllers.length === 0)
 		return (
 			<NotFoundPanel
@@ -95,24 +92,26 @@ export default function SectorPanel({ callsign }: { callsign: string }) {
 				</button>
 			</div>
 			<SectorTitle staticData={staticData} />
-			<div className="panel-container main scrollable">
-				<button
-					className={`panel-container-header${openSection === "controllers" ? " open" : ""}`}
-					type="button"
-					onClick={() => toggleSection("controllers")}
-				>
-					<p>Controller Information</p>
-					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-						<title>Controllers</title>
-						<path
-							fillRule="evenodd"
-							d="M11.842 18 .237 7.26a.686.686 0 0 1 0-1.038.8.8 0 0 1 1.105 0L11.842 16l10.816-9.704a.8.8 0 0 1 1.105 0 .686.686 0 0 1 0 1.037z"
-							clipRule="evenodd"
-						></path>
-					</svg>
-				</button>
-				<ControllerInfo controllers={controllers} sector={staticData.feature} openSection={openSection} ref={controllersRef} />
-			</div>
+			{controllers.length > 0 && (
+				<div className="panel-container main scrollable">
+					<button
+						className={`panel-container-header${openSection === "controllers" ? " open" : ""}`}
+						type="button"
+						onClick={() => toggleSection("controllers")}
+					>
+						<p>Controller Information</p>
+						<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+							<title>Controllers</title>
+							<path
+								fillRule="evenodd"
+								d="M11.842 18 .237 7.26a.686.686 0 0 1 0-1.038.8.8 0 0 1 1.105 0L11.842 16l10.816-9.704a.8.8 0 0 1 1.105 0 .686.686 0 0 1 0 1.037z"
+								clipRule="evenodd"
+							></path>
+						</svg>
+					</button>
+					<ControllerInfo controllers={controllers} sector={staticData.feature} openSection={openSection} ref={controllersRef} />
+				</div>
+			)}
 		</>
 	);
 }

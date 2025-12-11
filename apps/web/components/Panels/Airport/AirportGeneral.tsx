@@ -45,10 +45,7 @@ export function AirportGeneral({ icao }: { icao: string }) {
 
 	const lastIcaoRef = useRef<string | null>(null);
 
-	const [staticData, setStaticData] = useState<AirportPanelStatic>({
-		airport: null,
-		tracon: null,
-	});
+	const [staticData, setStaticData] = useState<AirportPanelStatic | null>(null);
 	useEffect(() => {
 		if (!icao || lastIcaoRef.current === icao) return;
 		lastIcaoRef.current = icao;
@@ -81,7 +78,7 @@ export function AirportGeneral({ icao }: { icao: string }) {
 		setHeight(controllersRef, openSection === "controllers");
 	}, [openSection]);
 
-	if (isLoading) return <Spinner />;
+	if (isLoading || !staticData) return <Spinner />;
 	if (!staticData.airport)
 		return (
 			<NotFoundPanel
