@@ -27,12 +27,17 @@ export function AirportGeneral({ icao }: { icao: string }) {
 	const { data, isLoading } = useSWR<AirportLong>(`/data/airport/${icao}`, fetchApi, { refreshInterval: 60_000 });
 	const parsedMetar = data?.metar ? parseMetar(data.metar) : null;
 
+	const lastIcaoRef = useRef<string | null>(null);
+
 	const [staticData, setStaticData] = useState<AirportPanelStatic>({
 		airport: null,
 		controllers: [],
 		tracon: null,
 	});
 	useEffect(() => {
+		if (!icao || lastIcaoRef.current === icao) return;
+		lastIcaoRef.current = icao;
+
 		const loadStaticData = async () => {
 			while (!cacheIsInitialized()) {
 				await new Promise((resolve) => setTimeout(resolve, 50));
