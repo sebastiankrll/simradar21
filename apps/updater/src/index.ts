@@ -5,6 +5,7 @@ import { updateAirlines } from "./airlines.js";
 import { updateAirports } from "./airports.js";
 import { updateFirs } from "./fir.js";
 import { updateFleets } from "./fleet.js";
+import { updateR2Storage } from "./s3.js";
 import { updateTracons } from "./tracon.js";
 
 let dbsInitialized = false;
@@ -22,6 +23,8 @@ CronJob.from({
 		await updateFirs();
 		await updateTracons();
 		await updateFleets();
+
+		await updateR2Storage();
 
 		console.log("✅ Static data update completed!");
 	},
