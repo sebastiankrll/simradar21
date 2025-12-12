@@ -39,14 +39,10 @@ header {
 	box-sizing: border-box;
 }
 
-#header-clock {
-	color: var(--color-main-text);
-}
-
-#header-clock span {
-	font-size: 0.625rem;
-	margin-left: 0.25rem;
-	color: var(--color-light-text);
+.header-item.icon {
+	background-color: transparent;
+	border: none;
+	color: white;
 }
 
 #header-search {

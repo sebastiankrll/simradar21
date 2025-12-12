@@ -53,6 +53,16 @@ footer {
 	}
 }
 
+#footer-clock {
+	color: var(--color-main-text);
+}
+
+#footer-clock span {
+	font-size: 0.625rem;
+	margin-left: 0.25rem;
+	color: var(--color-light-text);
+}
+
 #footer-github,
 #footer-version {
 	background: none;
