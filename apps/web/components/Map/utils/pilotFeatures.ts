@@ -4,6 +4,8 @@ import type { Extent } from "ol/extent";
 import { Point } from "ol/geom";
 import { fromLonLat, transformExtent } from "ol/proj";
 import RBush from "rbush";
+import { toast } from "react-toastify";
+import MessageBox from "@/components/MessageBox/MessageBox";
 import type { PilotProperties } from "@/types/ol";
 import { pilotMainSource } from "./dataLayers";
 import { animateOverlays, resetMap } from "./events";
@@ -50,7 +52,6 @@ export function initPilotFeatures(data: WsAll): void {
 }
 
 export function updatePilotFeatures(delta: PilotDelta): void {
-	const items: RBushPilotFeature[] = [];
 	const pilotsInDelta = new Set<string>();
 
 	for (const p of delta.updated) {
@@ -71,15 +72,6 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 		}
 
 		pilotMap.set(p.id, feature);
-
-		const item: RBushPilotFeature = {
-			minX: p.longitude ?? props.longitude,
-			minY: p.latitude ?? props.latitude,
-			maxX: p.longitude ?? props.longitude,
-			maxY: p.latitude ?? props.latitude,
-			feature,
-		};
-		items.push(item);
 	}
 
 	for (const p of delta.added) {
@@ -98,15 +90,6 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 		feature.setId(`pilot_${p.id}`);
 
 		pilotMap.set(p.id, feature);
-
-		const item: RBushPilotFeature = {
-			minX: p.longitude,
-			minY: p.latitude,
-			maxX: p.longitude,
-			maxY: p.latitude,
-			feature,
-		};
-		items.push(item);
 	}
 
 	for (const id of pilotMap.keys()) {
@@ -115,13 +98,26 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 		}
 	}
 
-	if (highlightedPilot && !pilotMap.has(highlightedPilot)) {
-		highlightedPilot = null;
-		resetMap(true);
+	const items: RBushPilotFeature[] = [];
+	for (const [_id, feature] of pilotMap.entries()) {
+		const props = feature.getProperties() as PilotProperties;
+		items.push({
+			minX: props.longitude,
+			minY: props.latitude,
+			maxX: props.longitude,
+			maxY: props.latitude,
+			feature,
+		});
 	}
 
 	pilotRBush.clear();
 	pilotRBush.load(items);
+
+	if (highlightedPilot && !pilotMap.has(highlightedPilot)) {
+		toast.info(MessageBox, { data: { title: "Pilot Disconnected", message: `The viewed pilot has disconnected.` } });
+		highlightedPilot = null;
+		resetMap(true);
+	}
 }
 
 let highlightedPilot: string | null = null;
@@ -134,8 +130,10 @@ export function clearHighlightedPilot(): void {
 	highlightedPilot = null;
 }
 
+let initialized = false;
 export function setPilotFeatures(extent: Extent, zoom: number): void {
-	if (zoom > 10) {
+	if (zoom > 12 && !initialized) {
+		initialized = true;
 		return;
 	}
 
@@ -203,6 +201,8 @@ export function animatePilotFeatures(map: OlMap) {
 
 		features.forEach((feature) => {
 			const groundspeed = (feature.get("groundspeed") as number) || 0;
+			if (groundspeed <= 0) return;
+
 			const heading = (feature.get("heading") as number) || 0;
 			const latitude = (feature.get("latitude") as number) || 0;
 			const longitude = (feature.get("longitude") as number) || 0;

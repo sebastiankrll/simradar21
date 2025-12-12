@@ -8,7 +8,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { getAirportShort, getCachedAirline, getCachedAirport, getCachedFir, getCachedTracon, getControllerMerged } from "@/storage/cache";
 import { AirportOverlay, PilotOverlay, SectorOverlay } from "../components/Overlay/Overlays";
 import { addHighlightedAirport, clearHighlightedAirport, moveToAirportFeature } from "./airportFeatures";
-import { moveToSectorFeature } from "./controllerFeatures";
+import { addHighlightedController, clearHighlightedController, moveToSectorFeature } from "./controllerFeatures";
 import { firSource, pilotMainSource, setFeatures, trackSource, traconSource } from "./dataLayers";
 import { getMap, getMapView } from "./init";
 import { addHighlightedPilot, clearHighlightedPilot, moveToPilotFeature } from "./pilotFeatures";
@@ -147,6 +147,7 @@ export async function onClick(evt: MapBrowserEvent): Promise<void> {
 	if ((type === "tracon" || type === "fir") && id) {
 		const strippedId = id.toString().replace(/^(sector)_/, "");
 		navigate?.(`/sector/${strippedId}`);
+		addHighlightedController(strippedId);
 	}
 }
 
@@ -226,11 +227,6 @@ export function updateOverlays(): void {
 }
 
 async function updateOverlay(feature: Feature<Point>, overlay: Overlay): Promise<void> {
-	if (!feature || !overlay) {
-		resetMap(true);
-		return;
-	}
-
 	const geom = feature.getGeometry();
 	const coords = geom?.getCoordinates();
 	overlay.setPosition(coords);
@@ -397,6 +393,7 @@ function clearMap(): void {
 	toggleControllerSectorHover(clickedFeature, false, "clicked");
 	clearHighlightedAirport();
 	clearHighlightedPilot();
+	clearHighlightedController();
 	if (followInterval) {
 		clearInterval(followInterval);
 		followInterval = null;
