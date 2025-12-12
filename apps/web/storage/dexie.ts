@@ -8,11 +8,11 @@ interface StaticVersions {
 	firsVersion: string;
 	airlinesVersion: string;
 }
-
 interface DexieFeature {
 	id: string;
 	feature: FIRFeature | SimAwareTraconFeature;
 }
+type Manifest = { key: string; versions: StaticVersions };
 
 const R2_BUCKET_URL = process.env.NODE_ENV === "development" ? process.env.NEXT_PUBLIC_R2_BUCKET_URL_DEV : process.env.NEXT_PUBLIC_R2_BUCKET_URL;
 
@@ -21,6 +21,7 @@ const db = new Dexie("StaticDatabase") as Dexie & {
 	firs: EntityTable<DexieFeature, "id">;
 	tracons: EntityTable<DexieFeature, "id">;
 	airlines: EntityTable<StaticAirline, "id">;
+	manifest: EntityTable<Manifest, "key">;
 };
 
 db.version(1).stores({
@@ -28,23 +29,26 @@ db.version(1).stores({
 	firs: "id",
 	tracons: "id",
 	airlines: "id",
+	manifest: "key",
 });
 
 export async function dxInitDatabases(): Promise<void> {
-	const manifest = await fetchApi<StaticVersions>(`${R2_BUCKET_URL}/manifest.json`, {
+	const latestManifest = await fetchApi<StaticVersions>(`${R2_BUCKET_URL}/manifest.json`, {
 		cache: "no-store",
 	});
-	const localVersions: StaticVersions = JSON.parse(localStorage.getItem("databaseVersions") || "{}");
+	const storedManifest = (await db.manifest.get("databaseVersions")) as Manifest | undefined;
 
-	if (manifest.airportsVersion !== localVersions.airportsVersion) {
-		const entries = (await fetchApi<StaticAirport[]>(`${R2_BUCKET_URL}/airports_${manifest.airportsVersion}.json`, {
+	if (latestManifest.airportsVersion !== storedManifest?.versions.airportsVersion) {
+		const entries = (await fetchApi<StaticAirport[]>(`${R2_BUCKET_URL}/airports_${latestManifest.airportsVersion}.json`, {
 			cache: "no-store",
 		})) as StaticAirport[];
 		storeData(entries, db.airports as EntityTable<any, "id">);
 	}
 
-	if (manifest.firsVersion !== localVersions.firsVersion) {
-		const features = (await fetchApi<FIRFeature[]>(`${R2_BUCKET_URL}/firs_${manifest.firsVersion}.json`, { cache: "no-store" })) as FIRFeature[];
+	if (latestManifest.firsVersion !== storedManifest?.versions.firsVersion) {
+		const features = (await fetchApi<FIRFeature[]>(`${R2_BUCKET_URL}/firs_${latestManifest.firsVersion}.json`, {
+			cache: "no-store",
+		})) as FIRFeature[];
 		const entries: DexieFeature[] = features.map((f) => ({
 			id: f.properties.id,
 			feature: f,
@@ -53,8 +57,8 @@ export async function dxInitDatabases(): Promise<void> {
 		storeData(entries, db.firs as EntityTable<any, "id">);
 	}
 
-	if (manifest.traconsVersion !== localVersions.traconsVersion) {
-		const features = (await fetchApi<SimAwareTraconFeature[]>(`${R2_BUCKET_URL}/tracons_${manifest.traconsVersion}.json`, {
+	if (latestManifest.traconsVersion !== storedManifest?.versions.traconsVersion) {
+		const features = (await fetchApi<SimAwareTraconFeature[]>(`${R2_BUCKET_URL}/tracons_${latestManifest.traconsVersion}.json`, {
 			cache: "no-store",
 		})) as SimAwareTraconFeature[];
 		const entries: DexieFeature[] = features.map((f) => ({
@@ -65,14 +69,14 @@ export async function dxInitDatabases(): Promise<void> {
 		storeData(entries, db.tracons as EntityTable<any, "id">);
 	}
 
-	if (manifest.airlinesVersion !== localVersions.airlinesVersion) {
-		const entries = (await fetchApi<StaticAirline[]>(`${R2_BUCKET_URL}/airlines_${manifest.airlinesVersion}.json`, {
+	if (latestManifest.airlinesVersion !== storedManifest?.versions.airlinesVersion) {
+		const entries = (await fetchApi<StaticAirline[]>(`${R2_BUCKET_URL}/airlines_${latestManifest.airlinesVersion}.json`, {
 			cache: "no-store",
 		})) as StaticAirline[];
 		storeData(entries, db.airlines as EntityTable<any, "id">);
 	}
 
-	localStorage.setItem("databaseVersions", JSON.stringify(manifest));
+	await db.manifest.put({ key: "databaseVersions", versions: latestManifest });
 }
 
 async function storeData(data: any[], db: EntityTable<any, "id">): Promise<void> {
