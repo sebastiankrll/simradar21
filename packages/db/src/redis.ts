@@ -124,7 +124,7 @@ export async function rdsGetMultiple(keyPrefix: string, keys: string[]): Promise
 	if (keys.length === 0) return [];
 
 	try {
-		const keysWithPrefix = keys.map((val) => `${keyPrefix}:${val}`);
+		const keysWithPrefix = keyPrefix === "" ? keys : keys.map((val) => `${keyPrefix}:${val}`);
 		const results = await client.mGet(keysWithPrefix);
 
 		return results.map((r) => (r ? JSON.parse(r) : null));
