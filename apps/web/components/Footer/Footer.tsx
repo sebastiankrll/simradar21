@@ -1,12 +1,26 @@
 "use client";
 
 import "./Footer.css";
+import useSWR from "swr";
+import { fetchApi } from "@/utils/api";
+
+interface Metrics {
+	connectedClients: number;
+	rateLimitedClients: number;
+	totalMessages: number;
+	avgMessagesPerClient: number;
+	timestamp: string;
+}
+
+const WS_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "ws://localhost:3002";
 
 export default function Footer() {
+	const { data: metrics, isLoading } = useSWR<Metrics>(`${WS_URL.replace("ws", "http")}/metrics`, fetchApi, { refreshInterval: 120_000 });
+
 	return (
 		<footer>
 			<div className="footer-item" id="footer-clients">
-				<span>1249</span>visitors online
+				<span>{isLoading ? "..." : (metrics?.connectedClients ?? "0")}</span>visitors online
 			</div>
 			<div className="footer-item" id="footer-timestamp">
 				<span></span>18:27:20z
