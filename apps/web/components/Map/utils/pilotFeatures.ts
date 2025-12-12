@@ -4,6 +4,8 @@ import type { Extent } from "ol/extent";
 import { Point } from "ol/geom";
 import { fromLonLat, transformExtent } from "ol/proj";
 import RBush from "rbush";
+import { toast } from "react-toastify";
+import MessageBox from "@/components/MessageBox/MessageBox";
 import type { PilotProperties } from "@/types/ol";
 import { pilotMainSource } from "./dataLayers";
 import { animateOverlays, resetMap } from "./events";
@@ -96,11 +98,6 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 		}
 	}
 
-	if (highlightedPilot && !pilotMap.has(highlightedPilot)) {
-		highlightedPilot = null;
-		resetMap(true);
-	}
-
 	const items: RBushPilotFeature[] = [];
 	for (const [_id, feature] of pilotMap.entries()) {
 		const props = feature.getProperties() as PilotProperties;
@@ -115,6 +112,12 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 
 	pilotRBush.clear();
 	pilotRBush.load(items);
+
+	if (highlightedPilot && !pilotMap.has(highlightedPilot)) {
+		toast.info(MessageBox, { data: { title: "Pilot Disconnected", message: `The viewed pilot has disconnected.` } });
+		highlightedPilot = null;
+		resetMap(true);
+	}
 }
 
 let highlightedPilot: string | null = null;
@@ -198,6 +201,8 @@ export function animatePilotFeatures(map: OlMap) {
 
 		features.forEach((feature) => {
 			const groundspeed = (feature.get("groundspeed") as number) || 0;
+			if (groundspeed <= 0) return;
+
 			const heading = (feature.get("heading") as number) || 0;
 			const latitude = (feature.get("latitude") as number) || 0;
 			const longitude = (feature.get("longitude") as number) || 0;

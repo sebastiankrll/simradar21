@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 import "./Map.css";
 import { useRouter } from "next/navigation";
+import { ToastContainer } from "react-toastify";
+import { MessageBoxCloseButton } from "../MessageBox/MessageBox";
 import { onClick, onMoveEnd, onPointerMove, setNavigator } from "./utils/events";
 import { initMap } from "./utils/init";
 import { animatePilotFeatures } from "./utils/pilotFeatures";
@@ -34,5 +36,10 @@ export default function OMap() {
 		};
 	}, [router]);
 
-	return <div id="map" />;
+	return (
+		<>
+			<ToastContainer closeButton={MessageBoxCloseButton} icon={false} theme="colored" />
+			<div id="map" />
+		</>
+	);
 }

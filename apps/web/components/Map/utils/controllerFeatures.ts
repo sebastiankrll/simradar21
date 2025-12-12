@@ -8,10 +8,13 @@ import { fromLonLat } from "ol/proj";
 import Fill from "ol/style/Fill";
 import Style from "ol/style/Style";
 import Text from "ol/style/Text";
+import { toast } from "react-toastify";
+import MessageBox from "@/components/MessageBox/MessageBox";
 import { getCachedAirport, getCachedFir, getCachedTracon } from "@/storage/cache";
 import type { AirportLabelProperties, ControllerLabelProperties } from "@/types/ol";
 import { getAirportSize } from "./airportFeatures";
 import { airportLabelSource, controllerLabelSource, firSource, traconSource } from "./dataLayers";
+import { resetMap } from "./events";
 import { getMapView } from "./init";
 
 export function getControllerLabelStyle(feature: FeatureLike, resolution: number): Style {
@@ -207,6 +210,12 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 			}
 		}
 	}
+
+	if (highlightedController && !controllerList.has(highlightedController)) {
+		toast.info(MessageBox, { data: { title: "Controller Disconnected", message: `The viewed controller has disconnected.` } });
+		highlightedController = null;
+		resetMap(true);
+	}
 }
 
 function createControllerLabel(lon: number, lat: number, label: string, type: "tracon" | "fir"): void {
@@ -285,7 +294,6 @@ function getAirportLabelStations(controllerMerged: ControllerMerged): number[] {
 }
 
 export function moveToSectorFeature(id: string): Feature<Point> | null {
-	console.log(controllerLabelSource.getFeatures());
 	const labelFeature = controllerLabelSource.getFeatureById(`sector_${id}`) as Feature<Point> | null;
 
 	const view = getMapView();
@@ -299,5 +307,17 @@ export function moveToSectorFeature(id: string): Feature<Point> | null {
 		zoom: 7,
 	});
 
+	addHighlightedController(id);
+
 	return labelFeature;
+}
+
+let highlightedController: string | null = null;
+
+export function addHighlightedController(id: string | null): void {
+	highlightedController = id;
+}
+
+export function clearHighlightedController(): void {
+	highlightedController = null;
 }
