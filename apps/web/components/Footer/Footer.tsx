@@ -51,7 +51,7 @@ export default function Footer() {
 	return (
 		<footer>
 			<div className="footer-item" id="footer-clients">
-				<span>{isLoading ? "..." : (metrics?.connectedClients ?? "0")}</span>visitors online
+				<span>{isLoading ? "..." : metrics?.connectedClients ? metrics.connectedClients + 1 : 1}</span>visitors online
 			</div>
 			<div className="footer-item" id="footer-timestamp">
 				<span style={{ background: stale ? "var(--color-red)" : "", animationDuration: stale ? "1s" : "" }}></span>
