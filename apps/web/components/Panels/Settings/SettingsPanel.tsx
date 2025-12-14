@@ -21,6 +21,7 @@ export default function SettingsPanel() {
 				</button>
 			</div>
 			<div className="panel-container main scrollable" id="settings-panel">
+				<div className="panel-data-separator">General</div>
 				<div className="setting-item">
 					<p className="setting-item-title">Dark mode</p>
 					<ToggleSwitch />
@@ -30,6 +31,11 @@ export default function SettingsPanel() {
 					<ToggleSwitch />
 				</div>
 				<div className="setting-item">
+					<p className="setting-item-title">Day / night brightness</p>
+					<SliderSwitch />
+				</div>
+				<div className="panel-data-separator">Airports</div>
+				<div className="setting-item">
 					<p className="setting-item-title">Airport markers</p>
 					<ToggleSwitch />
 				</div>
@@ -37,13 +43,52 @@ export default function SettingsPanel() {
 					<p className="setting-item-title">Airport marker size</p>
 					<SliderSwitch />
 				</div>
+				<div className="panel-data-separator">Planes</div>
 				<div className="setting-item column">
 					<p className="setting-item-title">Plane overlay</p>
-					<ChooseSwitch />
+					<ChooseSwitch options={["Callsign only", "Telemetry off", "Full"]} />
 				</div>
 				<div className="setting-item">
 					<p className="setting-item-title">Plane marker size</p>
 					<SliderSwitch />
+				</div>
+				<div className="setting-item">
+					<p className="setting-item-title">Animated plane markers</p>
+					<ToggleSwitch />
+					<p className="setting-item-desc">Turn off to improve performance on low-end devices.</p>
+				</div>
+				<div className="panel-data-separator">Units</div>
+				<div className="setting-item column">
+					<p className="setting-item-title">Time Zone</p>
+					<ChooseSwitch options={["Local airport time", "UTC"]} />
+				</div>
+				<div className="setting-item column">
+					<p className="setting-item-title">Clock</p>
+					<ChooseSwitch options={["12-hour clock", "24-hour clock"]} />
+				</div>
+				<div className="setting-item column">
+					<p className="setting-item-title">Temperature</p>
+					<ChooseSwitch options={["Celsius °C", "Fahrenheit °F"]} />
+				</div>
+				<div className="setting-item column">
+					<p className="setting-item-title">Speed</p>
+					<ChooseSwitch options={["Knots", "km/h", "mph"]} />
+				</div>
+				<div className="setting-item column">
+					<p className="setting-item-title">Vertical Speed</p>
+					<ChooseSwitch options={["Fpm", "m/s"]} />
+				</div>
+				<div className="setting-item column">
+					<p className="setting-item-title">Wind Speed</p>
+					<ChooseSwitch options={["Knots", "km/h", "mph", "m/s"]} />
+				</div>
+				<div className="setting-item column">
+					<p className="setting-item-title">Altitude</p>
+					<ChooseSwitch options={["Feet", "Meters"]} />
+				</div>
+				<div className="setting-item column">
+					<p className="setting-item-title">Distance</p>
+					<ChooseSwitch options={["km", "Miles", "nm"]} />
 				</div>
 			</div>
 		</>
@@ -81,8 +126,7 @@ function SliderSwitch() {
 	);
 }
 
-function ChooseSwitch() {
-	const options = ["Callsign only", "Telemetry off", "Full"];
+function ChooseSwitch({ options }: { options: string[] }) {
 	const [selectedIndex, setSelectedIndex] = useState(0);
 
 	return (
