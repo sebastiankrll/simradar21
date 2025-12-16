@@ -8,6 +8,7 @@ import Header from "@/components/Header/Header";
 import Loader from "@/components/Loader/Loader";
 import OMap from "@/components/Map/Map";
 import BasePanel from "@/components/Panels/BasePanel";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
 	title: "simradar21",
@@ -28,11 +29,13 @@ export default function RootLayout({
 		<html lang="en" className={manrope.className} suppressHydrationWarning>
 			<body>
 				<ThemeProvider>
-					<Header />
-					<Loader />
-					<OMap />
-					<BasePanel>{children}</BasePanel>
-					<Footer />
+					<Providers>
+						<Header />
+						<Loader />
+						<OMap />
+						<BasePanel>{children}</BasePanel>
+						<Footer />
+					</Providers>
 				</ThemeProvider>
 			</body>
 		</html>

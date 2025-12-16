@@ -1,9 +1,14 @@
 import Search from "./Search";
 import "./Header.css";
 import Image from "next/image";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import simradar24Logo from "@/assets/images/simradar24_logo.svg";
+import AuthButton from "./AuthButton";
 
-export default function Header() {
+export default async function Header() {
+	const session = await getServerSession(authOptions);
+
 	return (
 		<header>
 			<figure id="header-logo">
@@ -12,9 +17,7 @@ export default function Header() {
 			<div id="header-search-wrapper">
 				<Search />
 			</div>
-			<button type="button" id="header-vatsim-login">
-				Login with VATSIM
-			</button>
+			<AuthButton session={session} />
 		</header>
 	);
 }
