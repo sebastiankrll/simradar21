@@ -302,6 +302,31 @@ export default function Page() {
 					und &sect; 25 Abs. 1 TDDDG, soweit die Einwilligung die Speicherung von Cookies oder den Zugriff auf Informationen im Endger&auml;t des
 					Nutzers (z.&nbsp;B. Device-Fingerprinting) im Sinne des TDDDG umfasst. Die Einwilligung ist jederzeit widerrufbar.
 				</p>
+				<h3>Cloudflare</h3>
+				<p>
+					Wir nutzen Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, USA, als Content Delivery Network (CDN) und f&uuml;r
+					Objektspeicherung (Cloudflare R2).
+				</p>
+				<p>
+					Cloudflare speichert und verarbeitet Daten, einschlie&szlig;lich Ihrer IP-Adresse, Browserinformationen und Zugriffsdaten, um unsere Website
+					schneller bereitzustellen und vor Bedrohungen zu sch&uuml;tzen. Beim Zugriff auf unsere Website oder auf &uuml;ber Cloudflare gespeicherte
+					Inhalte werden diese Daten verarbeitet.
+				</p>
+				<p>
+					Die Nutzung von Cloudflare erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO. Wir haben ein berechtigtes Interesse an einer
+					m&ouml;glichst schnellen und sicheren Bereitstellung unserer Website. Sofern eine entsprechende Einwilligung abgefragt wurde, erfolgt die
+					Verarbeitung ausschlie&szlig;lich auf Grundlage von Art. 6 Abs. 1 lit. a DSGVO und &sect; 25 Abs. 1 TDDDG, soweit die Einwilligung die
+					Speicherung von Cookies oder den Zugriff auf Informationen im Endger&auml;t des Nutzers im Sinne des TDDDG umfasst. Die Einwilligung ist
+					jederzeit widerrufbar.
+				</p>
+				<p>
+					Cloudflare verf&uuml;gt &uuml;ber eine Zertifizierung nach dem &bdquo;EU-US Data Privacy Framework&ldquo; (DPF) und bietet somit ein
+					angemessenes Datenschutzniveau. Weitere Informationen finden Sie in der{" "}
+					<a href="https://www.cloudflare.com/de-de/privacy/" target="_blank" rel="noopener noreferrer">
+						Datenschutzerkl&auml;rung von Cloudflare
+					</a>
+					.
+				</p>
 			</div>
 		</section>
 	);
