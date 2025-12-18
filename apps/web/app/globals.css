@@ -39,7 +39,7 @@ html {
 
 [data-theme="dark"] {
 	--color-bg: rgb(21, 27, 39);
-	--color-main-text: rgb(194, 201, 218);
+	--color-main-text: rgb(221, 225, 235);
 	--color-dark-grey: rgb(46, 52, 66);
 	--color-light-grey: rgb(46, 52, 66);
 	--color-border: rgb(113, 121, 153);
@@ -66,6 +66,6 @@ fieldset {
 }
 
 section {
-	padding: 5.5rem 2rem 2rem 2rem;
+	padding: 5.5rem 2rem 3.5rem 2rem;
 	flex: 1;
 }
