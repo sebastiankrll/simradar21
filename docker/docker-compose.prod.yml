@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:18.1
-    container_name: sr24_postgres
+    container_name: sr21_postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -11,7 +11,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql
     networks:
-      - sr24_backend
+      - sr21_backend
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
       interval: 10s
@@ -20,7 +20,7 @@ services:
 
   redis:
     image: redis:8.4.0
-    container_name: sr24_redis
+    container_name: sr21_redis
     restart: unless-stopped
     environment:
       REDIS_PORT: ${REDIS_PORT}
@@ -30,7 +30,7 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - sr24_backend
+      - sr21_backend
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
@@ -41,14 +41,14 @@ services:
     build:
       context: ..
       dockerfile: packages/db/Dockerfile
-    container_name: sr24_prisma
+    container_name: sr21_prisma
     environment:
       POSTGRES_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?schema=public
     depends_on:
       postgres:
         condition: service_healthy
     networks:
-      - sr24_backend
+      - sr21_backend
     labels:
       - "traefik.enable=false"
     restart: "no"
@@ -61,7 +61,7 @@ services:
         NEXT_PUBLIC_API_URL: "https://${DOMAIN}/api"
         NEXT_PUBLIC_WEBSOCKET_URL: "wss://${DOMAIN}/ws"
         NEXT_PUBLIC_R2_BUCKET_URL: ${NEXT_PUBLIC_R2_BUCKET_URL}
-    container_name: sr24_web
+    container_name: sr21_web
     restart: always
     environment:
       NODE_ENV: production
@@ -88,7 +88,7 @@ services:
     build:
       context: ..
       dockerfile: apps/api/Dockerfile
-    container_name: sr24_api
+    container_name: sr21_api
     restart: always
     environment:
       NODE_ENV: production
@@ -112,7 +112,7 @@ services:
         condition: service_healthy
     networks:
       - traefik_proxy
-      - sr24_backend
+      - sr21_backend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)"
@@ -128,7 +128,7 @@ services:
     build:
       context: ..
       dockerfile: apps/websocket/Dockerfile
-    container_name: sr24_websocket
+    container_name: sr21_websocket
     restart: always
     environment:
       NODE_ENV: production
@@ -146,7 +146,7 @@ services:
         condition: service_healthy
     networks:
       - traefik_proxy
-      - sr24_backend
+      - sr21_backend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.ws.rule=Host(`${DOMAIN}`) && PathPrefix(`/ws`)"
@@ -162,7 +162,7 @@ services:
     build:
       context: ..
       dockerfile: apps/ingestion/Dockerfile
-    container_name: sr24_ingestion
+    container_name: sr21_ingestion
     restart: always
     environment:
       NODE_ENV: production
@@ -181,7 +181,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - sr24_backend
+      - sr21_backend
     labels:
       - "traefik.enable=false"
 
@@ -189,7 +189,7 @@ services:
     build:
       context: ..
       dockerfile: apps/updater/Dockerfile
-    container_name: sr24_updater
+    container_name: sr21_updater
     restart: always
     environment:
       NODE_ENV: production
@@ -212,14 +212,14 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - sr24_backend
+      - sr21_backend
     labels:
       - "traefik.enable=false"
 
 networks:
   traefik_proxy:
     external: true
-  sr24_backend:
+  sr21_backend:
     driver: bridge
 
 volumes:
