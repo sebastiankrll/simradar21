@@ -211,7 +211,7 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 		}
 	}
 
-	if (highlightedController && !controllerList.has(highlightedController)) {
+	if (highlightedController && !controllerList.has(`tracon_${highlightedController}`) && !controllerList.has(`fir_${highlightedController}`)) {
 		toast.info(MessageBox, { data: { title: "Controller Disconnected", message: `The viewed controller has disconnected.` } });
 		highlightedController = null;
 		resetMap(true);

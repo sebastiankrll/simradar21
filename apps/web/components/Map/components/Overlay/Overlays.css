@@ -80,15 +80,25 @@
 .overlay-controller-frequency {
 	margin-left: 2rem;
 	font-weight: 700;
+	margin-right: 10px;
 }
 
 .overlay-controller-connections {
-	width: 25px;
+	margin-left: 3px;
 	text-align: end;
 }
 
 .overlay-controller-save {
-	margin-left: 4px;
+	margin-left: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+}
+
+.overlay-controller-save use {
+	color: white;
 }
 
 .overlay-main-wrapper {
@@ -209,9 +219,8 @@
 	text-align: end;
 }
 
-.overlay-airport-traffic svg {
-	fill: white;
-	width: 18px;
+.overlay-airport-traffic use {
+	color: white;
 }
 
 .overlay-anchor {

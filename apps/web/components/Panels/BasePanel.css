@@ -45,20 +45,18 @@
 	background-color: var(--color-red);
 	width: 1.5rem;
 	height: 1.5rem;
-	padding: 0.25rem;
 	margin-left: auto;
-}
-
-.panel-close svg {
-	fill: white;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .panel-close:hover {
 	background-color: white;
 }
 
-.panel-close:hover svg {
-	fill: var(--color-red);
+.panel-close:hover use {
+	color: var(--color-red);
 }
 
 .panel-container.title-section {
@@ -178,11 +176,8 @@
 }
 
 .panel-container-header svg {
-	width: 1rem;
-	height: 1rem;
 	margin-left: auto;
 	transition: transform 0.2s ease;
-	fill: white;
 }
 
 .panel-container-header.open svg {
@@ -205,6 +200,10 @@
 	min-height: 0px;
 }
 
+.panel-section-title use {
+	color: var(--color-main-text);
+}
+
 .panel-section-title {
 	display: flex;
 	justify-content: center;
@@ -212,11 +211,6 @@
 	background-color: var(--color-light-grey);
 	border-right: 1px solid var(--color-border);
 	min-width: 2rem;
-}
-
-.panel-section-title svg {
-	width: 1rem;
-	fill: var(--color-main-text);
 }
 
 .panel-section-content {
@@ -277,9 +271,8 @@
 	opacity: 1;
 }
 
-.panel-navigation-button svg {
-	fill: var(--color-main-text);
-	height: 1rem;
+.panel-navigation-button use {
+	color: var(--color-main-text);
 }
 
 .panel-navigation-button:hover {
@@ -290,9 +283,9 @@
 	background-color: var(--color-green);
 }
 
-.panel-navigation-button:hover svg,
-.panel-navigation-button.active svg {
-	fill: white;
+.panel-navigation-button:hover use,
+.panel-navigation-button.active use {
+	color: white;
 }
 
 .panel-navigation-button:hover p,

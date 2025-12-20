@@ -75,7 +75,18 @@ header {
 	border: 1px solid white;
 }
 
+#header-user use {
+	color: var(--color-blue);
+}
+
 #header-nav {
-	width: 12px;
 	z-index: 5;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+#header-nav:hover use {
+	color: var(--color-green);
 }

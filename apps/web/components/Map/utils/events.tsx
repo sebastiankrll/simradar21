@@ -401,6 +401,8 @@ function clearMap(): void {
 }
 
 export function resetMap(nav: boolean = true): void {
+	clearMap();
+
 	if (lastExtent) {
 		const view = getMapView();
 		view?.fit(lastExtent, {
@@ -416,8 +418,6 @@ export function resetMap(nav: boolean = true): void {
 	}
 	clickedFeature?.set("clicked", false);
 	clickedFeature = null;
-
-	clearMap();
 
 	if (nav) {
 		navigate?.(`/`);

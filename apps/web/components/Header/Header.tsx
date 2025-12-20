@@ -6,8 +6,8 @@ import Image from "next/image";
 import { signIn, useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import simradar24Logo from "@/assets/images/logos/Simradar21_Logo.svg";
-import VatsimLogo from "@/assets/images/logos/VATSIM_Logo_Only.png";
 import useSettings from "@/hooks/useSettings";
+import Icon from "../Icon/Icon";
 import Navigation from "./Navigation";
 
 export default function Header() {
@@ -41,11 +41,11 @@ export default function Header() {
 			</figure>
 			<Search />
 			<button type="button" id="header-user" onClick={() => signIn("vatsim")} aria-label="Sign In/Out">
-				<Image src={VatsimLogo} alt="VATSIM logo" height={30} width={30} />
+				<Icon name="user" size={24} offset={-1} />
 				<span style={{ backgroundColor: session ? "var(--color-green)" : "var(--color-red)" }}></span>
 			</button>
 			<button type="button" id="header-nav" aria-label="Navigation" onClick={() => setOpen(!open)}>
-				{open ? "✕" : "☰"}
+				{open ? <Icon name="cancel" /> : <Icon name="off-canvas" large />}
 			</button>
 			<Navigation open={open} />
 		</header>
