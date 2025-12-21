@@ -9,6 +9,7 @@ import MessageBox from "@/components/shared/MessageBox/MessageBox";
 import type { PilotProperties } from "@/types/ol";
 import { pilotMainSource } from "./dataLayers";
 import { animateOverlays, resetMap } from "./events";
+import { filterPilotFeatures } from "./filters";
 import { getMapView } from "./init";
 import { animateTrackFeatures, initTrackFeatures } from "./trackFeatures";
 
@@ -142,19 +143,20 @@ export function setPilotFeatures(extent: Extent, zoom: number): void {
 	const pilotsByAltitude = pilotsByExtent.sort((a, b) => (b.feature.get("altitude_agl") || 0) - (a.feature.get("altitude_agl") || 0)).slice(0, 300);
 
 	const features = pilotsByAltitude.map((f) => f.feature);
+	const filteredFeatures = filterPilotFeatures(features);
 
 	if (highlightedPilot) {
 		const exists = pilotsByAltitude.find((p) => p.feature.getId() === `pilot_${highlightedPilot}`);
 		if (!exists) {
 			const feature = pilotMap.get(highlightedPilot);
 			if (feature) {
-				features.push(feature);
+				filteredFeatures.push(feature);
 			}
 		}
 	}
 
 	pilotMainSource.clear();
-	pilotMainSource.addFeatures(features);
+	pilotMainSource.addFeatures(filteredFeatures);
 }
 
 export function moveToPilotFeature(id: string): Feature<Point> | null {

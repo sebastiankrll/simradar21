@@ -47,7 +47,7 @@ const FIXED_OPTIONS = {
 export default function FiltersPanel() {
 	const [options, setOptions] = useState<string[]>([]);
 	const [inputs, setInputs] = useState<string[]>([]);
-	const [filterValues, setFilterValues] = useState<Record<string, any>>({});
+	const [filterValues, setFilterValues] = useState<Record<string, SelectOptionType[]>>({});
 
 	const filters = useFiltersStore();
 
@@ -96,6 +96,7 @@ export default function FiltersPanel() {
 		setFilterValues({});
 		filters.resetAllFilters();
 		filters.setActive(false);
+		applyMapFilters({});
 	};
 
 	const FilterOption = ({ label }: { label: string }) => {
