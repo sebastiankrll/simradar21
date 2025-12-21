@@ -7,6 +7,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import simradar24Logo from "@/assets/images/logos/Simradar21_Logo.svg";
 import useSettings from "@/hooks/useSettings";
+import { getSettingValues, useSettingsStore } from "@/storage/zustand";
 import Icon from "../Icon/Icon";
 import Navigation from "./Navigation";
 
@@ -16,7 +17,20 @@ export default function Header() {
 
 	const { data: session } = useSession();
 
+	const settings = useSettingsStore();
 	useSettings();
+
+	const onThemeChange = async () => {
+		settings.setTheme(settings.theme === "dark" ? "light" : "dark");
+
+		if (session) {
+			await fetch("/user/settings", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(getSettingValues(settings)),
+			});
+		}
+	};
 
 	useEffect(() => {
 		function handleClickOutside(event: MouseEvent) {
@@ -42,6 +56,15 @@ export default function Header() {
 				</a>
 			</figure>
 			<Search />
+			<button
+				type="button"
+				id="header-theme"
+				onClick={() => onThemeChange()}
+				aria-label="Toggle Theme"
+				className={settings.theme === "dark" ? "light" : "dark"}
+			>
+				{<Icon name={settings.theme === "dark" ? "light-theme" : "dark-theme"} size={24} />}
+			</button>
 			<button type="button" id="header-user" onClick={() => signIn("vatsim")} aria-label="Sign In/Out">
 				<Icon name="user" size={24} offset={-1} />
 				<span style={{ backgroundColor: session ? "var(--color-green)" : "var(--color-red)" }}></span>

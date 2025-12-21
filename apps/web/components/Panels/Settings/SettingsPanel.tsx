@@ -34,10 +34,6 @@ export default function SettingsPanel() {
 			<div className="panel-container main scrollable" id="settings-panel">
 				<div className="panel-data-separator">General</div>
 				<div className="setting-item">
-					<p className="setting-item-title">Dark mode</p>
-					<ToggleSwitch checked={settings.theme === "dark"} onChange={(e) => settings.setTheme(e.target.checked ? "dark" : "light")} />
-				</div>
-				<div className="setting-item">
 					<p className="setting-item-title">Day / night layer</p>
 					<ToggleSwitch checked={settings.dayNightLayer} onChange={(e) => settings.setDayNightLayer(e.target.checked)} />
 				</div>
