@@ -477,3 +477,15 @@ export function setClickedFeature(path: string): void {
 		});
 	}
 }
+
+export function moveViewToCoordinates(lon: number, lat: number): void {
+	const view = getMapView();
+	if (!view) return;
+
+	const coords = fromLonLat([lon, lat]);
+	view.animate({
+		center: coords,
+		zoom: Math.max(view.getZoom() || 2, 8),
+		duration: 500,
+	});
+}

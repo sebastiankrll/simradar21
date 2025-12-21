@@ -66,11 +66,11 @@ export default function Header() {
 				{<Icon name={settings.theme === "dark" ? "light-theme" : "dark-theme"} size={24} />}
 			</button>
 			<button type="button" id="header-user" onClick={() => signIn("vatsim")} aria-label="Sign In/Out">
-				<Icon name="user" size={24} offset={-1} />
+				<Icon name="user" size={20} offset={-1} />
 				<span style={{ backgroundColor: session ? "var(--color-green)" : "var(--color-red)" }}></span>
 			</button>
 			<button type="button" id="header-nav" aria-label="Navigation" onClick={() => setOpen(!open)}>
-				{open ? <Icon name="cancel" /> : <Icon name="off-canvas" large />}
+				<Icon name={open ? "cancel" : "off-canvas"} size={24} />
 			</button>
 			<Navigation open={open} />
 		</header>

@@ -57,6 +57,7 @@ header {
 	height: 2rem;
 	width: 2rem;
 	border-radius: 50%;
+	z-index: 5;
 }
 
 #header-theme.dark {
