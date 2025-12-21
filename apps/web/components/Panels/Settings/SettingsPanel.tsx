@@ -4,7 +4,7 @@ import { resetMap } from "@/components/Map/utils/events";
 import "./SettingsPanel.css";
 import { useEffect, useId, useRef, useState } from "react";
 import { HexColorPicker } from "react-colorful";
-import Icon from "@/components/Icon/Icon";
+import Icon from "@/components/shared/Icon/Icon";
 import { storeUserSettings, useSettingsStore } from "@/storage/zustand";
 
 export default function SettingsPanel() {

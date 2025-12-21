@@ -8,8 +8,8 @@ import { DashboardHistory } from "./DashboardHistory";
 import { DashboardStats } from "./DashboardStats";
 import "./DashboardPanel.css";
 import useSWR from "swr";
-import Icon from "@/components/Icon/Icon";
-import Spinner from "@/components/Spinner/Spinner";
+import Icon from "@/components/shared/Icon/Icon";
+import Spinner from "@/components/shared/Spinner/Spinner";
 import { fetchApi } from "@/utils/api";
 
 function storeOpenSections(sections: string[]) {

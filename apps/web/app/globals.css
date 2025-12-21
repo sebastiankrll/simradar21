@@ -39,6 +39,7 @@ html {
 	--font-weight-bold: 700;
 	--font-weight-normal: 500;
 	--font-weight-light: 300;
+	--font-size-normal: 14px;
 }
 
 [data-theme="dark"] {
@@ -50,6 +51,7 @@ html {
 	--color-box-shadow: rgb(39, 40, 46);
 	--color-glass-bg: rgba(80, 80, 80, 0.3);
 	--color-hover: rgb(105, 124, 165);
+	--font-weight-bold: 600;
 	--font-weight-normal: 400;
 	--font-weight-light: 200;
 }
@@ -74,4 +76,39 @@ fieldset {
 section {
 	padding: 5.5rem 2rem 3.5rem 2rem;
 	flex: 1;
+}
+
+select {
+	font-family: inherit;
+	font-size: var(--font-size-normal);
+	color: inherit;
+	background-color: var(--color-dark-grey);
+	border: 1px solid transparent;
+}
+
+select:focus {
+	outline: none;
+	border-color: var(--color-border);
+}
+
+select option:checked {
+	background: var(--color-hover);
+	color: white;
+}
+
+select option:hover {
+	background: var(--color-hover);
+}
+
+input {
+	font-family: inherit;
+	font-size: var(--font-size-normal);
+	color: inherit;
+	background-color: var(--color-dark-grey);
+	border: 1px solid var(--color-border);
+	padding: 2px 4px;
+}
+
+input:focus {
+	outline: none;
 }

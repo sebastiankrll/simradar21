@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import "./MapControls.css";
 import { useState } from "react";
-import Icon from "@/components/Icon/Icon";
+import Icon from "@/components/shared/Icon/Icon";
 import { moveViewToCoordinates, zoomView } from "../utils/events";
 
 export default function MapControls() {
@@ -57,7 +57,7 @@ export default function MapControls() {
 				</button>
 			</div>
 			<div className="map-controls">
-				<button type="button" className="map-control-item">
+				<button type="button" className="map-control-item" onClick={() => router.push("/filters")}>
 					<Icon name="filter" size={22} />
 				</button>
 				<button type="button" className="map-control-item" onClick={() => router.push("/settings")}>

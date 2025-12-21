@@ -3,7 +3,7 @@
 import "./BasePanel.css";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import Spinner from "../Spinner/Spinner";
+import Spinner from "../shared/Spinner/Spinner";
 
 export default function BasePanel({ children }: { children: React.ReactNode }) {
 	const pathname = usePathname();

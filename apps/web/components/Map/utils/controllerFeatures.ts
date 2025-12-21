@@ -9,7 +9,7 @@ import Fill from "ol/style/Fill";
 import Style from "ol/style/Style";
 import Text from "ol/style/Text";
 import { toast } from "react-toastify";
-import MessageBox from "@/components/MessageBox/MessageBox";
+import MessageBox from "@/components/shared/MessageBox/MessageBox";
 import { getCachedAirport, getCachedFir, getCachedTracon } from "@/storage/cache";
 import type { AirportLabelProperties, ControllerLabelProperties } from "@/types/ol";
 import { getAirportSize } from "./airportFeatures";

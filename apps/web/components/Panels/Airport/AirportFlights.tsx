@@ -7,7 +7,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import { setHoveredPilot } from "@/components/Map/utils/events";
-import Spinner from "@/components/Spinner/Spinner";
+import Spinner from "@/components/shared/Spinner/Spinner";
 import { cacheIsInitialized, getCachedAirline, getCachedAirport } from "@/storage/cache";
 import { useSettingsStore } from "@/storage/zustand";
 import { fetchApi } from "@/utils/api";

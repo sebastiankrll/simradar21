@@ -5,7 +5,7 @@ import type { AirportShort, ControllerMerged, ControllerShort } from "@sr24/type
 import type { Point } from "ol/geom";
 import { useState } from "react";
 import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
-import Icon from "@/components/Icon/Icon";
+import Icon from "@/components/shared/Icon/Icon";
 import { useSettingsStore } from "@/storage/zustand";
 import type { PilotProperties } from "@/types/ol";
 import { convertAltitude, convertSpeed, convertVerticalSpeed } from "@/utils/helpers";

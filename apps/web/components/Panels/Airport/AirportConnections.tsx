@@ -1,5 +1,5 @@
 import type { AirportLong } from "@sr24/types/vatsim";
-import Icon from "@/components/Icon/Icon";
+import Icon from "@/components/shared/Icon/Icon";
 import { getDelayColor } from "./AirportStatus";
 
 export function AirportConnections({ airport }: { airport: AirportLong | undefined }) {

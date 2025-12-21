@@ -5,7 +5,7 @@ import { Point } from "ol/geom";
 import { fromLonLat, transformExtent } from "ol/proj";
 import RBush from "rbush";
 import { toast } from "react-toastify";
-import MessageBox from "@/components/MessageBox/MessageBox";
+import MessageBox from "@/components/shared/MessageBox/MessageBox";
 import type { PilotProperties } from "@/types/ol";
 import { pilotMainSource } from "./dataLayers";
 import { animateOverlays, resetMap } from "./events";

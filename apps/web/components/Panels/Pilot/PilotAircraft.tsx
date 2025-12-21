@@ -1,7 +1,7 @@
 import type { StaticAircraft } from "@sr24/types/db";
 import type { PilotLong } from "@sr24/types/vatsim";
 import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
-import Icon from "@/components/Icon/Icon";
+import Icon from "@/components/shared/Icon/Icon";
 
 export function PilotAircraft({ pilot, aircraft }: { pilot: PilotLong; aircraft: StaticAircraft | undefined }) {
 	const acType = `${aircraft?.manufacturerName || ""} ${aircraft?.model || ""}`;

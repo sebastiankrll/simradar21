@@ -1,5 +1,5 @@
 import type { IAltimeter, IMetar, Visibility } from "metar-taf-parser";
-import Icon from "@/components/Icon/Icon";
+import Icon from "@/components/shared/Icon/Icon";
 import { useSettingsStore } from "@/storage/zustand";
 import { convertAltitude, convertTemperature, convertTime } from "@/utils/helpers";
 

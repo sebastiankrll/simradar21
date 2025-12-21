@@ -5,7 +5,7 @@ import type { ControllerLong } from "@sr24/types/vatsim";
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import { resetMap } from "@/components/Map/utils/events";
-import Spinner from "@/components/Spinner/Spinner";
+import Spinner from "@/components/shared/Spinner/Spinner";
 import { cacheIsInitialized, getCachedFir, getCachedTracon, getControllersApiRequest } from "@/storage/cache";
 import { fetchApi } from "@/utils/api";
 import { setHeight } from "../helpers";
