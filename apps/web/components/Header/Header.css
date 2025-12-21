@@ -102,7 +102,7 @@ header {
 }
 
 #header-user use {
-	color: var(--color-blue);
+	color: rgb(21, 27, 39);
 }
 
 #header-nav {

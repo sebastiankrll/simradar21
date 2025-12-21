@@ -26,7 +26,8 @@ const defaultSettings: SettingValues = {
 	distanceUnit: "nm" as const,
 };
 
-export function getSettingValues(s: SettingState): SettingValues {
+export function getSettingValues(): SettingValues {
+	const s = useSettingsStore.getState();
 	return {
 		theme: s.theme,
 		dayNightLayer: s.dayNightLayer,
@@ -50,6 +51,18 @@ export function getSettingValues(s: SettingState): SettingValues {
 		altitudeUnit: s.altitudeUnit,
 		distanceUnit: s.distanceUnit,
 	};
+}
+
+export async function storeUserSettings(): Promise<void> {
+	try {
+		await fetch("/user/settings", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(getSettingValues()),
+		});
+	} catch (err) {
+		console.error("Failed to save settings:", err);
+	}
 }
 
 export const useSettingsStore = create<SettingState>()(

@@ -489,3 +489,15 @@ export function moveViewToCoordinates(lon: number, lat: number): void {
 		duration: 500,
 	});
 }
+
+export function zoomView(zoomIn: boolean): void {
+	const view = getMapView();
+	if (!view) return;
+
+	const currentZoom = view.getZoom() || 2;
+	const newZoom = zoomIn ? currentZoom + 1 : currentZoom - 1;
+	view.animate({
+		zoom: newZoom,
+		duration: 300,
+	});
+}

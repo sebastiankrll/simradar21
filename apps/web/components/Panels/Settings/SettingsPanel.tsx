@@ -2,32 +2,25 @@
 
 import { resetMap } from "@/components/Map/utils/events";
 import "./SettingsPanel.css";
-import { useSession } from "next-auth/react";
 import { useEffect, useId, useRef, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 import Icon from "@/components/Icon/Icon";
-import { getSettingValues, useSettingsStore } from "@/storage/zustand";
+import { storeUserSettings, useSettingsStore } from "@/storage/zustand";
 
 export default function SettingsPanel() {
 	const settings = useSettingsStore();
-	const { data: session } = useSession();
 
-	const onClose = async () => {
-		if (session) {
-			await fetch("/user/settings", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(getSettingValues(settings)),
-			});
-		}
-		resetMap();
-	};
+	useEffect(() => {
+		return () => {
+			storeUserSettings();
+		};
+	}, []);
 
 	return (
 		<>
 			<div className="panel-header">
 				<div className="panel-id">Settings</div>
-				<button className="panel-close" type="button" onClick={onClose}>
+				<button className="panel-close" type="button" onClick={() => resetMap()}>
 					<Icon name="cancel" size={24} />
 				</button>
 			</div>

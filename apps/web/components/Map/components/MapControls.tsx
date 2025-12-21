@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import "./MapControls.css";
 import { useState } from "react";
 import Icon from "@/components/Icon/Icon";
-import { moveViewToCoordinates } from "../utils/events";
+import { moveViewToCoordinates, zoomView } from "../utils/events";
 
 export default function MapControls() {
 	const router = useRouter();
@@ -45,10 +45,10 @@ export default function MapControls() {
 			<button type="button" className="map-control-item" onClick={onFullscreen}>
 				<Icon name={isFullscreen ? "resize-decrease" : "resize-increase"} size={22} />
 			</button>
-			<button type="button" className="map-control-item">
+			<button type="button" className="map-control-item" onClick={() => zoomView(true)}>
 				<Icon name="add" />
 			</button>
-			<button type="button" className="map-control-item">
+			<button type="button" className="map-control-item" onClick={() => zoomView(false)}>
 				<Icon name="remove" />
 			</button>
 			<button type="button" className="map-control-item" onClick={onCenterOnLocation}>

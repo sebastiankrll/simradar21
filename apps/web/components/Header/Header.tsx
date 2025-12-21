@@ -7,7 +7,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import simradar24Logo from "@/assets/images/logos/Simradar21_Logo.svg";
 import useSettings from "@/hooks/useSettings";
-import { getSettingValues, useSettingsStore } from "@/storage/zustand";
+import { storeUserSettings, useSettingsStore } from "@/storage/zustand";
 import Icon from "../Icon/Icon";
 import Navigation from "./Navigation";
 
@@ -24,11 +24,7 @@ export default function Header() {
 		settings.setTheme(settings.theme === "dark" ? "light" : "dark");
 
 		if (session) {
-			await fetch("/user/settings", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(getSettingValues(settings)),
-			});
+			storeUserSettings();
 		}
 	};
 
@@ -66,7 +62,7 @@ export default function Header() {
 				{<Icon name={settings.theme === "dark" ? "light-theme" : "dark-theme"} size={24} />}
 			</button>
 			<button type="button" id="header-user" onClick={() => signIn("vatsim")} aria-label="Sign In/Out">
-				<Icon name="user" size={20} offset={-1} />
+				<Icon name="user" size={18} offset={-1} />
 				<span style={{ backgroundColor: session ? "var(--color-green)" : "var(--color-red)" }}></span>
 			</button>
 			<button type="button" id="header-nav" aria-label="Navigation" onClick={() => setOpen(!open)}>

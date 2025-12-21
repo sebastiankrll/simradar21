@@ -7,12 +7,12 @@ import { useSettingsStore } from "@/storage/zustand";
 
 export default function useSettings() {
 	const { setTheme } = useTheme();
-	const { theme: settingsTheme, setSettings } = useSettingsStore();
+	const settings = useSettingsStore();
 	const { data: session } = useSession();
 
 	useEffect(() => {
-		setTheme(settingsTheme);
-	}, [settingsTheme, setTheme]);
+		setTheme(settings.theme);
+	}, [settings.theme, setTheme]);
 
 	useEffect(() => {
 		if (!session) return;
@@ -25,12 +25,12 @@ export default function useSettings() {
 				}
 
 				const data = await res.json();
-				setSettings(data.settings);
+				settings.setSettings(data.settings);
 			} catch (err) {
 				console.error("Failed to load settings:", err);
 			}
 		};
 
 		fetchUserSettings();
-	}, [setSettings, session]);
+	}, [settings.setSettings, session]);
 }
