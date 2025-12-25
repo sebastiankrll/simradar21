@@ -5,6 +5,7 @@ import type { AirportShort, ControllerMerged, ControllerShort } from "@sr24/type
 import type { Point } from "ol/geom";
 import { useState } from "react";
 import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
+import { getIcon } from "@/components/Panels/Pilot/PilotTitle";
 import Icon from "@/components/shared/Icon/Icon";
 import { useSettingsStore } from "@/storage/zustand";
 import type { PilotProperties } from "@/types/ol";
@@ -47,14 +48,8 @@ export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; ai
 			)}
 			{planeOverlay !== "callsign" && (
 				<div className="overlay-main-wrapper">
-					<div className="overlay-icon" style={{ backgroundColor: airline?.bg ?? "" }}>
-						<p
-							style={{
-								color: airline?.font ?? "var(--color-green)",
-							}}
-						>
-							{airline?.iata || "?"}
-						</p>
+					<div className="overlay-icon" style={{ backgroundColor: airline?.color?.[0] ?? "" }}>
+						{getIcon(airline)}
 					</div>
 					<div className="overlay-title">
 						<p>{data.callsign}</p>

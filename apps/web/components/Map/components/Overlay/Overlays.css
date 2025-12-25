@@ -146,7 +146,8 @@
 	box-sizing: border-box;
 }
 
-.overlay-icon p {
+.overlay-icon p,
+.overlay-icon span {
 	font-weight: 800;
 	font-size: 18px;
 	line-height: 18px;

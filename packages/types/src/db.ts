@@ -75,8 +75,7 @@ export interface StaticAirline {
 	name: string;
 	callsign: string;
 	country: string;
-	bg: string | null;
-	font: string | null;
+	color?: string[];
 }
 
 export interface StaticAircraft {

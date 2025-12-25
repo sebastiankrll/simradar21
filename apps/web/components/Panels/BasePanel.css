@@ -67,6 +67,7 @@
 .panel-container.title-section {
 	display: flex;
 	padding: 0rem;
+	min-height: 58px;
 }
 
 .panel-icon {
