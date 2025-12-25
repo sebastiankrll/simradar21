@@ -156,7 +156,6 @@ export default function PilotPanel({ id }: { id: string }) {
 			<NotFoundPanel
 				title="Pilot not found!"
 				text="This pilot does not exist or is currently unavailable, most likely because of an incorrect ID or disconnect."
-				disableHeader
 			/>
 		);
 

@@ -25,6 +25,7 @@
 	box-sizing: border-box;
 	box-shadow: var(--box-shadow);
 	overflow-x: hidden;
+	flex-shrink: 0;
 }
 
 .panel-header {
@@ -39,7 +40,7 @@
 	height: 1.5rem;
 	line-height: 1.5rem;
 	padding: 0rem 0.5rem;
-	font-weight: 800;
+	font-weight: var(--font-weight-bold);
 }
 
 .panel-close {
@@ -83,8 +84,9 @@
 	box-sizing: border-box;
 }
 
-.panel-icon p {
-	font-weight: 800;
+.panel-icon p,
+.panel-icon span {
+	font-weight: var(--font-weight-bold);
 	font-size: 1.5rem;
 	line-height: 1.5rem;
 }
@@ -93,29 +95,27 @@
 	display: flex;
 	flex-flow: column;
 	justify-content: space-between;
-	padding: 4px;
+	padding: 8px 4px;
 	margin-left: 4px;
 	overflow: hidden;
 }
 
 .panel-title p {
-	font-weight: 700;
+	font-weight: var(--font-weight-bold);
 	font-size: 1rem;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	margin-top: 2px;
 }
 
 .panel-desc-items {
 	display: flex;
 	gap: 10px;
-	margin-bottom: 4px;
 }
 
 .panel-desc-item {
-	font-size: 12px;
-	font-weight: 600;
+	font-size: var(--font-size-small);
+	font-weight: var(--font-weight-bold);
 }
 
 .panel-desc-item.r {
@@ -168,8 +168,6 @@
 
 .panel-container-header p {
 	color: white;
-	font-weight: 600;
-	font-size: 12px;
 }
 
 .panel-container-header use {
@@ -230,24 +228,25 @@
 
 .panel-data-separator {
 	background-color: var(--color-dark-grey);
-	padding: 2px 5px;
-	font-size: 12px;
+	padding: 4px;
+	font-size: var(--font-size-small);
+	line-height: var(--font-size-small);
 	text-transform: uppercase;
 }
 
 .panel-data-item {
-	padding: 2px 5px;
+	padding: 4px;
 	display: flex;
 	flex-flow: column;
 }
 
 .panel-data-item p {
-	font-size: 11px;
+	font-size: var(--font-size-small);
 	position: relative;
 }
 
 .panel-data-item p:first-child {
-	font-weight: 700;
+	font-weight: 500;
 	text-transform: uppercase;
 }
 

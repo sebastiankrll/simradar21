@@ -21,7 +21,7 @@ export function PilotTelemetry({ pilot }: { pilot: PilotLong }) {
 			</div>
 			<div className="panel-section-content" id="panel-pilot-telemetry">
 				<div className="panel-data-item">
-					<p>Barometric Altitude</p>
+					<p>Baro. Altitude</p>
 					<p>{convertAltitude(Math.round(pilot.altitude_ms / 250) * 250, altitudeUnit)}</p>
 				</div>
 				<div className="panel-data-item">

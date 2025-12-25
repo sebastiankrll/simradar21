@@ -31,7 +31,7 @@ export function AirportConnections({ airport }: { airport: AirportLong | undefin
 						<p>{airport?.busiest.departure || "N/A"}</p>
 					</div>
 					<div className="panel-data-item">
-						<p>Unique Connections</p>
+						<p>Connections</p>
 						<p>{airport?.unique.departures || 0}</p>
 					</div>
 				</div>
@@ -57,7 +57,7 @@ export function AirportConnections({ airport }: { airport: AirportLong | undefin
 						<p>{airport?.busiest.arrival || "N/A"}</p>
 					</div>
 					<div className="panel-data-item">
-						<p>Unique Connections</p>
+						<p>Connections</p>
 						<p>{airport?.unique.arrivals || 0}</p>
 					</div>
 				</div>

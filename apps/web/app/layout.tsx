@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Manrope } from "next/font/google";
+import { Ubuntu } from "next/font/google";
 import "./globals.css";
 import "@/assets/images/sprites/freakflags.css";
 import Footer from "@/components/shared/Footer/Footer";
@@ -11,8 +11,9 @@ export const metadata: Metadata = {
 	description: "VATSIM tracking service",
 };
 
-const manrope = Manrope({
+const ubuntu = Ubuntu({
 	subsets: ["latin"],
+	weight: ["300", "400", "500", "700"],
 	display: "swap",
 });
 
@@ -22,7 +23,7 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en" className={manrope.className} suppressHydrationWarning>
+		<html lang="en" className={ubuntu.className} suppressHydrationWarning>
 			<body>
 				<Providers>
 					<Header />

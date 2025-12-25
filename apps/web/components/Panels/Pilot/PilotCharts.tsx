@@ -28,7 +28,7 @@ export function PilotCharts({
 			</div>
 			<div className="panel-section-content">
 				<ResponsiveContainer width="100%" aspect={1.618} maxHeight={500}>
-					<LineChart data={data} margin={{ top: 5, right: 5, bottom: 10, left: 5 }}>
+					<LineChart data={data} margin={{ top: 10, right: 5, bottom: 10, left: 5 }}>
 						<YAxis
 							yAxisId="alt"
 							stroke="var(--color-main-text)"

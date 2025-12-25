@@ -106,7 +106,7 @@ export function AirportWeather({
 					<p>{getClouds(parsedMetar, altitudeUnit)}</p>
 				</div>
 				<div className="panel-data-item">
-					<p>Last updated</p>
+					<p>Updated</p>
 					<p>{getLastUpdated(parsedMetar, timeFormat, timeZone)}</p>
 				</div>
 				<div className="panel-data-item">
