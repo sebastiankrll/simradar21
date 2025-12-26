@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Pilot" ALTER COLUMN "cid" SET DATA TYPE TEXT;

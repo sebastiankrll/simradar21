@@ -5,6 +5,7 @@ import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
+import type { Prisma } from "../../../packages/db/src/generated/prisma/index.js";
 import { type AuthRequest, authHandler } from "./auth.js";
 import { errorHandler } from "./error.js";
 import { validateCallsign, validateICAO, validateNumber, validateString } from "./validation.js";
@@ -254,6 +255,67 @@ app.get(
 
 		const data = await pgFindAirportFlights(icao, direction, limit, cursor, backwards);
 		res.json(data);
+	}),
+);
+
+app.get(
+	"/data/flights",
+	errorHandler(async (req, res) => {
+		const query = req.query.q as string;
+
+		if (!query || query.length < 1) {
+			res.status(400).json({ error: "Query parameter 'q' is required" });
+			return;
+		}
+
+		const whereClause: Prisma.PilotWhereInput = {
+			OR: [
+				{ callsign: { contains: query.toUpperCase() } },
+				{ dep_icao: { contains: query.toUpperCase() } },
+				{ arr_icao: { contains: query.toUpperCase() } },
+				{ cid: { contains: query } },
+				{ name: { contains: query, mode: "insensitive" } },
+			],
+		};
+
+		const [livePilots, offlinePilots] = await Promise.all([
+			prisma.pilot.findMany({
+				where: {
+					...whereClause,
+					live: true,
+				},
+				select: {
+					pilot_id: true,
+					callsign: true,
+					dep_icao: true,
+					arr_icao: true,
+					aircraft: true,
+					live: true,
+				},
+				take: 10,
+			}),
+
+			prisma.pilot.findMany({
+				where: {
+					...whereClause,
+					live: false,
+				},
+				select: {
+					pilot_id: true,
+					callsign: true,
+					dep_icao: true,
+					arr_icao: true,
+					aircraft: true,
+					live: true,
+				},
+				take: 10,
+			}),
+		]);
+
+		res.json({
+			live: livePilots,
+			offline: offlinePilots,
+		});
 	}),
 );
 

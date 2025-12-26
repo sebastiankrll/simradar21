@@ -2,7 +2,7 @@
 
 import type { StaticAirline, StaticAirport } from "@sr24/types/db";
 import type { PilotLong } from "@sr24/types/vatsim";
-import { type InfiniteData, QueryClientProvider, useInfiniteQuery } from "@tanstack/react-query";
+import { type InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
@@ -14,7 +14,6 @@ import { fetchApi } from "@/utils/api";
 import { convertTime } from "@/utils/helpers";
 import { getDelayColor } from "../Pilot/PilotTimes";
 import { getIcon } from "../Pilot/PilotTitle";
-import { queryClient } from "./AirportPanel";
 
 const LIMIT = 20;
 
@@ -29,11 +28,9 @@ export default function AirportFlights({ icao, direction }: { icao: string; dire
 	const dir = normalizeDirection(direction);
 
 	return (
-		<QueryClientProvider client={queryClient}>
-			<div className="panel-container main scrollable" id="panel-airport-flights">
-				<List icao={icao} dir={dir} />
-			</div>
-		</QueryClientProvider>
+		<div className="panel-container main scrollable" id="panel-airport-flights">
+			<List icao={icao} dir={dir} />
+		</div>
 	);
 }
 
@@ -75,8 +72,8 @@ function List({ icao, dir }: { icao: string; dir: "dep" | "arr" }) {
 			const firstPilot = firstPage[0];
 			return { cursor: firstPilot.id, backwards: true };
 		},
-		staleTime: 10_000,
-		gcTime: 30_000,
+		staleTime: 30_000,
+		gcTime: 60_000,
 	});
 
 	return (
@@ -134,7 +131,6 @@ function ListItem({
 		arrival: null,
 	});
 	useEffect(() => {
-		if (!pilot.flight_plan?.departure) console.log(pilot);
 		const airlineCode = pilot.callsign.slice(0, 3).toUpperCase();
 
 		const loadData = async () => {

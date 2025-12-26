@@ -53,7 +53,7 @@ export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; ai
 					</div>
 					<div className="overlay-title">
 						<p>{data.callsign}</p>
-						<p>{data.route}</p>
+						<p>{data.route.replace(" ", " \u002d ")}</p>
 					</div>
 					<div className="overlay-misc">
 						<div className="overlay-pilot-ac-type">{data.aircraft}</div>

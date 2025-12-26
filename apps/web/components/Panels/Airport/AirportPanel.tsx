@@ -2,12 +2,9 @@
 
 import { resetMap } from "@/components/Map/utils/events";
 import "./AirportPanel.css";
-import { QueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import Icon from "@/components/shared/Icon/Icon";
-
-export const queryClient = new QueryClient();
 
 export default function AirportPanel({ icao, children }: { icao: string; children: React.ReactNode }) {
 	const pathname = usePathname();
