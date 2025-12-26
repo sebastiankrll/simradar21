@@ -22,12 +22,13 @@ interface RBushPilotFeature {
 }
 
 const pilotRBush = new RBush<RBushPilotFeature>();
-const pilotMap = new Map<string, Feature<Point>>();
+const pilotMap = new Map<string, RBushPilotFeature>();
 
 export function initPilotFeatures(data: WsAll): void {
 	for (const p of data.pilots) {
 		const props: PilotProperties = {
 			type: "pilot",
+			coord3857: fromLonLat([p.longitude, p.latitude]),
 			clicked: false,
 			hovered: false,
 			...p,
@@ -47,7 +48,7 @@ export function initPilotFeatures(data: WsAll): void {
 			feature,
 		};
 
-		pilotMap.set(p.id, feature);
+		pilotMap.set(p.id, newItem);
 		pilotRBush.insert(newItem);
 	}
 }
@@ -60,19 +61,26 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 
 		if (Object.keys(p).length === 1) continue;
 
-		const feature = pilotMap.get(p.id);
-		if (!feature) continue;
+		const item = pilotMap.get(p.id);
+		if (!item) continue;
 
-		const props = feature.getProperties() as PilotProperties;
-		Object.assign(props, p);
-		feature.setProperties(props);
-
-		if (p.longitude !== undefined && p.latitude !== undefined) {
-			const geom = feature.getGeometry();
-			geom?.setCoordinates(fromLonLat([p.longitude, p.latitude]));
+		for (const k in p) {
+			item.feature.set(k, p[k as keyof typeof p], true);
 		}
 
-		pilotMap.set(p.id, feature);
+		if (p.longitude !== undefined && p.latitude !== undefined) {
+			const geom = item.feature.getGeometry();
+			geom?.setCoordinates(fromLonLat([p.longitude, p.latitude]));
+
+			item.feature.set("coord3857", fromLonLat([p.longitude, p.latitude]), true);
+
+			pilotRBush.remove(item);
+			item.minX = item.maxX = p.longitude;
+			item.minY = item.maxY = p.latitude;
+			pilotRBush.insert(item);
+		}
+
+		pilotMap.set(p.id, item);
 	}
 
 	for (const p of delta.added) {
@@ -80,6 +88,7 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 
 		const props: PilotProperties = {
 			type: "pilot",
+			coord3857: fromLonLat([p.longitude, p.latitude]),
 			clicked: false,
 			hovered: false,
 			...p,
@@ -90,29 +99,29 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 		feature.setProperties(props);
 		feature.setId(`pilot_${p.id}`);
 
-		pilotMap.set(p.id, feature);
-	}
-
-	for (const id of pilotMap.keys()) {
-		if (!pilotsInDelta.has(id)) {
-			pilotMap.delete(id);
-		}
-	}
-
-	const items: RBushPilotFeature[] = [];
-	for (const [_id, feature] of pilotMap.entries()) {
-		const props = feature.getProperties() as PilotProperties;
-		items.push({
-			minX: props.longitude,
-			minY: props.latitude,
-			maxX: props.longitude,
-			maxY: props.latitude,
+		const newItem: RBushPilotFeature = {
+			minX: p.longitude,
+			minY: p.latitude,
+			maxX: p.longitude,
+			maxY: p.latitude,
 			feature,
-		});
+		};
+
+		pilotMap.set(p.id, newItem);
+		pilotRBush.insert(newItem);
 	}
 
-	pilotRBush.clear();
-	pilotRBush.load(items);
+	const toRemove: string[] = [];
+
+	for (const item of pilotMap) {
+		if (pilotsInDelta.has(item[0])) continue;
+		toRemove.push(item[0]);
+		pilotRBush.remove(item[1]);
+	}
+
+	for (const id of toRemove) {
+		pilotMap.delete(id);
+	}
 
 	if (highlightedPilot && !pilotMap.has(highlightedPilot)) {
 		toast.info(MessageBox, { data: { title: "Pilot Disconnected", message: `The viewed pilot has disconnected.` } });
@@ -148,9 +157,9 @@ export function setPilotFeatures(extent: Extent, zoom: number): void {
 	if (highlightedPilot) {
 		const exists = pilotsByAltitude.find((p) => p.feature.getId() === `pilot_${highlightedPilot}`);
 		if (!exists) {
-			const feature = pilotMap.get(highlightedPilot);
-			if (feature) {
-				filteredFeatures.push(feature);
+			const item = pilotMap.get(highlightedPilot);
+			if (item) {
+				filteredFeatures.push(item.feature);
 			}
 		}
 	}
@@ -162,7 +171,8 @@ export function setPilotFeatures(extent: Extent, zoom: number): void {
 export function moveToPilotFeature(id: string): Feature<Point> | null {
 	let feature = pilotMainSource.getFeatureById(`pilot_${id}`) as Feature<Point> | null;
 	if (!feature) {
-		feature = pilotMap.get(id) || null;
+		const item = pilotMap.get(id);
+		feature = item ? item.feature : null;
 	}
 
 	const view = getMapView();
@@ -183,12 +193,8 @@ export function moveToPilotFeature(id: string): Feature<Point> | null {
 }
 
 let timestamp = Date.now();
-let animating = false;
 
 export function animatePilotFeatures(map: OlMap) {
-	if (animating) return;
-	animating = true;
-
 	const resolution = map.getView().getResolution() || 0;
 	let interval = 1000;
 	if (resolution > 1) {
@@ -202,25 +208,21 @@ export function animatePilotFeatures(map: OlMap) {
 		const features = pilotMainSource.getFeatures() as Feature<Point>[];
 
 		features.forEach((feature) => {
-			const groundspeed = (feature.get("groundspeed") as number) || 0;
-			if (groundspeed <= 0) return;
+			const kts = (feature.get("groundspeed") as number) || 0;
+			if (kts <= 0) return;
 
 			const heading = (feature.get("heading") as number) || 0;
-			const latitude = (feature.get("latitude") as number) || 0;
-			const longitude = (feature.get("longitude") as number) || 0;
-
-			const distKm = (groundspeed * 0.514444 * elapsed) / 1000 / 1000;
 			const headingRad = (heading * Math.PI) / 180;
-			const dx = distKm * Math.sin(headingRad);
-			const dy = distKm * Math.cos(headingRad);
+			const meters = kts * 0.514444 * (elapsed / 1000);
 
-			const newLat = latitude + (dy / 6378) * (180 / Math.PI);
-			const newLon = longitude + ((dx / 6378) * (180 / Math.PI)) / Math.cos((latitude * Math.PI) / 180);
+			const [x, y] = feature.get("coord3857");
+			const dx = meters * Math.sin(headingRad);
+			const dy = meters * Math.cos(headingRad);
+			const nx = x + dx;
+			const ny = y + dy;
 
-			feature.getGeometry()?.setCoordinates(fromLonLat([newLon, newLat]));
-
-			feature.set("latitude", newLat, true);
-			feature.set("longitude", newLon, true);
+			feature.getGeometry()?.setCoordinates([nx, ny]);
+			feature.set("coord3857", [nx, ny], true);
 		});
 
 		animateOverlays();
@@ -228,6 +230,4 @@ export function animatePilotFeatures(map: OlMap) {
 
 		timestamp = now;
 	}
-
-	animating = false;
 }
