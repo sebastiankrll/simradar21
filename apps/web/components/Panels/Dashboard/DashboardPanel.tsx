@@ -74,7 +74,7 @@ export default function DashboardPanel() {
 					<DashboardHistory history={data.history} />
 				</div>
 			</div>
-			<div className="panel-container dashboard">
+			<div className="panel-container dashboard" id="panel-dashboard-stats">
 				<button
 					className={`panel-container-header${openSection.includes("stats") ? " open" : ""}`}
 					type="button"

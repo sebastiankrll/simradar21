@@ -10,7 +10,7 @@ export function DashboardStats({ stats }: { stats: Stats }) {
 	return (
 		<div className="panel-section-content">
 			<div className="panel-data-separator">Connections</div>
-			<div className="panel-sub-container" id="panel-dashboard-stats">
+			<div className="panel-sub-container" id="panel-dashboard-connections">
 				<div className="panel-data-item">
 					<p>Total</p>
 					<p>{stats.pilots + stats.controllers + stats.supervisors}</p>

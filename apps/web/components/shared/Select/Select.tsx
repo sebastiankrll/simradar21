@@ -25,12 +25,16 @@ const containerStyles = (provided: CSSObjectWithLabel): CSSObjectWithLabel => ({
 	minHeight: "32px",
 	flexGrow: 1,
 	boxSizing: "border-box",
+	display: "flex",
+	alignItems: "center",
+	justifyContent: "space-between",
 });
 
 const controlStyles = (provided: CSSObjectWithLabel): CSSObjectWithLabel => ({
 	...provided,
 	minHeight: "100%",
 	padding: "4px",
+	width: "100%",
 });
 
 const menuStyles = (provided: CSSObjectWithLabel): CSSObjectWithLabel => ({

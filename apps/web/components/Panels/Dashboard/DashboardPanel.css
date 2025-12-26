@@ -3,7 +3,7 @@
 	flex-flow: column;
 }
 
-#panel-dashboard-stats {
+#panel-dashboard-connections {
 	display: grid;
 	grid-template-columns: repeat(2, 1fr);
 	grid-template-rows: repeat(2, 1fr);
@@ -69,6 +69,7 @@
 
 #panel-dashboard-events {
 	min-height: 0;
+	flex-shrink: 1;
 }
 
 .dashboard-event-item {
