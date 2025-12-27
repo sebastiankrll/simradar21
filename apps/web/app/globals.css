@@ -97,3 +97,21 @@ select option:checked {
 select option:hover {
 	background: var(--color-hover);
 }
+
+.scrollable {
+	overflow-y: auto;
+}
+
+.scrollable::-webkit-scrollbar {
+	width: 5px;
+}
+
+.scrollable::-webkit-scrollbar-track {
+	background: var(--color-light-grey);
+	border: 1px solid var(--color-border);
+	box-sizing: border-box;
+}
+
+.scrollable::-webkit-scrollbar-thumb {
+	background-color: var(--color-green);
+}

@@ -259,7 +259,7 @@ app.get(
 );
 
 app.get(
-	"/data/flights",
+	"/search/flights",
 	errorHandler(async (req, res) => {
 		const query = req.query.q as string;
 
@@ -300,6 +300,10 @@ app.get(
 					...whereClause,
 					live: false,
 				},
+				orderBy: {
+					last_update: "desc",
+				},
+				distinct: ["callsign"],
 				select: {
 					pilot_id: true,
 					callsign: true,
@@ -316,6 +320,35 @@ app.get(
 			live: livePilots,
 			offline: offlinePilots,
 		});
+	}),
+);
+
+app.get(
+	"/data/flights/:callsign",
+	errorHandler(async (req, res) => {
+		const callsign = req.params.callsign.toUpperCase();
+
+		const flights = await prisma.pilot.findMany({
+			where: {
+				callsign,
+			},
+			orderBy: {
+				last_update: "desc",
+			},
+			select: {
+				pilot_id: true,
+				callsign: true,
+				dep_icao: true,
+				arr_icao: true,
+				aircraft: true,
+				live: true,
+				last_update: true,
+				logon_time: true,
+			},
+			take: 20,
+		});
+
+		res.json(flights);
 	}),
 );
 
