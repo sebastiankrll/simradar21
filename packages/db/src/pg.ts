@@ -1,5 +1,5 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import type { PilotLong } from "@sr24/types/vatsim";
+import type { PilotLong } from "@sr24/types/interface";
 import { PrismaClient } from "./generated/prisma/client.js";
 
 const adapter = new PrismaPg({

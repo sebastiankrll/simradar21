@@ -1,8 +1,8 @@
 import "dotenv/config";
-import { brotliCompressSync, constants, gzipSync } from "node:zlib";
 import { pgDeleteStalePilots, pgUpsertPilots } from "@sr24/db/pg";
-import { rdsConnect, rdsPub, rdsSetMultiple, rdsSetMultipleTimeSeries, rdsSetSingle } from "@sr24/db/redis";
-import type { AirportShort, PilotShort, TrackPoint, VatsimData, VatsimTransceivers, WsAll, WsDelta } from "@sr24/types/vatsim";
+import { rdsConnect, rdsPub, rdsSetMultipleTimeSeries } from "@sr24/db/redis";
+import type { InitialData, RedisAll, TrackPoint, WsDelta } from "@sr24/types/interface";
+import type { VatsimData, VatsimTransceivers } from "@sr24/types/vatsim";
 import axios from "axios";
 import { getAirportDelta, getAirportShort, mapAirports } from "./airport.js";
 import { getControllerDelta, mapControllers } from "./controller.js";
@@ -42,32 +42,6 @@ async function fetchVatsimData(): Promise<void> {
 		const [controllersLong, controllersMerged] = await mapControllers(vatsimData, pilotsLong);
 		const airportsLong = await mapAirports(pilotsLong);
 
-		const delta: WsDelta = {
-			pilots: getPilotDelta(),
-			airports: getAirportDelta(),
-			controllers: getControllerDelta(),
-			timestamp: new Date(vatsimData.general.update_timestamp),
-		};
-		rdsPub("ws:delta", delta);
-
-		const all: WsAll = {
-			pilots: pilotsLong.map((p) => getPilotShort(p) as Required<PilotShort>),
-			airports: airportsLong.map((a) => getAirportShort(a) as Required<AirportShort>),
-			controllers: controllersMerged,
-		};
-		const raw = JSON.stringify(all);
-		const br = brotliCompressSync(raw, {
-			params: { [constants.BROTLI_PARAM_QUALITY]: 4 },
-		});
-		const gz = gzipSync(raw, { level: 3 });
-		await rdsSetSingle("ws:all:br", br.toString("base64"));
-		await rdsSetSingle("ws:all:gzip", gz.toString("base64"));
-
-		// Set pilots, controllers and airports data in redis
-		rdsSetMultiple(pilotsLong, "pilot", (p) => p.id, "pilots:live", 120);
-		rdsSetMultiple(controllersLong, "controller", (c) => c.callsign, "controllers:live", 120);
-		rdsSetMultiple(airportsLong, "airport", (a) => a.icao, "airports:live", 120);
-
 		await pgUpsertPilots(pilotsLong);
 		const now = Date.now();
 		if (now > lastPgCleanUp + 60 * 60 * 1000) {
@@ -89,10 +63,31 @@ async function fetchVatsimData(): Promise<void> {
 		}));
 		await rdsSetMultipleTimeSeries(trackPoints, "pilot:tp", (tp) => tp.id, 12 * 60 * 60);
 
-		// Update dashboard data
-		await updateDashboardData(vatsimData, controllersLong);
+		const dashboard = await updateDashboardData(vatsimData, controllersLong);
 
-		// console.log(`✅ Retrieved ${vatsimData.pilots.length} pilots and ${vatsimData.controllers.length} controllers.`);
+		const init: InitialData = {
+			pilots: pilotsLong.map((p) => getPilotShort(p)),
+			airports: airportsLong.map((a) => getAirportShort(a)),
+			controllers: controllersMerged,
+			timestamp: new Date(vatsimData.general.update_timestamp),
+		};
+
+		const redisAll: RedisAll = {
+			pilots: pilotsLong,
+			controllers: controllersLong,
+			airports: airportsLong,
+			dashboard: dashboard,
+			init,
+		};
+		rdsPub("data:all", redisAll);
+
+		const delta: WsDelta = {
+			pilots: getPilotDelta(),
+			airports: getAirportDelta(),
+			controllers: getControllerDelta(),
+			timestamp: new Date(vatsimData.general.update_timestamp),
+		};
+		rdsPub("ws:delta", delta);
 	} catch (error) {
 		console.error("❌ Error fetching VATSIM data:", error instanceof Error ? error.message : error);
 	}

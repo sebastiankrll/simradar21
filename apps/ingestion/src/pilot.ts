@@ -1,16 +1,8 @@
 import { createHash } from "node:crypto";
 import { rdsGetMultiple, rdsGetSingle } from "@sr24/db/redis";
 import type { StaticAirport } from "@sr24/types/db";
-import type {
-	PilotDelta,
-	PilotFlightPlan,
-	PilotLong,
-	PilotShort,
-	PilotTimes,
-	VatsimData,
-	VatsimPilot,
-	VatsimPilotFlightPlan,
-} from "@sr24/types/vatsim";
+import type { PilotDelta, PilotFlightPlan, PilotLong, PilotShort, PilotTimes } from "@sr24/types/interface";
+import type { VatsimData, VatsimPilot, VatsimPilotFlightPlan } from "@sr24/types/vatsim";
 import { haversineDistance } from "./utils/helpers.js";
 
 const TAXI_TIME_MS = 5 * 60 * 1000;
@@ -182,6 +174,8 @@ export function getPilotDelta(): PilotDelta {
 	};
 }
 
+export function getPilotShort(p: PilotLong): Required<PilotShort>;
+export function getPilotShort(p: PilotLong, c: PilotLong): PilotShort;
 export function getPilotShort(p: PilotLong, c?: PilotLong): PilotShort {
 	if (!c) {
 		return {

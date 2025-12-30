@@ -1,19 +1,52 @@
 import "dotenv/config";
+import { constants } from "node:zlib";
 import { pgFindAirportFlights, pgHealthCheck, pgShutdown, prisma } from "@sr24/db/pg";
-import { rdsConnect, rdsGetMultiple, rdsGetRing, rdsGetSingle, rdsGetTimeSeries, rdsHealthCheck, rdsShutdown } from "@sr24/db/redis";
-import type { PilotLong } from "@sr24/types/vatsim";
+import { rdsConnect, rdsGetSingle, rdsGetTimeSeries, rdsHealthCheck, rdsShutdown, rdsSub } from "@sr24/db/redis";
+import type { AirportLong, ControllerLong, DashboardData, InitialData, PilotLong, RedisAll } from "@sr24/types/interface";
+import compression from "compression";
 import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import type { Prisma } from "../../../packages/db/src/generated/prisma/index.js";
-import { authHandler, type CustomRequest, compressionHandler, errorHandler } from "./middleware.js";
-import { validateCallsign, validateICAO, validateNumber, validateString } from "./validation.js";
+import { authHandler, type CustomRequest, errorHandler } from "./middleware.js";
+import { validateCallsign, validateICAO, validateNumber } from "./validation.js";
 import { getMetar, getTaf } from "./weather.js";
-import compression from "compression";
-import { constants } from "node:zlib";
 
-rdsConnect();
+let initialData: InitialData | null = null;
+let dashboardData: DashboardData | null = null;
+const pilotsLong: Map<string, PilotLong> = new Map();
+const controllersLong: Map<string, ControllerLong> = new Map();
+const airportsLong: Map<string, AirportLong> = new Map();
+
+async function connectDBs(): Promise<void> {
+	await rdsConnect();
+	rdsSub("data:all", async (data: string) => {
+		try {
+			const parsed: RedisAll = JSON.parse(data);
+			initialData = parsed.init;
+			dashboardData = parsed.dashboard;
+			pilotsLong.clear();
+			parsed.pilots.forEach((p) => {
+				pilotsLong.set(p.id, p);
+			});
+			controllersLong.clear();
+			parsed.controllers.forEach((c) => {
+				controllersLong.set(c.callsign, c);
+			});
+			airportsLong.clear();
+			parsed.airports.forEach((a) => {
+				airportsLong.set(a.icao, a);
+			});
+		} catch (err) {
+			console.error("Error parsing RedisAll data from subscription:", err);
+		}
+	});
+}
+connectDBs().catch((err) => {
+	console.error("Error connecting to databases:", err);
+	process.exit(1);
+});
 
 const limiter = rateLimit({
 	windowMs: 60_000,
@@ -125,39 +158,20 @@ app.get(
 
 app.get(
 	"/data/init",
-	compressionHandler,
-	errorHandler(async (req: CustomRequest, res) => {
-		if (!req.compression) {
-			res.status(400).json({ error: "Compression information not found" });
+	brotliCompression,
+	errorHandler(async (_req, res) => {
+		if (!initialData) {
+			res.status(503).json({ error: "Initial data not available" });
 			return;
 		}
-		const { encoding, cacheKeySuffix } = req.compression;
-
-		const key = `ws:all:${cacheKeySuffix}`;
-		const cached = await rdsGetSingle(key);
-
-		if (!cached) {
-			res.status(404).end();
-			return;
-		}
-
-		const buffer = Buffer.from(cached, "base64");
-
-		res.setHeader("Content-Type", "application/octet-stream");
-		res.setHeader("Content-Encoding", encoding);
-		res.setHeader("Content-Length", buffer.length);
-		res.setHeader("Vary", "Accept-Encoding");
-
-		res.end(buffer);
+		res.json(initialData);
 	}),
 );
 
 app.get(
 	"/data/pilot/:id",
 	errorHandler(async (req, res) => {
-		const id = validateString(req.params.id, "Pilot ID", 1, 10);
-
-		const pilot = await rdsGetSingle(`pilot:${id}`);
+		const pilot = pilotsLong.get(req.params.id);
 		if (!pilot) {
 			res.status(404).json({ error: "Pilot not found" });
 			return;
@@ -170,9 +184,7 @@ app.get(
 app.get(
 	"/data/airport/:icao",
 	errorHandler(async (req, res) => {
-		const icao = validateICAO(req.params.icao).toUpperCase();
-
-		const airport = await rdsGetSingle(`airport:${icao}`);
+		const airport = airportsLong.get(req.params.icao.toUpperCase());
 		if (!airport) {
 			res.status(404).json({ error: "Airport not found" });
 			return;
@@ -185,7 +197,7 @@ app.get(
 app.get(
 	"/data/weather/:icao",
 	errorHandler(async (req, res) => {
-		const icao = validateICAO(req.params.icao).toUpperCase();
+		const icao = req.params.icao.toUpperCase();
 		const metar = getMetar(icao);
 		const taf = getTaf(icao);
 
@@ -203,7 +215,7 @@ app.get(
 			return;
 		}
 
-		const controllers = await rdsGetMultiple("controller", callsignArray);
+		const controllers = callsignArray.map((callsign) => controllersLong.get(callsign) || null);
 		const validControllers = controllers.filter((controller) => controller !== null);
 		if (validControllers.length === 0) {
 			res.status(404).json({ error: "Controller not found" });
@@ -216,11 +228,9 @@ app.get(
 
 app.get(
 	"/data/track/:id",
-    brotliCompression,
+	brotliCompression,
 	errorHandler(async (req, res) => {
-		const id = validateString(req.params.id, "Track ID", 1, 10);
-
-		const trackPoints = await rdsGetTimeSeries(`pilot:tp:${id}`);
+		const trackPoints = await rdsGetTimeSeries(`pilot:tp:${req.params.id}`);
 		if (!trackPoints || trackPoints.length === 0) {
 			res.status(404).json({ error: "Track not found" });
 			return;
@@ -233,9 +243,7 @@ app.get(
 app.get(
 	"/data/aircraft/:reg",
 	errorHandler(async (req, res) => {
-		const reg = validateString(req.params.reg, "Aircraft Registration", 1, 10).toUpperCase();
-
-		const aircraft = await rdsGetSingle(`static_fleet:${reg}`);
+		const aircraft = await rdsGetSingle(`static_fleet:${req.params.reg.toUpperCase()}`);
 		if (!aircraft) {
 			res.status(404).json({ error: "Aircraft not found" });
 			return;
@@ -247,18 +255,14 @@ app.get(
 
 app.get(
 	"/data/dashboard/",
-    brotliCompression,
+	brotliCompression,
 	errorHandler(async (_req, res) => {
-		const stats = await rdsGetSingle(`dashboard:stats`);
-		const history = await rdsGetRing(`dashboard:history`, 24 * 60 * 60 * 1000);
-		const events = await rdsGetSingle(`dashboard:events`);
-
-		if (!stats || !history || !events) {
-			res.status(404).json({ error: "Dashboard data not found" });
+		if (!dashboardData) {
+			res.status(404).json({ error: "Dashboard data not available" });
 			return;
 		}
 
-		res.json({ stats, history, events });
+		res.json(dashboardData);
 	}),
 );
 

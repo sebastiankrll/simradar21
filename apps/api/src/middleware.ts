@@ -55,30 +55,3 @@ export const authHandler = (req: CustomRequest, res: Response, next: NextFunctio
 		res.status(403).json({ error: "Invalid or expired token" });
 	}
 };
-
-type CompressionInfo = {
-	encoding: "br" | "gzip";
-	cacheKeySuffix: "br" | "gzip";
-};
-
-export function compressionHandler(req: CustomRequest, res: Response, next: NextFunction) {
-	const ae = req.headers["accept-encoding"] || "";
-
-	if (ae.includes("br")) {
-		req.compression = {
-			encoding: "br",
-			cacheKeySuffix: "br",
-		} satisfies CompressionInfo;
-		return next();
-	}
-
-	if (ae.includes("gzip")) {
-		req.compression = {
-			encoding: "gzip",
-			cacheKeySuffix: "gzip",
-		} satisfies CompressionInfo;
-		return next();
-	}
-
-	res.status(406).end();
-}
