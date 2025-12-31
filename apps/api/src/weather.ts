@@ -35,7 +35,7 @@ let tafCache: Map<string, string> = new Map();
 updateWeather();
 setInterval(updateWeather, WEATHER_FETCH_INTERVAL);
 
-export async function updateWeather(): Promise<void> {
+async function updateWeather(): Promise<void> {
 	try {
 		const parsedMetar = (await fetchWeather(METAR_URL)) as MetarXML;
 		const parsedTaf = (await fetchWeather(TAF_URL)) as TafXML;

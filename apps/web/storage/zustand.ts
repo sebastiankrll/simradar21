@@ -24,7 +24,7 @@ const defaultSettings: SettingValues = {
 	distanceUnit: "nm" as const,
 };
 
-export function getSettingValues(): SettingValues {
+function getSettingValues(): SettingValues {
 	const s = useSettingsStore.getState();
 	return {
 		theme: s.theme,

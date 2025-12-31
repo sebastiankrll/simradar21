@@ -11,12 +11,11 @@
 	"devDependencies": {
 		"@sr24/typescript-config": "*",
 		"@types/ws": "^8.18.1",
-		"tsup": "^8.5.0",
+		"tsx": "^4.21.0",
 		"typescript": "^5.9.3"
 	},
 	"dependencies": {
 		"@sr24/db": "*",
-		"@sr24/types": "*",
 		"ws": "^8.18.3"
 	}
 }

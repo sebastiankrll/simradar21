@@ -41,7 +41,7 @@ export async function fetchApi<T>(endpoint: string, options?: RequestInit): Prom
 	return data;
 }
 
-export async function postApi<T>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
+async function _postApi<T>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
 	const isAbsolute = /^https?:\/\//i.test(endpoint);
 	const url = isAbsolute ? endpoint : `${API_URL}${endpoint}`;
 	console.log(url);

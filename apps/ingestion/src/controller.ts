@@ -172,7 +172,7 @@ function getConnectionsCount(vatsimData: VatsimData, controllersLong: Controller
 const firPrefixes: Map<string, string> = new Map();
 const traconPrefixes: Map<string, string> = new Map();
 
-export async function mergeControllers(controllersLong: ControllerLong[]): Promise<ControllerMerged[]> {
+async function mergeControllers(controllersLong: ControllerLong[]): Promise<ControllerMerged[]> {
 	await updateFeaturesFromRedis();
 
 	const merged = new Map<string, ControllerMerged>();

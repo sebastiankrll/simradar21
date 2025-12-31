@@ -86,7 +86,7 @@ function closePolygons(features: SimAwareTraconFeature[]): SimAwareTraconFeature
 	});
 }
 
-export function setLabelPosition(features: SimAwareTraconFeature[]): SimAwareTraconFeature[] {
+function setLabelPosition(features: SimAwareTraconFeature[]): SimAwareTraconFeature[] {
 	return features.map((feature) => {
 		if (!feature.properties.label_lon || !feature.properties.label_lat) {
 			let lonlat = null;

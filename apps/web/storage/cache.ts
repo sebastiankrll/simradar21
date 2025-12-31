@@ -53,7 +53,7 @@ export function cacheIsInitialized(): boolean {
 	return initialized;
 }
 
-export async function updateCache(delta: WsDelta): Promise<void> {
+async function updateCache(delta: WsDelta): Promise<void> {
 	updatePilotFeatures(delta.pilots);
 	updateControllerFeatures(delta.controllers);
 	updateTrackFeatures(delta.pilots);
