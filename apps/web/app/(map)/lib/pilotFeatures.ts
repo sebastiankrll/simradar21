@@ -1,4 +1,4 @@
-import type { PilotDelta, WsAll } from "@sr24/types/interface";
+import type { PilotDelta, InitialData } from "@sr24/types/interface";
 import { Feature, type Map as OlMap } from "ol";
 import type { Extent } from "ol/extent";
 import { Point } from "ol/geom";
@@ -24,7 +24,7 @@ interface RBushPilotFeature {
 const pilotRBush = new RBush<RBushPilotFeature>();
 const pilotMap = new Map<string, RBushPilotFeature>();
 
-export function initPilotFeatures(data: WsAll): void {
+export function initPilotFeatures(data: InitialData): void {
 	for (const p of data.pilots) {
 		const props: PilotProperties = {
 			type: "pilot",

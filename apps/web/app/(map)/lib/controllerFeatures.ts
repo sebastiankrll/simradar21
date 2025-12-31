@@ -1,5 +1,5 @@
 import type { FIRFeature, SimAwareTraconFeature } from "@sr24/types/db";
-import type { ControllerDelta, ControllerMerged, WsAll } from "@sr24/types/interface";
+import type { ControllerDelta, ControllerMerged, InitialData } from "@sr24/types/interface";
 import Feature, { type FeatureLike } from "ol/Feature";
 import GeoJSON from "ol/format/GeoJSON";
 import { Circle, type MultiPolygon, Point, type Polygon } from "ol/geom";
@@ -65,7 +65,7 @@ const readGeoJSONFeature = (geojson: SimAwareTraconFeature | FIRFeature, type: "
 	return feature;
 };
 
-export async function initControllerFeatures(data: WsAll): Promise<void> {
+export async function initControllerFeatures(data: InitialData): Promise<void> {
 	const traconFeatures: Feature<MultiPolygon | Polygon>[] = [];
 	const firFeatures: Feature<MultiPolygon>[] = [];
 	const controllerLabelFeatures: Feature<Point>[] = [];
