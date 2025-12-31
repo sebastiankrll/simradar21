@@ -1,6 +1,6 @@
 // lib/wsClient.ts
 
-import type { WsDelta } from "@sr24/types/vatsim";
+import type { WsDelta } from "@sr24/types/interface";
 
 const WS_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "ws://localhost:3002";
 const RECONNECT_DELAY = 1000;
