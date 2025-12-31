@@ -1,7 +1,8 @@
 {
 	"name": "@sr24/db",
-	"type": "module",
 	"version": "1.0.0",
+	"private": true,
+	"type": "module",
 	"exports": {
 		"./pg": {
 			"types": "./src/pg.ts",
@@ -12,6 +13,7 @@
 			"default": "./dist/redis.js"
 		}
 	},
+	"types": "./dist/index.d.ts",
 	"scripts": {
 		"dev": "tsc --watch",
 		"build": "tsc && shx cp -r src/generated dist/generated",

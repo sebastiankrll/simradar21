@@ -3,7 +3,7 @@
 	"type": "module",
 	"scripts": {
 		"start": "node dist/index.js",
-		"dev": "tsup --watch --onSuccess \"node dist/index.cjs\"",
+		"dev": "tsx watch src/index.ts",
 		"build": "tsc",
 		"format-and-lint": "biome check .",
 		"format-and-lint:fix": "biome check . --write"

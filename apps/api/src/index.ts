@@ -7,9 +7,9 @@ import { pgFindAirportFlights, pgHealthCheck, pgShutdown, prisma } from "@sr24/d
 import { rdsConnect, rdsGetSingle, rdsGetTimeSeries, rdsHealthCheck, rdsShutdown, rdsSub } from "@sr24/db/redis";
 import type { AirportLong, ControllerLong, DashboardData, InitialData, PilotLong, RedisAll } from "@sr24/types/interface";
 import Fastify from "fastify";
-import type { Prisma } from "../../../packages/db/src/generated/prisma";
-import { authPlugin } from "./plugins";
-import { getMetar, getTaf } from "./weather";
+import type { Prisma } from "../../../packages/db/src/generated/prisma/index.js";
+import { authPlugin } from "./plugins.js";
+import { getMetar, getTaf } from "./weather.js";
 
 let initialData: InitialData | null = null;
 let dashboardData: DashboardData | null = null;

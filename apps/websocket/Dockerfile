@@ -43,4 +43,4 @@ COPY --from=installer /app .
 # Expose port if needed
 EXPOSE 3002
 
-CMD node apps/websocket/dist/index.js
+CMD ["node", "apps/websocket/dist/index.js"]

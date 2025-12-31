@@ -33,4 +33,4 @@ ENV NODE_ENV=production
 # Copy only the compiled files and dependencies
 COPY --from=installer /app .
 
-CMD node apps/updater/dist/index.js
+CMD ["node", "apps/updater/dist/index.js"]

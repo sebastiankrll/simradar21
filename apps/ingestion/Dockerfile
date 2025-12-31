@@ -40,4 +40,4 @@ ENV NODE_ENV=production
 # Copy only the compiled files and dependencies
 COPY --from=installer /app .
 
-CMD node apps/ingestion/dist/index.js
+CMD ["node", "apps/ingestion/dist/index.js"]

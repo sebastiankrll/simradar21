@@ -43,4 +43,4 @@ COPY --from=installer /app .
 # Expose port if needed
 EXPOSE 3001
 
-CMD node apps/api/dist/index.js
+CMD ["node", "apps/api/dist/index.js"]

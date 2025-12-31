@@ -1,4 +1,4 @@
-import type { PilotDelta, InitialData } from "@sr24/types/interface";
+import type { InitialData, PilotDelta } from "@sr24/types/interface";
 import { Feature, type Map as OlMap } from "ol";
 import type { Extent } from "ol/extent";
 import { Point } from "ol/geom";
