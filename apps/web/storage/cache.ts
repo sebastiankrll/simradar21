@@ -1,5 +1,5 @@
 import type { FIRFeature, SimAwareTraconFeature, StaticAirline, StaticAirport } from "@sr24/types/db";
-import type { AirportShort, ControllerMerged, TrackPoint, WsAll, WsDelta } from "@sr24/types/interface";
+import type { AirportShort, ControllerMerged, InitialData, TrackPoint, WsDelta } from "@sr24/types/interface";
 import { initAirportFeatures } from "@/app/(map)/lib/airportFeatures";
 import { initControllerFeatures, updateControllerFeatures } from "@/app/(map)/lib/controllerFeatures";
 import { setFeatures } from "@/app/(map)/lib/dataLayers";
@@ -22,9 +22,8 @@ export async function initCache(setStatus: StatusSetter, pathname: string): Prom
 		return;
 	}
 
-	// Init databases and fetch initial data simultaneously
 	const dbInitPromise = dxInitDatabases(setStatus);
-	const dataFetchPromise = fetchApi<WsAll>("/data/init");
+	const dataFetchPromise = fetchApi<InitialData>("/data/init");
 	const [_, data] = await Promise.all([dbInitPromise, dataFetchPromise]);
 	setStatus?.((prev) => ({ ...prev, cache: true }));
 

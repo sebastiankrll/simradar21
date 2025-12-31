@@ -88,6 +88,8 @@ async function fetchVatsimData(): Promise<void> {
 			timestamp: new Date(vatsimData.general.update_timestamp),
 		};
 		rdsPub("ws:delta", delta);
+
+		console.log("Updated");
 	} catch (error) {
 		console.error("❌ Error fetching VATSIM data:", error instanceof Error ? error.message : error);
 	}

@@ -1,7 +1,5 @@
 import "dotenv/config";
-import { constants } from "node:zlib";
-import compression from "@fastify/compress";
-import cors from "@fastify/cors";
+import fastifyCors from "@fastify/cors";
 import fastifyHelmet from "@fastify/helmet";
 import fastifyRateLimit from "@fastify/rate-limit";
 import fastifySensible from "@fastify/sensible";
@@ -49,19 +47,13 @@ connectDBs().catch((err) => {
 });
 
 const app = Fastify({
-	logger: false,
+	logger: true,
 });
 
+// Compression in traefik
 app.register(fastifyHelmet);
-app.register(cors);
-app.register(compression, {
-	brotliOptions: { params: { [constants.BROTLI_PARAM_QUALITY]: 4 } },
-});
-app.register(fastifyRateLimit, {
-	max: 60,
-	timeWindow: "1 minute",
-	errorResponseBuilder: () => ({ error: "Too many requests from this endpoint, please try again later." }),
-});
+app.register(fastifyCors);
+app.register(fastifyRateLimit);
 app.register(fastifySensible);
 app.register(authPlugin);
 
