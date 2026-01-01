@@ -1,0 +1,19 @@
+# VCS
+.git
+.github
+
+# Dependencies
+**/node_modules
+
+# Build output
+**/.next
+**/dist
+**/build
+**/.turbo
+
+# OS / editor junk
+.DS_Store
+*.log
+
+# Env (allow prod only if needed)
+!.env

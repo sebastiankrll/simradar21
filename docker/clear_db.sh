@@ -15,8 +15,8 @@ export $(grep -v '^#' .env | xargs)
 # CONFIGURATION
 # -----------------------------
 # Docker container names
-POSTGRES_CONTAINER="sr24_timescaledb"
-REDIS_CONTAINER="sr24_redis"
+POSTGRES_CONTAINER="sr21_postgres"
+REDIS_CONTAINER="sr21_redis"
 
 # PostgreSQL credentials are now from .env
 # PG_USER and PG_DB are automatically set
@@ -24,20 +24,21 @@ REDIS_CONTAINER="sr24_redis"
 # -----------------------------
 # FUNCTION: Clear PostgreSQL
 # -----------------------------
-echo "Clearing PostgreSQL database '$POSTGRES_DB' in container '$POSTGRES_CONTAINER'..."
-docker exec -i "$POSTGRES_CONTAINER" psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" 
+# echo "Clearing PostgreSQL database '$POSTGRES_DB' in container '$POSTGRES_CONTAINER'..."
+# docker exec -i "$POSTGRES_CONTAINER" psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" 
 
-if [ $? -eq 0 ]; then
-    echo "PostgreSQL database cleared successfully."
-else
-    echo "Failed to clear PostgreSQL database."
-fi
+# if [ $? -eq 0 ]; then
+#     echo "PostgreSQL database cleared successfully."
+# else
+#     echo "Failed to clear PostgreSQL database."
+# fi
 
 # -----------------------------
 # FUNCTION: Clear Redis
 # -----------------------------
 echo "Clearing all data in Redis container '$REDIS_CONTAINER'..."
-docker exec -i "$REDIS_CONTAINER" redis-cli FLUSHALL
+# with password
+docker exec -i "$REDIS_CONTAINER" redis-cli -a "$REDIS_PASSWORD" FLUSHALL
 
 if [ $? -eq 0 ]; then
     echo "Redis cleared successfully."

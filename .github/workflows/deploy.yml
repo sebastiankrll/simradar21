@@ -1,42 +1,45 @@
 name: Deploy to VM
 
 on:
-  push:
-    tags:
-      - 'v*'
-  workflow_dispatch:
+    push:
+        tags:
+            - "v*"
+    workflow_dispatch:
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+    deploy:
+        runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
 
-      - name: Set release version
-        run: echo "APP_VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+            - name: Set release version
+              run: echo "APP_VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
 
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.8.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
+            - name: Set up SSH
+              uses: webfactory/ssh-agent@v0.8.0
+              with:
+                  ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: Test SSH connection
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "echo ✅ SSH connection works!"
+            - name: Test SSH connection
+              run: |
+                  ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "echo ✅ SSH connection works!"
 
-      - name: Copy files to VM
-        run: |
-          rsync -avz -e "ssh -o StrictHostKeyChecking=no" . ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/simradar21
+            - name: Copy files to VM
+              run: |
+                  rsync -avz --delete \
+                    --filter=":- .deployignore" \
+                    -e "ssh -o StrictHostKeyChecking=no" \
+                    ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/simradar21
 
-      - name: Deploy on VM
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-            cd /opt/simradar21
-            
-            docker compose -f docker/docker-compose.prod.yml down
-            docker compose -f docker/docker-compose.prod.yml pull || true
-            docker compose -f docker/docker-compose.prod.yml build --no-cache
-            docker compose -f docker/docker-compose.prod.yml up -d --remove-orphans
-          EOF
+            - name: Deploy on VM
+              run: |
+                  ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+                    cd /opt/simradar21
+                    
+                    docker compose -f docker/docker-compose.prod.yml down
+                    docker compose -f docker/docker-compose.prod.yml pull || true
+                    docker compose -f docker/docker-compose.prod.yml build
+                    docker compose -f docker/docker-compose.prod.yml up -d --remove-orphans
+                  EOF
