@@ -8,7 +8,7 @@ import { getAirportDelta, getAirportShort, mapAirports } from "./airport.js";
 import { getControllerDelta, mapControllers } from "./controller.js";
 import { updateDashboardData } from "./dashboard.js";
 import { getPilotDelta, getPilotShort, mapPilots } from "./pilot.js";
-import { mapTrackPointsLong, mapTrackPointsShort } from "./tracks.js";
+import { mapTrackPoints } from "./tracks.js";
 
 const VATSIM_DATA_URL = "https://data.vatsim.net/v3/vatsim-data.json";
 const VATSIM_TRANSCEIVERS_URL = "https://data.vatsim.net/v3/transceivers-data.json";
@@ -44,9 +44,8 @@ async function fetchVatsimData(): Promise<void> {
 			await pgDeleteStalePilots();
 		}
 
-		const trackPointsLong = mapTrackPointsLong(pilotsLong);
-		const trackPointsShort = mapTrackPointsShort(trackPointsLong);
-		await rdsSetTrackpoints(trackPointsShort);
+		const trackPoints = mapTrackPoints(pilotsLong);
+		await rdsSetTrackpoints(trackPoints);
 
 		const dashboard = await updateDashboardData(vatsimData, controllersLong);
 

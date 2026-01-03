@@ -2,13 +2,31 @@ import type { VatsimEvent } from "./vatsim";
 
 export interface TrackPoint {
 	coordinates: [number, number];
-	altitude_ms?: number;
+	altitude_ms: number;
 	altitude_agl?: number;
-	groundspeed?: number;
+	groundspeed: number;
 	vertical_speed?: number;
 	heading?: number;
-	color?: string;
-	timestamp: Date;
+	color: string;
+	timestamp: number;
+}
+
+export interface DecodedTrackPoint {
+	x: number;
+	y: number;
+	alt_msl: number;
+	alt_agl: number;
+	gs: number;
+	vs: number;
+	hdg: number;
+	color: number;
+	ts: number;
+}
+
+export interface DeltaTrackPoint {
+	m: number;
+	v: number[];
+	t: number;
 }
 
 export interface PilotShort {

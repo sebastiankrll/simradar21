@@ -94,8 +94,8 @@ function getWind(wind: IWind | undefined, windUnit: "knots" | "kmh" | "mph" | "m
 		factor = 0.539957;
 	}
 
-	const speed = convertSpeed(wind.speed * factor, windUnit, false);
-	const gust = convertSpeed((wind.gust || 0) * factor, windUnit, false);
+	const speed = convertSpeed(wind.speed * factor, windUnit);
+	const gust = convertSpeed((wind.gust || 0) * factor, windUnit);
 
 	let shortUnit = "KT";
 	if (windUnit === "kmh") {

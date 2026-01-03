@@ -1,12 +1,12 @@
 import type { FIRFeature, SimAwareTraconFeature, StaticAirline, StaticAirport } from "@sr24/types/db";
-import type { AirportShort, ControllerMerged, InitialData, TrackPoint, WsDelta } from "@sr24/types/interface";
+import type { AirportShort, ControllerMerged, DeltaTrackPoint, InitialData, TrackPoint, WsDelta } from "@sr24/types/interface";
 import { initAirportFeatures } from "@/app/(map)/lib/airportFeatures";
 import { initControllerFeatures, updateControllerFeatures } from "@/app/(map)/lib/controllerFeatures";
 import { setFeatures } from "@/app/(map)/lib/dataLayers";
 import { setClickedFeature, updateOverlays } from "@/app/(map)/lib/events";
 import { getMapView } from "@/app/(map)/lib/init";
 import { initPilotFeatures, updatePilotFeatures } from "@/app/(map)/lib/pilotFeatures";
-import { updateTrackFeatures } from "@/app/(map)/lib/trackFeatures";
+import { decodeTrackPoints, updateTrackFeatures } from "@/app/(map)/lib/trackFeatures";
 import type { StatusSetter } from "@/types/initializer";
 import { fetchApi } from "@/utils/api";
 import { wsClient } from "@/utils/ws";
@@ -162,8 +162,9 @@ export async function fetchTrackPoints(id: string): Promise<TrackPoint[]> {
 		return inFlight;
 	}
 
-	const promise = fetchApi<TrackPoint[]>(`/data/track/${id}`)
-		.then((data) => {
+	const promise = fetchApi<(TrackPoint | DeltaTrackPoint)[]>(`/data/track/${id}`)
+		.then((masked) => {
+			const data = decodeTrackPoints(masked);
 			cachedTrackPoints.set(id, data);
 			pendingTrackPoints.delete(id);
 			return data;

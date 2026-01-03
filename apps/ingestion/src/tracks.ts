@@ -1,72 +1,40 @@
-import type { PilotLong, TrackPoint } from "@sr24/types/interface";
+import type { PilotLong } from "@sr24/types/interface";
 import { fromLonLat } from "./utils/helpers.js";
 
-let cached: Map<string, TrackPoint> = new Map();
-
-export function mapTrackPointsLong(pilots: PilotLong[]): Map<string, TrackPoint> {
-	const trackPointsLong: Map<string, TrackPoint> = new Map();
-	const newCached: Map<string, TrackPoint> = new Map();
-
+export function mapTrackPoints(pilots: PilotLong[]): Map<string, Buffer> {
+	const trackPoints: Map<string, Buffer> = new Map();
 	for (const pilot of pilots) {
-		const trackPointLong: TrackPoint = {
-			coordinates: fromLonLat([pilot.longitude, pilot.latitude]),
-			altitude_ms: roundAltitude(pilot.altitude_ms),
-			altitude_agl: roundAltitude(pilot.altitude_agl),
-			groundspeed: pilot.groundspeed,
-			vertical_speed: roundAltitude(pilot.vertical_speed),
-			heading: pilot.heading,
-			color: getTrackPointColor(pilot.altitude_agl, pilot.altitude_ms),
-			timestamp: pilot.timestamp,
-		};
-		newCached.set(pilot.id, trackPointLong);
-
-		const cachedTrackPoint = cached.get(pilot.id);
-		if (!cachedTrackPoint) {
-			trackPointsLong.set(pilot.id, trackPointLong);
-			continue;
-		}
-
-		if (
-			cachedTrackPoint.coordinates[0] === trackPointLong.coordinates[0] &&
-			cachedTrackPoint.coordinates[1] === trackPointLong.coordinates[1] &&
-			cachedTrackPoint.altitude_ms === trackPointLong.altitude_ms &&
-			cachedTrackPoint.groundspeed === trackPointLong.groundspeed
-		) {
-			continue;
-		}
-
-		const minimalTrackPoint: TrackPoint = { coordinates: trackPointLong.coordinates, timestamp: trackPointLong.timestamp };
-		if (cachedTrackPoint.altitude_ms !== trackPointLong.altitude_ms) minimalTrackPoint.altitude_ms = trackPointLong.altitude_ms;
-		if (cachedTrackPoint.altitude_agl !== trackPointLong.altitude_agl) minimalTrackPoint.altitude_agl = trackPointLong.altitude_agl;
-		if (cachedTrackPoint.groundspeed !== trackPointLong.groundspeed) minimalTrackPoint.groundspeed = trackPointLong.groundspeed;
-		if (cachedTrackPoint.vertical_speed !== trackPointLong.vertical_speed) minimalTrackPoint.vertical_speed = trackPointLong.vertical_speed;
-		if (cachedTrackPoint.heading !== trackPointLong.heading) minimalTrackPoint.heading = trackPointLong.heading;
-		if (cachedTrackPoint.color !== trackPointLong.color) minimalTrackPoint.color = trackPointLong.color;
-
-		if (Object.keys(minimalTrackPoint).length > 2) {
-			trackPointsLong.set(pilot.id, minimalTrackPoint);
-		}
+		const encoded = encodeTrackPoint(pilot);
+		trackPoints.set(pilot.id, encoded);
 	}
-
-	cached = newCached;
-	return trackPointsLong;
+	return trackPoints;
 }
 
-export function mapTrackPointsShort(trackPointsLong: Map<string, TrackPoint>): Map<string, TrackPoint> {
-	const trackPointsShort: Map<string, TrackPoint> = new Map();
-	for (const [id, trackPointLong] of trackPointsLong) {
-		trackPointsShort.set(id, getTrackPointShort(trackPointLong));
-	}
+const TRACKPOINT_SIZE = 25;
 
-	return trackPointsShort;
-}
+export function encodeTrackPoint(p: PilotLong): Buffer {
+	const buf = Buffer.allocUnsafe(TRACKPOINT_SIZE);
 
-function getTrackPointShort(trackPointLong: TrackPoint): TrackPoint {
-	const trackPointShort: TrackPoint = { coordinates: trackPointLong.coordinates, timestamp: trackPointLong.timestamp };
-	if (trackPointLong.altitude_ms !== undefined) trackPointShort.altitude_ms = trackPointLong.altitude_ms;
-	if (trackPointLong.groundspeed !== undefined) trackPointShort.groundspeed = trackPointLong.groundspeed;
-	if (trackPointLong.color !== undefined) trackPointShort.color = trackPointLong.color;
-	return trackPointShort;
+	const [x, y] = fromLonLat([p.longitude, p.latitude]);
+	buf.writeInt32BE(x, 0);
+	buf.writeInt32BE(y, 4);
+
+	buf.writeInt16BE(roundAltitude(p.altitude_ms) / 100, 8);
+	buf.writeInt16BE(roundAltitude(p.altitude_agl) / 100, 10);
+
+	buf.writeInt16BE(p.groundspeed, 12);
+	buf.writeInt16BE(roundAltitude(p.vertical_speed), 14);
+	buf.writeUInt16BE(p.heading, 16);
+
+	const color = getTrackPointColor(p.altitude_agl, p.altitude_ms);
+	const rgb = parseInt(color.slice(1), 16);
+	buf.writeUInt8((rgb >> 16) & 0xff, 18);
+	buf.writeUInt8((rgb >> 8) & 0xff, 19);
+	buf.writeUInt8(rgb & 0xff, 20);
+
+	buf.writeUInt32BE(Math.floor(p.timestamp.getTime() / 1000), 21);
+
+	return buf;
 }
 
 function roundAltitude(altitude: number): number {
@@ -75,7 +43,7 @@ function roundAltitude(altitude: number): number {
 
 function getTrackPointColor(altitude_agl: number, altitude_ms: number): string {
 	if (altitude_agl < 50) {
-		return "#4d5f83ff";
+		return "#4d5f83";
 	}
 
 	const degrees = (300 / 50000) * altitude_ms + 60;
@@ -105,7 +73,7 @@ function getTrackPointColor(altitude_agl: number, altitude_ms: number): string {
 	for (let i = 0; i < 3; i++) {
 		resultRGB[i] = Math.round(lowerBound.rgb[i] + interpolationFactor * (upperBound.rgb[i] - lowerBound.rgb[i]));
 	}
-	const hexString = `#${resultRGB.map((c) => c.toString(16).padStart(2, "0")).join("")}ff`;
+	const hexString = `#${resultRGB.map((c) => c.toString(16).padStart(2, "0")).join("")}`;
 
 	return hexString;
 }

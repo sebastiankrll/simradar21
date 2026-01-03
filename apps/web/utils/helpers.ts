@@ -89,7 +89,7 @@ export function convertSpeed(knots: number, unit: "knots" | "kmh" | "mph" | "ms"
 }
 
 export function convertAltitude(feet: number, unit: "feet" | "meters"): number;
-export function convertAltitude(feet: number, unit: "feet" | "meters", withUnit: false): string;
+export function convertAltitude(feet: number, unit: "feet" | "meters", withUnit: true): string;
 export function convertAltitude(feet: number, unit: "feet" | "meters", withUnit?: boolean): string | number {
 	switch (unit) {
 		case "feet":

@@ -22,11 +22,11 @@ export function PilotTelemetry({ pilot }: { pilot: PilotLong }) {
 			<div className="panel-section-content" id="panel-pilot-telemetry">
 				<div className="panel-data-item">
 					<p>Baro. Altitude</p>
-					<p>{convertAltitude(Math.round(pilot.altitude_ms / 250) * 250, altitudeUnit)}</p>
+					<p>{convertAltitude(Math.round(pilot.altitude_ms / 250) * 250, altitudeUnit, true)}</p>
 				</div>
 				<div className="panel-data-item">
 					<p>Radar Altitude</p>
-					<p>{convertAltitude(Math.round(pilot.altitude_agl / 250) * 250, altitudeUnit)}</p>
+					<p>{convertAltitude(Math.round(pilot.altitude_agl / 250) * 250, altitudeUnit, true)}</p>
 				</div>
 				<div className="panel-data-item">
 					<p>Vertical Speed</p>
@@ -42,7 +42,7 @@ export function PilotTelemetry({ pilot }: { pilot: PilotLong }) {
 				</div>
 				<div className="panel-data-item">
 					<p>Ground Speed</p>
-					<p>{convertSpeed(pilot.groundspeed, speedUnit)}</p>
+					<p>{convertSpeed(pilot.groundspeed, speedUnit, true)}</p>
 				</div>
 			</div>
 		</div>
