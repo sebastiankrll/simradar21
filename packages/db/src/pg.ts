@@ -1,6 +1,7 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import type { PilotLong } from "@sr24/types/interface";
 import { PrismaClient } from "./generated/prisma/client.js";
+import { rdsGetTrackPoints } from "./redis.js";
 
 const adapter = new PrismaPg({
 	connectionString: `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DB}?schema=public`,
@@ -34,6 +35,32 @@ export async function pgUpsertPilots(pilots: PilotLong[]): Promise<void> {
 	for (let i = 0; i < pilots.length; i += BATCH_SIZE) {
 		const batch = pilots.slice(i, i + BATCH_SIZE);
 		await pgUpsertPilotsBatch(batch);
+	}
+
+	const transactions = [];
+
+	for (const p of pilots) {
+		if (p.live || !p.flight_plan || !p.times) continue;
+
+		try {
+			const buffers: Buffer[] = await rdsGetTrackPoints(p.id, true);
+			if (buffers.length === 0) continue;
+
+			const blob = Buffer.concat(buffers);
+			transactions.push(
+				prisma.trackpoint.upsert({
+					where: { pilot_id: p.id },
+					update: { points: blob, created_at: new Date() },
+					create: { pilot_id: p.id, points: blob, created_at: new Date() },
+				}),
+			);
+		} catch (err) {
+			console.error(`Error upserting trackpoints for pilot ${p.id}:`, err);
+		}
+	}
+
+	if (transactions.length > 0) {
+		await prisma.$transaction(transactions);
 	}
 }
 
@@ -211,27 +238,53 @@ export async function pgFindAirportFlights(
 
 export async function pgDeleteStalePilots(): Promise<void> {
 	try {
-		const deleted = await prisma.pilot.deleteMany({
+		await prisma.pilot.deleteMany({
 			where: {
 				last_update: { lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
 			},
 		});
 
-		const updated = await prisma.pilot.updateMany({
+		const pilots = await prisma.pilot.findMany({
 			where: {
 				live: true,
 				last_update: { lt: new Date(Date.now() - 120 * 1000) },
+			},
+			select: { pilot_id: true },
+		});
+
+		if (pilots.length === 0) return;
+
+		await prisma.pilot.updateMany({
+			where: {
+				pilot_id: { in: pilots.map((p) => p.pilot_id) },
 			},
 			data: {
 				live: false,
 			},
 		});
 
-		if (deleted.count > 0) {
-			console.log(`🗑️  Deleted ${deleted.count} stale pilots`);
+		const transactions = [];
+
+		for (const p of pilots) {
+			try {
+				const buffers: Buffer[] = await rdsGetTrackPoints(p.pilot_id, true);
+				if (buffers.length === 0) continue;
+
+				const blob = Buffer.concat(buffers);
+				transactions.push(
+					prisma.trackpoint.upsert({
+						where: { pilot_id: p.pilot_id },
+						update: { points: blob, created_at: new Date() },
+						create: { pilot_id: p.pilot_id, points: blob, created_at: new Date() },
+					}),
+				);
+			} catch (err) {
+				console.error(`Error upserting trackpoints for pilot ${p.pilot_id}:`, err);
+			}
 		}
-		if (updated.count > 0) {
-			console.log(`♻️  Marked ${updated.count} pilots as not live`);
+
+		if (transactions.length > 0) {
+			await prisma.$transaction(transactions);
 		}
 	} catch (err) {
 		console.error("Error cleaning up stale pilots:", err);

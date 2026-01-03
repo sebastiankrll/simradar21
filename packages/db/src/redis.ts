@@ -11,8 +11,6 @@ const client = createClient({
 	.on("error", (err) => console.log("Redis Client Error", err))
 	.on("connect", () => console.log("✅ Connected to Redis (normal)"));
 
-await client.connect();
-
 const bufferClient = createClient({
 	url: `redis://${process.env.REDIS_HOST || "localhost"}:${process.env.REDIS_PORT || 6379}`,
 	password: process.env.NODE_ENV === "production" ? process.env.REDIS_PASSWORD : undefined,
@@ -22,7 +20,11 @@ const bufferClient = createClient({
 	.on("error", (err) => console.log("Redis Client Error", err))
 	.on("connect", () => console.log("✅ Connected to Redis (buffer)"));
 
-await bufferClient.connect();
+await client.connect();
+
+export async function rdsConnectBufferClient(): Promise<void> {
+	await bufferClient.connect();
+}
 
 export async function rdsHealthCheck(): Promise<boolean> {
 	try {
@@ -160,10 +162,13 @@ const TP_MASK = {
 	COLOR: 1 << 3,
 } as const;
 
-export async function rdsGetTrackPoints(id: string): Promise<(TrackPoint | DeltaTrackPoint)[]> {
+export async function rdsGetTrackPoints(id: string): Promise<(TrackPoint | DeltaTrackPoint)[]>;
+export async function rdsGetTrackPoints(id: string, buffer: true): Promise<Buffer[]>;
+export async function rdsGetTrackPoints(id: string, buffer?: boolean): Promise<(TrackPoint | DeltaTrackPoint)[] | Buffer[]> {
 	try {
 		const buffers: Buffer[] = await bufferClient.zRange(`trackpoint:${id}`, 0, -1);
 		if (buffers.length === 0) return [];
+		if (buffer) return buffers;
 
 		const result: (TrackPoint | DeltaTrackPoint)[] = [];
 		let prev: DecodedTrackPoint | null = null;
@@ -174,11 +179,8 @@ export async function rdsGetTrackPoints(id: string): Promise<(TrackPoint | Delta
 			if (!prev) {
 				result.push({
 					coordinates: [curr.x, curr.y],
-					altitude_ms: curr.alt_msl,
-					altitude_agl: curr.alt_agl,
+					altitude_ms: curr.alt_msl * 100,
 					groundspeed: curr.gs,
-					vertical_speed: curr.vs,
-					heading: curr.hdg,
 					color: `#${curr.color.toString(16).padStart(6, "0")}`,
 					timestamp: curr.ts,
 				});
@@ -192,7 +194,7 @@ export async function rdsGetTrackPoints(id: string): Promise<(TrackPoint | Delta
 				}
 				if (curr.alt_msl !== prev.alt_msl) {
 					mask |= TP_MASK.ALT_MSL;
-					values.push(curr.alt_msl * 100);
+					values.push(curr.alt_msl);
 				}
 				if (curr.gs !== prev.gs) {
 					mask |= TP_MASK.GS;
@@ -225,8 +227,8 @@ function decodeTrackPoint(buf: Buffer): DecodedTrackPoint {
 		x: buf.readInt32BE(0),
 		y: buf.readInt32BE(4),
 		alt_msl: buf.readInt16BE(8),
-		alt_agl: buf.readUInt16BE(10),
-		gs: buf.readUInt16BE(12),
+		alt_agl: buf.readInt16BE(10),
+		gs: buf.readInt16BE(12),
 		vs: buf.readInt16BE(14),
 		hdg: buf.readUInt16BE(16),
 		color: (buf.readUInt8(18) << 16) | (buf.readUInt8(19) << 8) | buf.readUInt8(20),

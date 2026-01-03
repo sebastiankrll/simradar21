@@ -39,14 +39,14 @@ export default function PilotPanel({ id }: { id: string }) {
 		data: pilotData,
 		isLoading,
 		mutate,
-	} = useSWR<PilotLong>(`/data/pilot/${id}`, fetchApi, {
+	} = useSWR<PilotLong>(`/map/pilot/${id}`, fetchApi, {
 		refreshInterval: 60_000,
 	});
 
 	const lastIdRef = useRef<string | null>(null);
 
 	const registration = pilotData?.flight_plan?.ac_reg;
-	const { data: aircraftData } = useSWR<StaticAircraft>(registration ? `/data/aircraft/${registration}` : null, fetchApi, {
+	const { data: aircraftData } = useSWR<StaticAircraft>(registration ? `/map/aircraft/${registration}` : null, fetchApi, {
 		revalidateIfStale: false,
 		revalidateOnFocus: false,
 		shouldRetryOnError: false,

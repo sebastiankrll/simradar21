@@ -161,7 +161,7 @@ export function decodeTrackPoints(masked: (TrackPoint | DeltaTrackPoint)[]): Tra
 			let i = 0;
 
 			if (item.m & TP_MASK.COORDS) last.coordinates = [item.v[i++], item.v[i++]];
-			if (item.m & TP_MASK.ALT_MSL) last.altitude_ms = item.v[i++];
+			if (item.m & TP_MASK.ALT_MSL) last.altitude_ms = item.v[i++] * 100;
 			if (item.m & TP_MASK.GS) last.groundspeed = item.v[i++];
 			if (item.m & TP_MASK.COLOR) last.color = `#${item.v[i++].toString(16).padStart(6, "0")}`;
 

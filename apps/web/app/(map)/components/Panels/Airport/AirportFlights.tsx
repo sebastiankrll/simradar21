@@ -58,7 +58,7 @@ function List({ icao, dir }: { icao: string; dir: "dep" | "arr" }) {
 				if (pageParam.backwards) params.set("backwards", "true");
 			}
 
-			return await fetchApi<PilotLong[]>(`/data/airport/${icao.toUpperCase()}/flights?${params.toString()}`);
+			return await fetchApi<PilotLong[]>(`/map/airport/${icao.toUpperCase()}/pilots?${params.toString()}`);
 		},
 		initialPageParam: {},
 		getNextPageParam: (lastPage) => {

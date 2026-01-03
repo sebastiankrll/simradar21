@@ -23,7 +23,7 @@ export async function initCache(setStatus: StatusSetter, pathname: string): Prom
 	}
 
 	const dbInitPromise = dxInitDatabases(setStatus);
-	const dataFetchPromise = fetchApi<InitialData>("/data/init");
+	const dataFetchPromise = fetchApi<InitialData>("/map/init");
 	const [_, data] = await Promise.all([dbInitPromise, dataFetchPromise]);
 	setStatus?.((prev) => ({ ...prev, cache: true }));
 
@@ -162,7 +162,7 @@ export async function fetchTrackPoints(id: string): Promise<TrackPoint[]> {
 		return inFlight;
 	}
 
-	const promise = fetchApi<(TrackPoint | DeltaTrackPoint)[]>(`/data/track/${id}`)
+	const promise = fetchApi<(TrackPoint | DeltaTrackPoint)[]>(`/map/pilot/${id}/track`)
 		.then((masked) => {
 			const data = decodeTrackPoints(masked);
 			cachedTrackPoints.set(id, data);
@@ -195,11 +195,11 @@ export function getControllersApiRequest(id: string, type: "airport" | "sector")
 	}
 
 	if (type === "airport") {
-		return `/data/controllers/${airportIds.flat().join(",")}${traconIds.length > 0 ? "," : ""}${traconIds.flat().join(",")}`;
+		return `/map/controller/${airportIds.flat().join(",")}${traconIds.length > 0 ? "," : ""}${traconIds.flat().join(",")}`;
 	}
 	if (type === "sector" && firIds.length > 0) {
-		return `/data/controllers/${firIds.flat().join(",")}`;
+		return `/map/controller/${firIds.flat().join(",")}`;
 	} else {
-		return `/data/controllers/${traconIds.flat().join(",")}`;
+		return `/map/controller/${traconIds.flat().join(",")}`;
 	}
 }

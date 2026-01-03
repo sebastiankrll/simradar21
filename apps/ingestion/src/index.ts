@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { pgDeleteStalePilots, pgUpsertPilots } from "@sr24/db/pg";
-import { rdsPub, rdsSetTrackpoints } from "@sr24/db/redis";
+import { rdsConnectBufferClient, rdsPub, rdsSetTrackpoints } from "@sr24/db/redis";
 import type { InitialData, RedisAll, WsDelta } from "@sr24/types/interface";
 import type { VatsimData, VatsimTransceivers } from "@sr24/types/vatsim";
 import axios from "axios";
@@ -30,6 +30,8 @@ async function fetchVatsimData(): Promise<void> {
 			updating = false;
 			return;
 		}
+		// console.time("VATSIM Data Fetch");
+
 		lastVatsimUpdate = timestmap;
 		vatsimData.transceivers = await axios.get<VatsimTransceivers[]>(VATSIM_TRANSCEIVERS_URL).then((res) => res.data);
 
@@ -37,15 +39,15 @@ async function fetchVatsimData(): Promise<void> {
 		const [controllersLong, controllersMerged] = await mapControllers(vatsimData, pilotsLong);
 		const airportsLong = await mapAirports(pilotsLong);
 
+		const trackPoints = mapTrackPoints(pilotsLong);
+		await rdsSetTrackpoints(trackPoints);
+
 		await pgUpsertPilots(pilotsLong);
 		const now = Date.now();
 		if (now > lastPgCleanUp + 60 * 60 * 1000) {
 			lastPgCleanUp = now;
 			await pgDeleteStalePilots();
 		}
-
-		const trackPoints = mapTrackPoints(pilotsLong);
-		await rdsSetTrackpoints(trackPoints);
 
 		const dashboard = await updateDashboardData(vatsimData, controllersLong);
 
@@ -73,7 +75,7 @@ async function fetchVatsimData(): Promise<void> {
 		};
 		rdsPub("ws:delta", delta);
 
-		// console.log("Updated");
+		// console.timeEnd("VATSIM Data Fetch");
 	} catch (error) {
 		console.error("❌ Error fetching VATSIM data:", error instanceof Error ? error.message : error);
 	}
@@ -81,5 +83,6 @@ async function fetchVatsimData(): Promise<void> {
 	updating = false;
 }
 
+await rdsConnectBufferClient();
 await fetchVatsimData();
 setInterval(fetchVatsimData, FETCH_INTERVAL);

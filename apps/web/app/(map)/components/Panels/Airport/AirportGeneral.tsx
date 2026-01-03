@@ -28,11 +28,11 @@ interface WeatherResponse {
 }
 
 export function AirportGeneral({ icao }: { icao: string }) {
-	const { data: airportData, isLoading } = useSWR<AirportLong>(`/data/airport/${icao}`, fetchApi, {
+	const { data: airportData, isLoading } = useSWR<AirportLong>(`/map/airport/${icao}`, fetchApi, {
 		refreshInterval: 60_000,
 		shouldRetryOnError: false,
 	});
-	const { data: weatherData } = useSWR<WeatherResponse>(`/data/weather/${icao}`, fetchApi, {
+	const { data: weatherData } = useSWR<WeatherResponse>(`/map/airport/${icao}/weather`, fetchApi, {
 		refreshInterval: 5 * 60_000,
 		shouldRetryOnError: false,
 	});

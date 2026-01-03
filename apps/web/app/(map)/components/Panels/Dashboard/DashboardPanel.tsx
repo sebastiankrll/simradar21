@@ -33,7 +33,7 @@ function getStoredOpenSections(): string[] {
 }
 
 export default function DashboardPanel() {
-	const { data, isLoading } = useSWR<DashboardData>("/data/dashboard", fetchApi, { refreshInterval: 60_000 });
+	const { data, isLoading } = useSWR<DashboardData>("/map/dashboard", fetchApi, { refreshInterval: 60_000 });
 
 	const historyRef = useRef<HTMLDivElement>(null);
 	const statsRef = useRef<HTMLDivElement>(null);

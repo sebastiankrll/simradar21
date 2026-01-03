@@ -16,8 +16,8 @@ export function PilotCharts({
 	const { altitudeUnit, speedUnit, timeFormat, timeZone } = useSettingsStore();
 	const data = trackPoints.map((point) => ({
 		name: convertTime(point.timestamp * 1000, timeFormat, timeZone),
-		altitude: convertAltitude(point.altitude_ms, altitudeUnit, true),
-		speed: convertSpeed(point.groundspeed, speedUnit, true),
+		altitude: convertAltitude(point.altitude_ms, altitudeUnit),
+		speed: convertSpeed(point.groundspeed, speedUnit),
 	}));
 
 	return (

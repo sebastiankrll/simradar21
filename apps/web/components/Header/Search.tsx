@@ -33,7 +33,7 @@ type QueryResult = {
 };
 
 async function fetchPilots(query: string): Promise<PilotResult> {
-	const pilots = await fetchApi<PilotResult>(`/search/flights?q=${encodeURIComponent(query)}`);
+	const pilots = await fetchApi<PilotResult>(`/search?q=${encodeURIComponent(query)}`);
 	return pilots;
 }
 

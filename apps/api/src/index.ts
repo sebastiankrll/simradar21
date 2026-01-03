@@ -4,12 +4,14 @@ import fastifyHelmet from "@fastify/helmet";
 import fastifyRateLimit from "@fastify/rate-limit";
 import fastifySensible from "@fastify/sensible";
 import { pgFindAirportFlights, pgHealthCheck, pgShutdown, prisma } from "@sr24/db/pg";
-import { rdsGetSingle, rdsGetTrackPoints, rdsHealthCheck, rdsShutdown, rdsSub } from "@sr24/db/redis";
+import { rdsConnectBufferClient, rdsGetSingle, rdsGetTrackPoints, rdsHealthCheck, rdsShutdown, rdsSub } from "@sr24/db/redis";
 import type { AirportLong, ControllerLong, DashboardData, InitialData, PilotLong, RedisAll } from "@sr24/types/interface";
 import Fastify from "fastify";
 import type { Prisma } from "../../../packages/db/src/generated/prisma/index.js";
 import { authPlugin } from "./plugins.js";
 import { getMetar, getTaf } from "./weather.js";
+
+await rdsConnectBufferClient();
 
 let initialData: InitialData | null = null;
 let dashboardData: DashboardData | null = null;
@@ -93,15 +95,22 @@ app.get("/health", async (_request, reply) => {
 	});
 });
 
-app.get("/data/init", async () => {
+app.get("/map/init", async () => {
 	if (!initialData) {
 		throw app.httpErrors.serviceUnavailable({ error: "Initial data not available" });
 	}
 	return initialData;
 });
 
+app.get("/map/dashboard", async () => {
+	if (!dashboardData) {
+		throw app.httpErrors.notFound({ error: "Dashboard data not available" });
+	}
+	return dashboardData;
+});
+
 app.get(
-	"/data/pilot/:id",
+	"/map/pilot/:id",
 	{
 		schema: {
 			params: {
@@ -122,75 +131,7 @@ app.get(
 );
 
 app.get(
-	"/data/airport/:icao",
-	{
-		schema: {
-			params: {
-				type: "object",
-				properties: { icao: { type: "string", minLength: 4, maxLength: 4 } },
-				required: ["icao"],
-			},
-		},
-	},
-	async (request) => {
-		const { icao } = request.params as { icao: string };
-		const airport = airportsLong.get(icao.toUpperCase());
-		if (!airport) {
-			throw app.httpErrors.notFound({ error: "Airport not found" });
-		}
-		return airport;
-	},
-);
-
-app.get(
-	"/data/weather/:icao",
-	{
-		schema: {
-			params: {
-				type: "object",
-				properties: { icao: { type: "string", minLength: 4, maxLength: 4 } },
-				required: ["icao"],
-			},
-		},
-	},
-	async (request) => {
-		const { icao } = request.params as { icao: string };
-		const metar = getMetar(icao.toUpperCase());
-		const taf = getTaf(icao.toUpperCase());
-		return { metar, taf };
-	},
-);
-
-app.get(
-	"/data/controllers/:callsigns",
-	{
-		schema: {
-			params: {
-				type: "object",
-				properties: { callsigns: { type: "string", minLength: 4 } },
-				required: ["callsigns"],
-			},
-		},
-	},
-	async (request) => {
-		const { callsigns } = request.params as { callsigns: string };
-		const callsignArray = callsigns.split(",");
-
-		if (callsignArray.length === 0) {
-			throw app.httpErrors.badRequest({ error: "At least one callsign is required" });
-		}
-
-		const controllers = callsignArray.map((callsign) => controllersLong.get(callsign) || null);
-		const validControllers = controllers.filter((controller) => controller !== null);
-		if (validControllers.length === 0) {
-			throw app.httpErrors.notFound({ error: "Controllers not found" });
-		}
-		return validControllers;
-	},
-);
-
-app.get(
-	"/data/track/:id",
+	"/map/pilot/:id/track",
 	{
 		schema: {
 			params: {
@@ -211,7 +152,7 @@ app.get(
 );
 
 app.get(
-	"/data/aircraft/:reg",
+	"/map/aircraft/:reg",
 	{
 		schema: {
 			params: {
@@ -231,15 +172,48 @@ app.get(
 	},
 );
 
-app.get("/data/dashboard", async () => {
-	if (!dashboardData) {
-		throw app.httpErrors.notFound({ error: "Dashboard data not available" });
-	}
-	return dashboardData;
-});
+app.get(
+	"/map/airport/:icao",
+	{
+		schema: {
+			params: {
+				type: "object",
+				properties: { icao: { type: "string", minLength: 4, maxLength: 4 } },
+				required: ["icao"],
+			},
+		},
+	},
+	async (request) => {
+		const { icao } = request.params as { icao: string };
+		const airport = airportsLong.get(icao.toUpperCase());
+		if (!airport) {
+			throw app.httpErrors.notFound({ error: "Airport not found" });
+		}
+		return airport;
+	},
+);
 
 app.get(
-	"/data/airport/:icao/flights",
+	"/map/airport/:icao/weather",
+	{
+		schema: {
+			params: {
+				type: "object",
+				properties: { icao: { type: "string", minLength: 4, maxLength: 4 } },
+				required: ["icao"],
+			},
+		},
+	},
+	async (request) => {
+		const { icao } = request.params as { icao: string };
+		const metar = getMetar(icao.toUpperCase());
+		const taf = getTaf(icao.toUpperCase());
+		return { metar, taf };
+	},
+);
+
+app.get(
+	"/map/airport/:icao/pilots",
 	{
 		schema: {
 			params: {
@@ -273,7 +247,35 @@ app.get(
 );
 
 app.get(
-	"/search/flights",
+	"/map/controller/:callsigns",
+	{
+		schema: {
+			params: {
+				type: "object",
+				properties: { callsigns: { type: "string", minLength: 4 } },
+				required: ["callsigns"],
+			},
+		},
+	},
+	async (request) => {
+		const { callsigns } = request.params as { callsigns: string };
+		const callsignArray = callsigns.split(",");
+
+		if (callsignArray.length === 0) {
+			throw app.httpErrors.badRequest({ error: "At least one callsign is required" });
+		}
+
+		const controllers = callsignArray.map((callsign) => controllersLong.get(callsign) || null);
+		const validControllers = controllers.filter((controller) => controller !== null);
+		if (validControllers.length === 0) {
+			throw app.httpErrors.notFound({ error: "Controllers not found" });
+		}
+		return validControllers;
+	},
+);
+
+app.get(
+	"/search",
 	{
 		schema: {
 			querystring: {
