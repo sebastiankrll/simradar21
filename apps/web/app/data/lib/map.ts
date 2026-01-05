@@ -100,6 +100,8 @@ export function initDataLayers(pilot: PilotLong, trackPoints: Required<TrackPoin
 	initTrackPoints(trackPoints);
 }
 
+let extent: [number, number, number, number] | null = null;
+
 async function initAirports(pilot: PilotLong): Promise<void> {
 	if (!pilot.flight_plan) return;
 
@@ -121,7 +123,7 @@ async function initAirports(pilot: PilotLong): Promise<void> {
 	});
 	airportSource.addFeatures(features);
 
-	const extent = airports.reduce(
+	extent = airports.reduce(
 		(ext, a) => {
 			const airportExtent = [a.longitude, a.latitude, a.longitude, a.latitude];
 			return [
@@ -135,8 +137,7 @@ async function initAirports(pilot: PilotLong): Promise<void> {
 	);
 
 	map?.getView().fit(transformExtent(extent, "EPSG:4326", "EPSG:3857"), {
-		padding: [140, 100, 100, 420],
-		maxZoom: 10,
+		padding: [148, 100, 100, 420],
 		duration: 1000,
 	});
 }
@@ -207,5 +208,26 @@ export function updatePilot(trackPoint: Required<TrackPoint> | undefined): void 
 	pilotFeature.setProperties({
 		altitude_agl: trackPoint.altitude_agl,
 		heading: trackPoint.heading,
+	});
+}
+
+export function centerOnRoute(): void {
+	if (!extent) return;
+	map?.getView().fit(transformExtent(extent, "EPSG:4326", "EPSG:3857"), {
+		padding: [148, 100, 100, 420],
+		duration: 300,
+	});
+}
+
+export function centerOnPilot(): void {
+	if (!pilotFeature) return;
+	const geometry = pilotFeature.getGeometry();
+	if (!geometry) return;
+
+	const coordinates = geometry.getCoordinates();
+	map?.getView().animate({
+		center: coordinates,
+		duration: 300,
+		zoom: 10,
 	});
 }

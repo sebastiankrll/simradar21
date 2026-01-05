@@ -54,11 +54,13 @@
 	background: var(--color-glass-bg);
 	backdrop-filter: blur(5px);
 	border: 1px solid var(--color-border);
-	height: 24px;
+	height: 32px;
 	flex: 1;
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: 4px;
+	padding: 4px;
+	box-sizing: border-box;
 }
 
 .replay-button {
@@ -68,6 +70,11 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	color: white;
+}
+
+.replay-button.active {
+	background: var(--color-blue);
 }
 
 .replay-button use {

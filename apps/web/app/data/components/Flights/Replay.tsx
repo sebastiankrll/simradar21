@@ -5,7 +5,7 @@ import useSWR from "swr";
 import { decodeTrackPoints } from "@/components/Map/trackFeatures";
 import Spinner from "@/components/Spinner/Spinner";
 import { fetchApi } from "@/utils/api";
-import { initDataLayers, updatePilot } from "../../lib/map";
+import { centerOnPilot, initDataLayers, updatePilot } from "../../lib/map";
 import { ReplayControl } from "./ReplayControl";
 import ReplayMap from "./ReplayMap";
 import ReplayPanel from "./ReplayPanel";
@@ -28,6 +28,7 @@ export function Replay({ id, setOpen }: { id: string; setOpen: React.Dispatch<Re
 
 	const [playing, setPlaying] = useState(false);
 	const [speedIndex, setSpeedIndex] = useState(3);
+	const [follow, setFollow] = useState(false);
 
 	useEffect(() => {
 		if (!data) return;
@@ -39,7 +40,9 @@ export function Replay({ id, setOpen }: { id: string; setOpen: React.Dispatch<Re
 
 	useEffect(() => {
 		updatePilot(trackPoints[progress]);
-	}, [progress, trackPoints]);
+		if (!follow) return;
+		centerOnPilot();
+	}, [progress, trackPoints, follow]);
 
 	useEffect(() => {
 		if (!playing) return;
@@ -78,6 +81,8 @@ export function Replay({ id, setOpen }: { id: string; setOpen: React.Dispatch<Re
 				setPlaying={setPlaying}
 				playing={playing}
 				onDownload={() => downloadTrackpointsCSV(trackPoints, `${data.pilot.callsign}_track.csv`)}
+				setFollow={setFollow}
+				follow={follow}
 				max={trackPoints.length - 1}
 			/>
 		</div>
