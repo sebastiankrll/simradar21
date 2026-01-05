@@ -5,11 +5,11 @@ import VectorLayer from "ol/layer/Vector";
 import WebGLVectorLayer from "ol/layer/WebGLVector";
 import { fromLonLat, transformExtent } from "ol/proj";
 import VectorSource from "ol/source/Vector";
-import Stroke from "ol/style/Stroke";
 import Style from "ol/style/Style";
 import { getAirportSize } from "@/components/Map/airportFeatures";
 import { initBaseLayer, setBaseLayerTheme } from "@/components/Map/baseLayer";
 import { initSunLayer, setSunLayerTheme } from "@/components/Map/sunLayer";
+import { getStroke } from "@/components/Map/trackFeatures";
 import { webglConfig } from "@/components/Map/webglConfig";
 import { getCachedAirport } from "@/storage/cache";
 
@@ -161,7 +161,7 @@ function initPilot(pilot: PilotLong, trackPoints: Required<TrackPoint>[]): void 
 }
 
 function initTrackPoints(trackPoints: Required<TrackPoint>[]): void {
-    if (trackPoints.length < 2) return;
+	if (trackPoints.length < 2) return;
 	const trackFeatures: Feature<LineString>[] = [];
 
 	for (let i = 0; i < trackPoints.length - 1; i++) {
@@ -172,10 +172,7 @@ function initTrackPoints(trackPoints: Required<TrackPoint>[]): void {
 			geometry: new LineString([start.coordinates, end.coordinates]),
 			type: "track",
 		});
-		const stroke = new Stroke({
-			color: start.color,
-			width: 3,
-		});
+		const stroke = getStroke(start, end);
 
 		trackFeature.setStyle(
 			new Style({

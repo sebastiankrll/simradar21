@@ -1,4 +1,5 @@
 import type { DeltaTrackPoint, TrackPoint } from "@sr24/types/interface";
+import Stroke from "ol/style/Stroke";
 
 const TP_MASK = {
 	COORDS: 1 << 0,
@@ -41,4 +42,19 @@ export function decodeTrackPoints(masked: (TrackPoint | DeltaTrackPoint)[] | und
 	}
 
 	return result;
+}
+
+export function getStroke(start: TrackPoint, end: TrackPoint): Stroke {
+	if (end.timestamp - start.timestamp > 60000) {
+		return new Stroke({
+			color: "rgba(152, 156, 178, 0.8)",
+			width: 3,
+			lineDash: [5, 8],
+			lineCap: "square",
+		});
+	}
+	return new Stroke({
+		color: start.color,
+		width: 3,
+	});
 }

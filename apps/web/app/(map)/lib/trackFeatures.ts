@@ -4,6 +4,7 @@ import type { Coordinate } from "ol/coordinate";
 import { LineString, type Point } from "ol/geom";
 import Stroke from "ol/style/Stroke";
 import Style from "ol/style/Style";
+import { getStroke } from "@/components/Map/trackFeatures";
 import { fetchTrackPoints } from "@/storage/cache";
 import { pilotMainSource, trackSource } from "./dataLayers";
 
@@ -28,10 +29,7 @@ export async function initTrackFeatures(id: string | null): Promise<void> {
 			geometry: new LineString([start.coordinates, end.coordinates]),
 			type: "track",
 		});
-		const stroke = new Stroke({
-			color: start.color,
-			width: 3,
-		});
+		const stroke = getStroke(start, end);
 
 		trackFeature.setStyle(
 			new Style({
