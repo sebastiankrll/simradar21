@@ -20,7 +20,7 @@ export function mapTrackPoints(pilots: PilotLong[]): Map<string, Buffer> {
 			timestamp: pilot.last_update.getTime(),
 		};
 		const cachedPoint = cached.get(pilot.id);
-		if (cachedPoint && !isChanged(cachedPoint, trackPoint)) {
+		if (cachedPoint && !isChanged(cachedPoint, trackPoint) && pilot.live) {
 			continue;
 		}
 
