@@ -1,4 +1,5 @@
 import type { DeltaTrackPoint, PilotLong, TrackPoint } from "@sr24/types/interface";
+import { toLonLat } from "ol/proj";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { decodeTrackPoints } from "@/components/Map/trackFeatures";
@@ -76,8 +77,31 @@ export function Replay({ id, setOpen }: { id: string; setOpen: React.Dispatch<Re
 				speedIndex={speedIndex}
 				setPlaying={setPlaying}
 				playing={playing}
+				onDownload={() => downloadTrackpointsCSV(trackPoints, `${data.pilot.callsign}_track.csv`)}
 				max={trackPoints.length - 1}
 			/>
 		</div>
 	);
+}
+
+function downloadTrackpointsCSV(trackPoints: Required<TrackPoint>[], filename = "trackpoints.csv") {
+	if (!trackPoints.length) return;
+
+	const headers = ["timestamp", "latitude", "longitude", "altitude_ms", "altitude_agl", "groundspeed", "vertical_speed", "heading"];
+	const rows = trackPoints.map((p) => {
+		const coordinates = toLonLat(p.coordinates);
+		return [p.timestamp, coordinates[1], coordinates[0], p.altitude_ms, p.altitude_agl, p.groundspeed, p.vertical_speed, p.heading].join(",");
+	});
+	const csvContent = [headers.join(","), ...rows].join("\n");
+
+	const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+	const url = URL.createObjectURL(blob);
+
+	const link = document.createElement("a");
+	link.href = url;
+	link.setAttribute("download", filename);
+	document.body.appendChild(link);
+	link.click();
+	document.body.removeChild(link);
+	URL.revokeObjectURL(url);
 }

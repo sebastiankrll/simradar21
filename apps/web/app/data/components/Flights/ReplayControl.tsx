@@ -11,6 +11,7 @@ export function ReplayControl({
 	speedIndex,
 	setPlaying,
 	playing,
+	onDownload,
 	max,
 }: {
 	progress: number;
@@ -20,6 +21,7 @@ export function ReplayControl({
 	speedIndex: number;
 	setPlaying: React.Dispatch<React.SetStateAction<boolean>>;
 	playing: boolean;
+	onDownload: () => void;
 	max: number;
 }) {
 	return (
@@ -43,6 +45,9 @@ export function ReplayControl({
 				min={0}
 				max={max}
 			/>
+			<button type="button" className="replay-button" onClick={() => onDownload()}>
+				<Icon name="download" size={24} />
+			</button>
 			<button type="button" className="replay-button" id="replay-close" onClick={() => setOpen(null)}>
 				<Icon name="cancel" size={24} />
 			</button>
