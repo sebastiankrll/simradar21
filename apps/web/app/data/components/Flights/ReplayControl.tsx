@@ -33,7 +33,7 @@ export function ReplayControl({
 	return (
 		<div id="replay-control">
 			<button type="button" className="replay-button" onClick={() => setPlaying((prev) => !prev)}>
-				<Icon name={playing ? "cancel" : "forward"} size={24} />
+				<Icon name={playing ? "pause" : "play"} size={24} />
 			</button>
 			<button
 				type="button"

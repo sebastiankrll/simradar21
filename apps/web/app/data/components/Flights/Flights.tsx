@@ -11,11 +11,12 @@ import { Fragment } from "react/jsx-runtime";
 import { toast } from "react-toastify";
 import MessageBox from "@/components/MessageBox/MessageBox";
 import { getDelayColorFromDates } from "@/components/Panel/utils";
+import Spinner from "@/components/Spinner/Spinner";
 import { getCachedAirport } from "@/storage/cache";
 import { useSettingsStore } from "@/storage/zustand";
 import { fetchApi } from "@/utils/api";
 import { convertTime } from "@/utils/helpers";
-import Spinner from "@/components/Spinner/Spinner";
+import Aircraft from "./Aircraft";
 
 const LIMIT = 20;
 
@@ -62,7 +63,10 @@ export default function Flights({ children, callsign, registration }: { children
 
 	return (
 		<div id="flights-page">
-			<h1>Flight history for {callsign || registration}</h1>
+			{registration && <Aircraft registration={registration} />}
+			<h1>
+				Flight history for {callsign ? "callsign" : "aircraft"} {callsign || registration}
+			</h1>
 			<table>
 				<colgroup>
 					<col />
@@ -167,8 +171,8 @@ function Row({ pilot, registration }: { pilot: PilotLong; registration?: string 
 			</td>
 			<td>
 				<div className="flights-page-buttons">
-					<button type="button" onClick={() => onPlayClick(pilot, router)}>
-						<Icon name="external-link" size={24} />
+					<button type="button" onClick={() => onPlayClick(pilot, router, registration)}>
+						{pilot.live ? "Live" : <Icon name="play" size={24} />}
 					</button>
 					<button type="button" onClick={() => onShareClick()}>
 						<Icon name={shared ? "select" : "share-android"} size={24} />
@@ -179,11 +183,11 @@ function Row({ pilot, registration }: { pilot: PilotLong; registration?: string 
 	);
 }
 
-function onPlayClick(pilot: PilotLong, router: ReturnType<typeof useRouter>) {
+function onPlayClick(pilot: PilotLong, router: ReturnType<typeof useRouter>, registration?: string) {
 	if (pilot.live) {
 		window.location.href = `/pilot/${pilot.id}`;
 	} else {
-		router.push(`/data/flights/${pilot.callsign}/${pilot.id}`);
+		router.push(`/data/${registration ? "aircrafts" : "flights"}/${registration || pilot.callsign}/${pilot.id}`);
 	}
 }
 

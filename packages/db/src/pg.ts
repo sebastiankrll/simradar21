@@ -52,7 +52,7 @@ export async function pgUpsertPilots(pilots: PilotLong[]): Promise<void> {
 			transactions.push(
 				prisma.trackpoint.upsert({
 					where: { id: p.id },
-					update: { points: blob, created_at: new Date() },
+					update: { points: compressed, created_at: new Date() },
 					create: { id: p.id, points: compressed, created_at: new Date() },
 				}),
 			);
