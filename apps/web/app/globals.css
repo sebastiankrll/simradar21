@@ -52,6 +52,7 @@ html {
 	--color-box-shadow: rgb(39, 40, 46);
 	--color-glass-bg: rgba(80, 80, 80, 0.3);
 	--color-hover: rgb(105, 124, 165);
+	--color-green: #11b995;
 }
 
 button {

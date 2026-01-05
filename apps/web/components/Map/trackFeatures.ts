@@ -10,9 +10,11 @@ const TP_MASK = {
 	COLOR: 1 << 6,
 } as const;
 
-export function decodeTrackPoints(masked: (TrackPoint | DeltaTrackPoint)[]): TrackPoint[];
-export function decodeTrackPoints(masked: (TrackPoint | DeltaTrackPoint)[], full: true): Required<TrackPoint>[];
-export function decodeTrackPoints(masked: (TrackPoint | DeltaTrackPoint)[], full?: boolean): TrackPoint[] {
+export function decodeTrackPoints(masked: (TrackPoint | DeltaTrackPoint)[] | undefined): TrackPoint[];
+export function decodeTrackPoints(masked: (TrackPoint | DeltaTrackPoint)[] | undefined, full: true): Required<TrackPoint>[];
+export function decodeTrackPoints(masked: (TrackPoint | DeltaTrackPoint)[] | undefined, full?: boolean): TrackPoint[] {
+	if (!masked) return [];
+
 	const result: TrackPoint[] = [];
 	let last: TrackPoint | null = null;
 
@@ -30,7 +32,7 @@ export function decodeTrackPoints(masked: (TrackPoint | DeltaTrackPoint)[], full
 			if (item.m & TP_MASK.HDG && full) last.heading = item.v[i++];
 			if (item.m & TP_MASK.COLOR) last.color = `#${item.v[i++].toString(16).padStart(6, "0")}`;
 
-			last.timestamp = item.t;
+			last.timestamp = item.t * 1000;
 		} else {
 			throw new Error("First trackpoint must be full, cannot start with delta");
 		}

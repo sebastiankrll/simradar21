@@ -23,6 +23,13 @@ const trackSource = new VectorSource({
 	useSpatialIndex: false,
 });
 
+const trackLayer = new VectorLayer({
+	source: trackSource,
+	properties: {
+		type: "track",
+	},
+	zIndex: 0,
+});
 const airportLayer = new WebGLVectorLayer({
 	source: airportSource,
 	variables: {
@@ -31,13 +38,6 @@ const airportLayer = new WebGLVectorLayer({
 	style: webglConfig.airport_main,
 	properties: {
 		type: "airport_main",
-	},
-	zIndex: 0,
-});
-const trackLayer = new VectorLayer({
-	source: trackSource,
-	properties: {
-		type: "track",
 	},
 	zIndex: 1,
 });
@@ -141,24 +141,27 @@ async function initAirports(pilot: PilotLong): Promise<void> {
 	});
 }
 
+let pilotFeature: Feature<Point> | null = null;
+
 function initPilot(pilot: PilotLong, trackPoints: Required<TrackPoint>[]): void {
 	if (trackPoints.length === 0) return;
-	const feature = new Feature({
+	pilotFeature = new Feature({
 		geometry: new Point(trackPoints[0].coordinates),
 	});
-	feature.setProperties({
+	pilotFeature.setProperties({
 		type: "pilot",
-		hovered: false,
+		hovered: true,
 		clicked: false,
 		aircraft: pilot.aircraft,
 		altitude_agl: trackPoints[0].altitude_agl,
 		heading: trackPoints[0].heading,
 	});
-	feature.setId(`pilot_${pilot.id}`);
-	pilotSource.addFeature(feature);
+	pilotFeature.setId(`pilot_${pilot.id}`);
+	pilotSource.addFeature(pilotFeature);
 }
 
 function initTrackPoints(trackPoints: Required<TrackPoint>[]): void {
+    if (trackPoints.length < 2) return;
 	const trackFeatures: Feature<LineString>[] = [];
 
 	for (let i = 0; i < trackPoints.length - 1; i++) {
@@ -184,7 +187,6 @@ function initTrackPoints(trackPoints: Required<TrackPoint>[]): void {
 	}
 
 	trackSource.addFeatures(trackFeatures);
-	console.log(trackPoints);
 }
 
 function setDataLayersTheme(theme: boolean): void {
@@ -199,4 +201,14 @@ export function setDataLayersSettings(airportMarkerSize: number, planeMarkerSize
 	const planeSize = planeMarkerSize / 50;
 	pilotMainLayer.updateStyleVariables({ size: planeSize });
 	pilotShadowLayer.updateStyleVariables({ size: planeSize });
+}
+
+export function updatePilot(trackPoint: Required<TrackPoint>): void {
+	if (!pilotFeature) return;
+
+	pilotFeature.getGeometry()?.setCoordinates(trackPoint.coordinates);
+	pilotFeature.setProperties({
+		altitude_agl: trackPoint.altitude_agl,
+		heading: trackPoint.heading,
+	});
 }

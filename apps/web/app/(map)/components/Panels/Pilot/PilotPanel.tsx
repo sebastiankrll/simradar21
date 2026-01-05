@@ -1,6 +1,6 @@
 "use client";
 
-import type { StaticAircraft, StaticAirline, StaticAirport } from "@sr24/types/db";
+import type { StaticAirline, StaticAirport } from "@sr24/types/db";
 import type { PilotLong, TrackPoint, WsDelta } from "@sr24/types/interface";
 import { useEffect, useRef, useState } from "react";
 import { cacheIsInitialized, fetchTrackPoints, getCachedAirline, getCachedAirport } from "@/storage/cache";
@@ -47,13 +47,6 @@ export default function PilotPanel({ id }: { id: string }) {
 	});
 
 	const lastIdRef = useRef<string | null>(null);
-
-	const registration = pilotData?.flight_plan?.ac_reg;
-	const { data: aircraftData } = useSWR<StaticAircraft>(registration ? `/data/aircraft/${registration}` : null, fetchApi, {
-		revalidateIfStale: false,
-		revalidateOnFocus: false,
-		shouldRetryOnError: false,
-	});
 
 	const [trackPoints, setTrackPoints] = useState<TrackPoint[]>([]);
 	const [staticData, setStaticData] = useState<PilotPanelStatic>({
@@ -193,7 +186,7 @@ export default function PilotPanel({ id }: { id: string }) {
 					<Icon name="arrow-down" />
 				</button>
 				<PilotFlightplan pilot={pilotData} data={staticData} openSection={openSection} ref={infoRef} />
-				<PilotAircraft pilot={pilotData} aircraft={aircraftData} />
+				<PilotAircraft pilot={pilotData} />
 				<button className={`panel-container-header${openSection === "charts" ? " open" : ""}`} type="button" onClick={() => toggleSection("charts")}>
 					<p>Speed & Altitude Graph</p>
 					<Icon name="arrow-down" />
