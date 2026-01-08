@@ -16,6 +16,8 @@ function getInitializerText(status: StatusMap): string {
 		return "Downloading airline data ...";
 	} else if (!status.aircrafts) {
 		return "Downloading aircraft data ...";
+	} else if (!status.navigraph) {
+		return "Downloading Navigraph data ...";
 	} else {
 		return "Initialization complete!";
 	}
@@ -29,7 +31,7 @@ export default function Initializer() {
 	useEffect(() => {
 		if (dxDatabaseIsStale()) {
 			setVisible(true);
-			setOpen(true);
+			setTimeout(() => setOpen(true), 100);
 			dxEnsureInitialized(setStatus);
 		}
 	}, []);
@@ -47,7 +49,7 @@ export default function Initializer() {
 
 	return (
 		<div id="initializer" className={open ? "open" : ""}>
-			<span id="initializer-progress" style={{ width: `${(Object.keys(status).length / 5) * 100}%` }}></span>
+			<span id="initializer-progress" style={{ width: `${(Object.keys(status).length / 6) * 100}%` }}></span>
 			<p id="initializer-title">Initializing data ...</p>
 			<p id="initializer-disclaimer">This can take up to a minute during the first load.</p>
 			<p id="initializer-text">{getInitializerText(status)}</p>

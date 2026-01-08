@@ -4,6 +4,7 @@ export type StatusMap = {
 	tracons?: boolean;
 	airlines?: boolean;
 	aircrafts?: boolean;
+	navigraph?: boolean;
 };
 
 export type StatusSetter = (status: Partial<StatusMap> | ((prev: Partial<StatusMap>) => Partial<StatusMap>)) => void;

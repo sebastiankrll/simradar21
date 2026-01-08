@@ -132,18 +132,22 @@ async function storeData<T, K extends keyof T>(data: T[], db: EntityTable<T, K>)
 }
 
 export async function dxGetAllAirports(): Promise<StaticAirport[]> {
+	await dxEnsureInitialized();
 	return await db.airports.toArray();
 }
 
 export async function dxGetAirport(id: string): Promise<StaticAirport | null> {
+	await dxEnsureInitialized();
 	return (await db.airports.get(id)) || null;
 }
 
 export async function dxGetAirline(id: string): Promise<StaticAirline | null> {
+	await dxEnsureInitialized();
 	return (await db.airlines.get(id)) || null;
 }
 
 export async function dxFindAirlines(query: string, limit: number): Promise<StaticAirline[]> {
+	await dxEnsureInitialized();
 	return await db.airlines
 		.filter((airline) => airline.name.toLowerCase().includes(query.toLowerCase()) || airline.id.toLowerCase().includes(query.toLowerCase()))
 		.limit(limit)
@@ -151,6 +155,7 @@ export async function dxFindAirlines(query: string, limit: number): Promise<Stat
 }
 
 export async function dxFindAircrafts(query: string, limit: number): Promise<StaticAircraftType[]> {
+	await dxEnsureInitialized();
 	return await db.aircrafts
 		.filter((aircraft) => aircraft.name.toLowerCase().includes(query.toLowerCase()) || aircraft.icao.toLowerCase().includes(query.toLowerCase()))
 		.limit(limit)
@@ -158,6 +163,7 @@ export async function dxFindAircrafts(query: string, limit: number): Promise<Sta
 }
 
 export async function dxFindAirports(query: string, limit: number): Promise<StaticAirport[]> {
+	await dxEnsureInitialized();
 	return await db.airports
 		.filter((airport) => airport.name.toLowerCase().includes(query.toLowerCase()) || airport.id.toLowerCase().includes(query.toLowerCase()))
 		.limit(limit)
@@ -165,9 +171,11 @@ export async function dxFindAirports(query: string, limit: number): Promise<Stat
 }
 
 export async function dxGetTracons(ids: string[]): Promise<(DexieFeature | undefined)[]> {
+	await dxEnsureInitialized();
 	return await db.tracons.bulkGet(ids);
 }
 
 export async function dxGetFirs(ids: string[]): Promise<(DexieFeature | undefined)[]> {
+	await dxEnsureInitialized();
 	return await db.firs.bulkGet(ids);
 }
