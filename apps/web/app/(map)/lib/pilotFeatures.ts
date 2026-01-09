@@ -153,7 +153,7 @@ export function setPilotFeatures(extent: Extent, zoom: number): void {
 	const filteredFeatures = filterPilotFeatures(features).slice(0, 300);
 
 	if (highlightedPilot) {
-		const exists = pilotsByAltitude.find((p) => p.feature.getId() === `pilot_${highlightedPilot}`);
+		const exists = filteredFeatures.find((p) => p.getId() === `pilot_${highlightedPilot}`);
 		if (!exists) {
 			const item = pilotMap.get(highlightedPilot);
 			if (item) {
