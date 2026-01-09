@@ -181,10 +181,7 @@ export interface DashboardData {
 	events: VatsimEvent[];
 }
 
-export interface DashboardHistory {
-	t: Date;
-	v: { pilots: number; controllers: number };
-}
+export type DashboardHistory = [number, number, number];
 
 export interface DashboardStats {
 	pilots: number;
