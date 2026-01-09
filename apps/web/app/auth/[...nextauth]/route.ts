@@ -72,27 +72,43 @@ export const authOptions: NextAuthOptions = {
 
 	callbacks: {
 		async signIn({ profile, account }) {
-			if (account?.provider !== "vatsim" || !profile?.data) return true;
+			if (account?.provider === "vatsim") {
+				const cid = profile?.data?.cid;
+				if (!cid) return false;
 
-			const cid = profile?.data?.cid;
-			if (!cid) return false;
-
-			const jwtToken = sign({ vatsim: { cid } }, JWT_SECRET, {
-				expiresIn: "5m",
-			});
-
-			try {
-				const response = await fetch(`${API_URL}/user`, {
-					method: "GET",
-					headers: {
-						Authorization: `Bearer ${jwtToken}`,
-					},
+				const jwtToken = sign({ vatsim: { cid } }, JWT_SECRET, {
+					expiresIn: "5m",
 				});
 
-				if (!response.ok) return false;
-			} catch (err) {
-				console.error("Failed to ensure user:", err);
-				return false;
+				try {
+					const response = await fetch(`${API_URL}/user`, {
+						method: "GET",
+						headers: {
+							Authorization: `Bearer ${jwtToken}`,
+						},
+					});
+
+					if (!response.ok) return false;
+				} catch (err) {
+					console.error("Failed to ensure user:", err);
+					return false;
+				}
+			}
+
+			if (account?.provider === "navigraph") {
+				const response = await fetch(`${API_URL}/user/navigraph`, {
+					method: "PATCH",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						accessToken: account.access_token,
+						refreshToken: account.refresh_token,
+						expiresAt: account.expires_at ? account.expires_at * 1000 : 3600 * 1000 + Date.now(),
+					}),
+				});
+
+				if (!response.ok) {
+					console.error("Failed to save Navigraph connection");
+				}
 			}
 
 			return true;

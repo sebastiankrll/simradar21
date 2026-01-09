@@ -208,7 +208,7 @@ export async function deleteUser(cid: number | undefined) {
 	});
 }
 
-export async function patchUser(cid: number | undefined, data: Partial<{ settings: any; filters: any; bookmarks: any }>) {
+export async function patchUser(cid: number | undefined, data: any) {
 	return await prisma.user.update({
 		where: { id: String(cid) },
 		data,
