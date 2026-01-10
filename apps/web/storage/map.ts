@@ -12,6 +12,7 @@ import { type WsData, type WsPresence, wsClient } from "@/utils/ws";
 let airportsShort: Required<AirportShort>[] = [];
 let controllersMerged: ControllerMerged[] = [];
 let initialized = false;
+let lastMessageSeq: number | null = null;
 
 export async function initMapData(pathname: string): Promise<void> {
 	if (initialized) {
@@ -22,6 +23,27 @@ export async function initMapData(pathname: string): Promise<void> {
 	const data = await fetchApi<InitialData>("/map/init");
 
 	await initAirportFeatures();
+	await initFeatures(data);
+
+	const handleMessage = async (msg: WsData | WsPresence) => {
+		if (msg.t === "delta") {
+			if (lastMessageSeq && msg.s !== (lastMessageSeq + 1) % Number.MAX_SAFE_INTEGER) {
+				console.warn(`Missed WS messages: last seq ${lastMessageSeq}, current seq ${msg.s}`);
+				const data = await fetchApi<InitialData>("/map/init");
+				await initFeatures(data);
+			} else {
+				updateCache(msg.data);
+			}
+			lastMessageSeq = msg.s;
+		}
+	};
+	wsClient.addListener(handleMessage);
+
+	setClickedFeature(pathname);
+	initialized = true;
+}
+
+async function initFeatures(data: InitialData): Promise<void> {
 	await initControllerFeatures(data);
 	initPilotFeatures(data);
 
@@ -32,16 +54,6 @@ export async function initMapData(pathname: string): Promise<void> {
 	if (view) {
 		setFeatures(view.calculateExtent(), view.getZoom() || 5);
 	}
-
-	const handleMessage = (msg: WsData | WsPresence) => {
-		if (msg.t === "delta") {
-			updateCache(msg.data);
-		}
-	};
-	wsClient.addListener(handleMessage);
-
-	setClickedFeature(pathname);
-	initialized = true;
 }
 
 async function updateCache(delta: WsDelta): Promise<void> {

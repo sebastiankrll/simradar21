@@ -24,6 +24,9 @@ const pilotRBush = new RBush<RBushPilotFeature>();
 const pilotMap = new Map<string, RBushPilotFeature>();
 
 export function initPilotFeatures(data: InitialData): void {
+	pilotRBush.clear();
+	pilotMap.clear();
+
 	for (const p of data.pilots) {
 		const props: PilotProperties = {
 			type: "pilot",

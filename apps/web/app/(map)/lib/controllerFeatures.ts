@@ -66,6 +66,12 @@ const readGeoJSONFeature = (geojson: SimAwareTraconFeature | FIRFeature, type: "
 };
 
 export async function initControllerFeatures(data: InitialData): Promise<void> {
+	controllerSet.clear();
+	traconSource.clear();
+	firSource.clear();
+	controllerLabelSource.clear();
+	airportLabelSource.clear();
+
 	const traconFeatures: Feature<MultiPolygon | Polygon>[] = [];
 	const firFeatures: Feature<MultiPolygon>[] = [];
 	const controllerLabelFeatures: Feature<Point>[] = [];

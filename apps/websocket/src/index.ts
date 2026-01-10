@@ -4,6 +4,7 @@ import { rdsShutdown, rdsSub } from "@sr24/db/redis";
 
 const PORT = Number(process.env.WS_PORT) || 3002;
 const MAX_BACKPRESSURE = 2 * 1024 * 1024;
+const MAX_SEQ = Number.MAX_SAFE_INTEGER;
 
 const clients = new Set<uWS.WebSocket<unknown>>();
 let connectedClients = 0;
@@ -52,9 +53,10 @@ function broadcastDelta(data: Buffer) {
 }
 
 rdsSub("ws:delta", (message: string) => {
+	globalSeq = (globalSeq + 1) % MAX_SEQ;
 	const payload = JSON.stringify({
 		t: "delta",
-		s: globalSeq++,
+		s: globalSeq,
 		c: connectedClients,
 		data: JSON.parse(message),
 	});
