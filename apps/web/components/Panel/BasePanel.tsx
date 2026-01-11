@@ -16,7 +16,6 @@ export default function BasePanel({ children }: { children: React.ReactNode }) {
 		const type = pathname.split("/")[1] || "";
 
 		if (type === "") {
-			console.log(isHidden);
 			setOpen(!isHidden);
 			prevPath.current = type;
 			return;
