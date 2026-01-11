@@ -131,9 +131,9 @@ async function getDashboardHistory(vatsimData: VatsimData, controllersLong: Cont
 	}
 	lastHistoryUpdateTimestamp = new Date();
 
-	history.push({ t: new Date(), v: { pilots: vatsimData.pilots.length, controllers: controllersLong.length } });
+	history.push([now / 1000, vatsimData.pilots.length, controllersLong.length]);
 	const cutoff = now - MAX_HISTORY_HOURS * 60 * 60 * 1000;
-	history = history.filter((entry) => new Date(entry.t).getTime() >= cutoff);
+	history = history.filter((entry) => entry[0] * 1000 >= cutoff);
 
 	rdsSetSingle("dashboard:history", history);
 	return history;

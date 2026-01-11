@@ -7,9 +7,9 @@ export function DashboardHistory({ history }: { history: DashboardData["history"
 	const { timeZone, timeFormat } = useSettingsStore();
 
 	const data = history.map((point) => ({
-		name: convertTime(point.t, timeFormat, timeZone),
-		controllers: point.v.controllers,
-		pilots: point.v.pilots,
+		name: `${new Date(point[0] * 1000).toLocaleDateString()} ${convertTime(point[0] * 1000, timeFormat, timeZone)}`,
+		pilots: point[1],
+		controllers: point[2],
 	}));
 
 	return (

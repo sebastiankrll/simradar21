@@ -24,6 +24,9 @@ const pilotRBush = new RBush<RBushPilotFeature>();
 const pilotMap = new Map<string, RBushPilotFeature>();
 
 export function initPilotFeatures(data: InitialData): void {
+	pilotRBush.clear();
+	pilotMap.clear();
+
 	for (const p of data.pilots) {
 		const props: PilotProperties = {
 			type: "pilot",
@@ -153,7 +156,7 @@ export function setPilotFeatures(extent: Extent, zoom: number): void {
 	const filteredFeatures = filterPilotFeatures(features).slice(0, 300);
 
 	if (highlightedPilot) {
-		const exists = pilotsByAltitude.find((p) => p.feature.getId() === `pilot_${highlightedPilot}`);
+		const exists = filteredFeatures.find((p) => p.getId() === `pilot_${highlightedPilot}`);
 		if (!exists) {
 			const item = pilotMap.get(highlightedPilot);
 			if (item) {

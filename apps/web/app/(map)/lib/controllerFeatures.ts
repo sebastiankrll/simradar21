@@ -66,10 +66,18 @@ const readGeoJSONFeature = (geojson: SimAwareTraconFeature | FIRFeature, type: "
 };
 
 export async function initControllerFeatures(data: InitialData): Promise<void> {
+	controllerSet.clear();
+	traconSource.clear();
+	firSource.clear();
+	controllerLabelSource.clear();
+	airportLabelSource.clear();
+
 	const traconFeatures: Feature<MultiPolygon | Polygon>[] = [];
 	const firFeatures: Feature<MultiPolygon>[] = [];
 	const controllerLabelFeatures: Feature<Point>[] = [];
 	const airportLabelFeatures: Feature<Point>[] = [];
+
+	console.log(data)
 
 	await Promise.all(
 		data.controllers.map(async (c) => {
@@ -91,8 +99,7 @@ export async function initControllerFeatures(data: InitialData): Promise<void> {
 					return;
 				}
 
-				const icao = id.split("_")[0];
-				const airport = await getCachedAirport(icao);
+				const airport = await getCachedAirport(id);
 				if (airport) {
 					const polygon = createCircleTracon(airport.longitude, airport.latitude);
 					const feature = new Feature(polygon);
@@ -101,7 +108,7 @@ export async function initControllerFeatures(data: InitialData): Promise<void> {
 					traconFeatures.push(feature);
 
 					const longitude = airport.longitude;
-					const latitude = airport.latitude - 25 / 60;
+					const latitude = airport.latitude - 20 / 60;
 					const labelFeature = getControllerLabelFeature(longitude, latitude, id, "tracon");
 					controllerLabelFeatures.push(labelFeature);
 				}
@@ -169,8 +176,7 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 				continue;
 			}
 
-			const icao = id.split("_")[0];
-			const airport = await getCachedAirport(icao);
+			const airport = await getCachedAirport(id);
 			if (airport) {
 				const polygon = createCircleTracon(airport.longitude, airport.latitude);
 				const feature = new Feature(polygon);
