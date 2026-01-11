@@ -8,7 +8,7 @@ import Initializer from "@/components/Initializer/Initializer";
 import { setSunLayerSettings } from "@/components/Map/sunLayer";
 import BasePanel from "@/components/Panel/BasePanel";
 import { initMapData } from "@/storage/map";
-import { useSettingsStore } from "@/storage/zustand";
+import { useMapRotationStore, useSettingsStore } from "@/storage/zustand";
 import { setDataLayersSettings } from "../lib/dataLayers";
 import { onClick, onMoveEnd, onPointerMove, setNavigator } from "../lib/events";
 import { getMap, initMap, setMapTheme } from "../lib/init";
@@ -31,12 +31,16 @@ export default function OMap({ children }: { children?: React.ReactNode }) {
 		traconColor,
 		firColor,
 	} = useSettingsStore();
+	const { setRotation } = useMapRotationStore();
 
 	useEffect(() => {
 		setNavigator((href) => router.push(href));
 
 		const map = initMap();
-		map.on(["moveend"], onMoveEnd);
+		map.on(["moveend"], (e) => {
+			onMoveEnd(e);
+			setRotation(e.target.getView().getRotation());
+		});
 		map.on("pointermove", onPointerMove);
 		map.on("click", onClick);
 
@@ -46,7 +50,7 @@ export default function OMap({ children }: { children?: React.ReactNode }) {
 			map.un("click", onClick);
 			map.setTarget(undefined);
 		};
-	}, [router]);
+	}, [router, setRotation]);
 
 	useEffect(() => {
 		initMapData(pathname);

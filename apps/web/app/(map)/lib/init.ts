@@ -78,3 +78,7 @@ export function setMapTheme(theme: boolean): void {
 	setDataLayersTheme(theme);
 	setSunLayerTheme(theme);
 }
+
+export function northUpView(): void {
+	map?.getView().setRotation(0);
+}

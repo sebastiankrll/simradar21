@@ -4,8 +4,9 @@ import { useRouter } from "next/navigation";
 import "./Controls.css";
 import { useState } from "react";
 import Icon from "@/components/Icon/Icon";
-import { useFiltersStore, useMapVisibilityStore } from "@/storage/zustand";
+import { useFiltersStore, useMapRotationStore, useMapVisibilityStore } from "@/storage/zustand";
 import { moveViewToCoordinates, zoomView } from "../lib/events";
+import { northUpView } from "../lib/init";
 
 export default function Controls() {
 	const router = useRouter();
@@ -13,6 +14,7 @@ export default function Controls() {
 
 	const { active: filterActive } = useFiltersStore();
 	const { isHidden, setHidden } = useMapVisibilityStore();
+	const { rotation, setRotation } = useMapRotationStore();
 
 	const onFullscreen = async () => {
 		try {
@@ -62,8 +64,15 @@ export default function Controls() {
 				<button type="button" className="map-control-item" onClick={onCenterOnLocation}>
 					<Icon name="poi-contact" size={22} />
 				</button>
-				<button type="button" className="map-control-item" onClick={onCenterOnLocation}>
-					<Icon name="compass" size={22} />
+				<button
+					type="button"
+					className="map-control-item"
+					onClick={() => {
+						northUpView();
+						setRotation(0);
+					}}
+				>
+					<Icon name="compass" size={22} style={{ transform: `rotate(${rotation - 0.4}rad)` }} />
 				</button>
 				<button type="button" className={`map-control-item ${filterActive ? "active" : ""}`} onClick={() => router.push("/filters")}>
 					<Icon name="filter" size={22} />
