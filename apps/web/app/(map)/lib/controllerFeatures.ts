@@ -106,7 +106,7 @@ export async function initControllerFeatures(data: InitialData): Promise<void> {
 					traconFeatures.push(feature);
 
 					const longitude = airport.longitude;
-					const latitude = airport.latitude - 20 / 60;
+					const latitude = airport.latitude - 17 / 60;
 					const labelFeature = getControllerLabelFeature(longitude, latitude, id, "tracon");
 					controllerLabelFeatures.push(labelFeature);
 				}
@@ -183,7 +183,7 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 				traconSource.addFeature(feature);
 
 				const longitude = airport.longitude;
-				const latitude = airport.latitude - 25 / 60;
+				const latitude = airport.latitude - 17 / 60;
 				const labelFeature = getControllerLabelFeature(longitude, latitude, id, "tracon");
 				controllerLabelSource.addFeature(labelFeature);
 

@@ -140,7 +140,7 @@ export default function FiltersPanel() {
 						Save & Apply
 					</button>
 					<button type="button" className="filter-action" style={{ background: "var(--color-red)" }} onClick={handleClearAll}>
-						Clear All
+						Reset All
 					</button>
 				</div>
 

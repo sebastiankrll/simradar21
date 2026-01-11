@@ -188,7 +188,24 @@ async function createOverlay(feature: Feature<Point>): Promise<Overlay> {
 				?.toString()
 				.replace(/^sector_/, "") || "";
 
-		const cachedTracon = await getCachedTracon(id);
+		let cachedTracon = await getCachedTracon(id);
+		if (!cachedTracon) {
+			const cachedAirport = await getCachedAirport(id);
+			if (cachedAirport) {
+				cachedTracon = {
+					properties: {
+						id: cachedAirport.id,
+						name: cachedAirport.name.replace("Airport", "Radar"),
+						prefix: "",
+					},
+					type: "Feature",
+					geometry: {
+						type: "MultiPolygon",
+						coordinates: [],
+					},
+				};
+			}
+		}
 		const controllerMerged = getControllerMerged(`tracon_${id}`);
 		root.render(<SectorOverlay cached={cachedTracon} merged={controllerMerged} />);
 	}
@@ -266,7 +283,24 @@ async function updateOverlay(feature: Feature<Point>, overlay: Overlay): Promise
 				?.toString()
 				.replace(/^sector_/, "") || "";
 
-		const cachedTracon = await getCachedTracon(id);
+		let cachedTracon = await getCachedTracon(id);
+		if (!cachedTracon) {
+			const cachedAirport = await getCachedAirport(id);
+			if (cachedAirport) {
+				cachedTracon = {
+					properties: {
+						id: cachedAirport.id,
+						name: cachedAirport.name.replace("Airport", "Radar"),
+						prefix: "",
+					},
+					type: "Feature",
+					geometry: {
+						type: "MultiPolygon",
+						coordinates: [],
+					},
+				};
+			}
+		}
 		const controllerMerged = getControllerMerged(`tracon_${id}`);
 		root.render(<SectorOverlay cached={cachedTracon} merged={controllerMerged} />);
 	}

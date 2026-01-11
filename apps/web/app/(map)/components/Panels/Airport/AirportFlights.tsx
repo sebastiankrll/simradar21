@@ -11,7 +11,6 @@ import { getAirlineIcon } from "@/components/Icon/Icon";
 import { getDelayColorFromDates } from "@/components/Panel/utils";
 import Spinner from "@/components/Spinner/Spinner";
 import { getCachedAirline, getCachedAirport } from "@/storage/cache";
-import { cacheIsInitialized } from "@/storage/map";
 import { useSettingsStore } from "@/storage/zustand";
 import { fetchApi } from "@/utils/api";
 import { convertTime } from "@/utils/helpers";
@@ -134,11 +133,7 @@ function ListItem({
 	useEffect(() => {
 		const airlineCode = pilot.callsign.slice(0, 3).toUpperCase();
 
-		const loadData = async () => {
-			while (!cacheIsInitialized()) {
-				await new Promise((resolve) => setTimeout(resolve, 50));
-			}
-
+		(async () => {
 			const [airline, departure, arrival] = await Promise.all([
 				getCachedAirline(airlineCode || ""),
 				getCachedAirport(pilot.flight_plan?.departure.icao || ""),
@@ -146,9 +141,7 @@ function ListItem({
 			]);
 
 			setData({ airline, departure, arrival });
-		};
-
-		loadData();
+		})();
 	}, [pilot]);
 
 	const schedTime = dir === "dep" ? pilot.times?.sched_off_block : pilot.times?.sched_on_block;
