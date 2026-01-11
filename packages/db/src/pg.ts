@@ -212,11 +212,12 @@ export async function pgDeleteStalePilots(): Promise<void> {
 				if (buffers.length === 0) continue;
 
 				const blob = Buffer.concat(buffers);
+				const compressed = deflateSync(blob);
 				transactions.push(
 					prisma.trackpoint.upsert({
 						where: { id: id },
-						update: { points: blob, created_at: new Date() },
-						create: { id: id, points: blob, created_at: new Date() },
+						update: { points: compressed, created_at: new Date() },
+						create: { id: id, points: compressed, created_at: new Date() },
 					}),
 				);
 			} catch (err) {
